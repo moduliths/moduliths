@@ -1,0 +1,1 @@
+org.springframework.events.config.EventPublicationConfigurationExtension=org.springframework.events.jpa.JpaEventPublicationConfiguration
