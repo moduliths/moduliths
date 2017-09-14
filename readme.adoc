@@ -1,5 +1,7 @@
 = Spring (reliable) Domain Events
 
+image:https://travis-ci.org/olivergierke/spring-domain-events.svg?branch=master["Build Status", link="https://travis-ci.org/olivergierke/spring-domain-events"]
+
 == The Problem
 
 Spring allows applications to publish events via its `ApplicationEventPublisher` API.
@@ -25,4 +27,4 @@ This allows us to re-publish the events to transactional listeners that either h
 * `core` -- multicaster implementation, general and configuration infrastructure and SPI interfaces.
 * `jackson` -- a rudimentary Jackson-based `EventSerializer` implementation.
 * `jpa` -- a JPA-based `EventPublicationRegistry`.
-* `test` -- a sample integration test featuring two successful and one failing listener to show the registry exposes  the publication of the failed listener after the failure.  
+* `test` -- a sample integration test featuring two successful and one failing listener to show the registry exposes  the publication of the failed listener after the failure.
