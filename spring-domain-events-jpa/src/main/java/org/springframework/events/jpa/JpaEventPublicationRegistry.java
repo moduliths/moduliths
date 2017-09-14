@@ -18,12 +18,14 @@ package org.springframework.events.jpa;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationListener;
 import org.springframework.events.CompletableEventPublication;
 import org.springframework.events.EventPublication;
@@ -39,8 +41,9 @@ import org.springframework.util.Assert;
  * 
  * @author Oliver Gierke
  */
+@Slf4j
 @RequiredArgsConstructor
-class JpaEventPublicationRegistry implements EventPublicationRegistry {
+class JpaEventPublicationRegistry implements EventPublicationRegistry, DisposableBean {
 
 	private final @NonNull JpaEventPublicationRepository events;
 	private final @NonNull EventSerializer serializer;
@@ -52,10 +55,10 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry {
 	@Override
 	public void store(Object event, Collection<ApplicationListener<?>> listeners) {
 
-		listeners.stream()//
-				.map(it -> PublicationTargetIdentifier.forListener(it))//
-				.map(it -> CompletableEventPublication.of(event, it))//
-				.map(this::map)//
+		listeners.stream() //
+				.map(it -> PublicationTargetIdentifier.forListener(it)) //
+				.map(it -> CompletableEventPublication.of(event, it)) //
+				.map(this::map) //
 				.forEach(it -> events.save(it));
 	}
 
@@ -66,8 +69,8 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry {
 	@Override
 	public Iterable<EventPublication> findIncompletePublications() {
 
-		List<EventPublication> result = events.findByCompletionDateIsNull().stream()//
-				.map(it -> JpaEventPublicationAdapter.of(it, serializer))//
+		List<EventPublication> result = events.findByCompletionDateIsNull().stream() //
+				.map(it -> JpaEventPublicationAdapter.of(it, serializer)) //
 				.collect(Collectors.toList());
 
 		return result;
@@ -84,17 +87,52 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry {
 		Assert.notNull(event, "Domain event must not be null!");
 		Assert.notNull(listener, "Listener identifier must not be null!");
 
-		events.findBySerializedEventAndListenerId(serializer.serialize(event), listener.toString())//
+		events.findBySerializedEventAndListenerId(serializer.serialize(event), listener.toString()) //
+				.map(JpaEventPublicationRegistry::logCompleted) //
 				.ifPresent(it -> events.save(it.markCompleted()));
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.beans.factory.DisposableBean#destroy()
+	 */
+	@Override
+	public void destroy() throws Exception {
+
+		List<JpaEventPublication> outstandingPublications = events.findByCompletionDateIsNull();
+
+		if (outstandingPublications.isEmpty()) {
+
+			log.debug("No publications outstanding!");
+			return;
+		}
+
+		log.debug("Shutting down with the following publications left unfinished:");
+
+		outstandingPublications.forEach(it -> log.debug("\t{} - {}", it.getId(), it.getEventType()));
 	}
 
 	private JpaEventPublication map(EventPublication publication) {
 
-		return JpaEventPublication.builder()//
-				.serializedEvent(serializer.serialize(publication.getEvent()).toString())//
-				.publicationDate(publication.getPublicationDate())//
-				.listenerId(publication.getTargetIdentifier().toString())//
+		JpaEventPublication result = JpaEventPublication.builder() //
+				.eventType(publication.getEvent().getClass()) //
+				.publicationDate(publication.getPublicationDate()) //
+				.listenerId(publication.getTargetIdentifier().toString()) //
+				.serializedEvent(serializer.serialize(publication.getEvent()).toString()) //
 				.build();
+
+		log.debug("Registering publication of {} with id {} for {}.", //
+				result.getEventType(), result.getId(), result.getListenerId());
+
+		return result;
+	}
+
+	private static JpaEventPublication logCompleted(JpaEventPublication publication) {
+
+		log.debug("Marking publication of event {} with id {} to listener {} completed.", //
+				publication.getEventType(), publication.getId(), publication.getListenerId());
+
+		return publication;
 	}
 
 	@EqualsAndHashCode
