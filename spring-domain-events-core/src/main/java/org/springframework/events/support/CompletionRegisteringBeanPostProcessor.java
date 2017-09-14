@@ -23,10 +23,12 @@ import java.lang.reflect.Method;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.aop.framework.Advised;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.events.EventPublicationRegistry;
 import org.springframework.events.PublicationTargetIdentifier;
@@ -69,7 +71,7 @@ public class CompletionRegisteringBeanPostProcessor implements BeanPostProcessor
 
 	private static class ProxyCreatingMethodCallback implements MethodCallback {
 
-		private final ObjectFactory<EventPublicationRegistry> registry;
+		private final CompletionRegisteringMethodInterceptor interceptor;
 
 		private @Getter Object bean;
 		private boolean methodFound = false;
@@ -79,7 +81,7 @@ public class CompletionRegisteringBeanPostProcessor implements BeanPostProcessor
 			Assert.notNull(registry, "EventPublicationRegistry must not be null!");
 
 			this.bean = bean;
-			this.registry = registry;
+			this.interceptor = new CompletionRegisteringMethodInterceptor(registry);
 		}
 
 		@Override
@@ -96,22 +98,32 @@ public class CompletionRegisteringBeanPostProcessor implements BeanPostProcessor
 				return;
 			}
 
+			this.methodFound = true;
+
 			bean = createCompletionRegisteringProxy(bean);
 		}
 
 		private Object createCompletionRegisteringProxy(Object bean) {
 
+			if (bean instanceof Advised) {
+
+				Advised advised = (Advised) bean;
+				advised.addAdvice(advised.getAdvisors().length, interceptor);
+
+				return bean;
+			}
+
 			ProxyFactory factory = new ProxyFactory(bean);
-			factory.addAdvice(new CompletionRegisteringMethodInterceptor(registry, bean));
+			factory.setProxyTargetClass(true);
+			factory.addAdvice(interceptor);
 
 			return factory.getProxy();
 		}
 
 		@RequiredArgsConstructor
-		private static class CompletionRegisteringMethodInterceptor implements MethodInterceptor {
+		private static class CompletionRegisteringMethodInterceptor implements MethodInterceptor, Ordered {
 
-			private final @NonNull ObjectFactory<EventPublicationRegistry> eventStore;
-			private final @NonNull Object listener;
+			private final @NonNull ObjectFactory<EventPublicationRegistry> registry;
 
 			/* 
 			 * (non-Javadoc)
@@ -122,10 +134,19 @@ public class CompletionRegisteringBeanPostProcessor implements BeanPostProcessor
 
 				Object result = invocation.proceed();
 
-				eventStore.getObject().markCompleted(invocation.getArguments()[0],
+				registry.getObject().markCompleted(invocation.getArguments()[0],
 						PublicationTargetIdentifier.forMethod(invocation.getMethod()));
 
 				return result;
+			}
+
+			/* 
+			 * (non-Javadoc)
+			 * @see org.springframework.core.Ordered#getOrder()
+			 */
+			@Override
+			public int getOrder() {
+				return Ordered.HIGHEST_PRECEDENCE - 10;
 			}
 		}
 	}
