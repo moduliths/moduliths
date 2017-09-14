@@ -8,6 +8,7 @@
 	</appender>
 
 	<logger name="org.springframework" level="info" />
+	<logger name="org.springframework.events" level="debug" />
 
 	<root level="warn">
 		<appender-ref ref="console" />

@@ -39,7 +39,6 @@ class InfrastructureConfiguration {
 		HibernateJpaVendorAdapter adapter = new HibernateJpaVendorAdapter();
 		adapter.setDatabase(Database.HSQL);
 		adapter.setGenerateDdl(true);
-		adapter.setShowSql(true);
 
 		LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
 		factoryBean.setDataSource(dataSource());

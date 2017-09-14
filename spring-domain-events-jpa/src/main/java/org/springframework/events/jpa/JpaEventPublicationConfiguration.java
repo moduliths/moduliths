@@ -20,15 +20,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportSelector;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.events.EventSerializer;
 import org.springframework.events.config.EventPublicationConfigurationExtension;
+import org.springframework.util.ClassUtils;
 
 /**
  * @author Oliver Gierke
  */
 @Configuration
-@EnableJpaRepositories
+@Import(JpaEventPublicationConfiguration.RepositoriesEnablingImportSelector.class)
 @RequiredArgsConstructor
 public class JpaEventPublicationConfiguration implements EventPublicationConfigurationExtension {
 
@@ -38,5 +42,24 @@ public class JpaEventPublicationConfiguration implements EventPublicationConfigu
 	@Bean
 	public JpaEventPublicationRegistry jpaEventPublicationRegistry() {
 		return new JpaEventPublicationRegistry(repository, serializer.getObject());
+	}
+
+	static class RepositoriesEnablingImportSelector implements ImportSelector {
+
+		private static final boolean IN_SPRING_BOOT = ClassUtils.isPresent("org.springframework.boot.SpringApplication",
+				RepositoriesEnablingImportSelector.class.getClassLoader());
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.context.annotation.ImportSelector#selectImports(org.springframework.core.type.AnnotationMetadata)
+		 */
+		@Override
+		public String[] selectImports(AnnotationMetadata importingClassMetadata) {
+			return IN_SPRING_BOOT ? new String[0] : new String[] { EnablingConfig.class.getName() };
+		}
+
+		@Configuration
+		@EnableJpaRepositories
+		static class EnablingConfig {}
 	}
 }
