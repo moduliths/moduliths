@@ -48,6 +48,11 @@ public class Modules {
 
 	public Modules(String path, DescribedPredicate<? super JavaClass> ignored) {
 
+		// FIXME: Is this property really reliable? I thought the only guarantee is "path where java was executed"
+		// We could
+		//     * Make the public API Modules(Class<?> modulithAnnotatedType) and scan that package;
+		//         in the end we're just looking for that type as root anyway, right?
+		//     * Just scan the classpath with the given ImportOptions? (since it skips JARs then anyway)
 		String workingDirectory = System.getProperty("user.dir") + "/" + path;
 
 		ImportOptions options = new ImportOptions() //

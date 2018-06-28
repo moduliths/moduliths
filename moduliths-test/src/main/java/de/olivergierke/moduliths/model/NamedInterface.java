@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 
+import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
+
 /**
  * @author Oliver Gierke
  */
@@ -28,6 +30,6 @@ public class NamedInterface {
 	private final Classes classes;
 
 	public boolean contains(JavaClass type) {
-		return !classes.that(Predicates.isTheSameAs(type)).isEmpty();
+        return !classes.that(equalTo(type)).isEmpty();
 	}
 }

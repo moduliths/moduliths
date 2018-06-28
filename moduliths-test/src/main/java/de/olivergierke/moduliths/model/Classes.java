@@ -29,6 +29,8 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 
+import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
+
 /**
  * @author Oliver Gierke
  */
@@ -63,7 +65,7 @@ public class Classes implements DescribedIterable<JavaClass> {
 	}
 
 	public boolean contains(JavaClass type) {
-		return classes.that(Predicates.isTheSameAs(type)).iterator().hasNext();
+        return classes.that(equalTo(type)).iterator().hasNext();
 	}
 
 	/* 
