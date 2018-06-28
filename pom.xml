@@ -13,6 +13,7 @@
 		<module>moduliths-core</module>
 		<module>moduliths-test</module>
 		<module>moduliths-sample</module>
+		<module>moduliths-integration-test</module>
 	</modules>
 
 	<properties>

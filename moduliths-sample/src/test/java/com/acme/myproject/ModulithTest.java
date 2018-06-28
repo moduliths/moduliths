@@ -15,26 +15,37 @@
  */
 package com.acme.myproject;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static org.assertj.core.api.Assertions.*;
+
 import de.olivergierke.moduliths.model.Modules;
 
 import org.junit.Test;
 
-import com.tngtech.archunit.core.domain.JavaClass;
+import com.acme.myproject.moduleB.internal.InternalComponentB;
+import com.acme.myproject.moduleC.InvalidComponent;
 
 /**
  * Test cases to verify the validity of the overall modulith rules
- * 
+ *
  * @author Oliver Gierke
  */
 public class ModulithTest {
 
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void verifyModules() {
-		new Modules().verify();
+		assertThatThrownBy(() -> Modules.of(Application.class).verify())
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining(
+						String.format("Module 'moduleC' depends on non-exposed type %s within module 'moduleB'",
+								InternalComponentB.class.getName()))
+				.hasMessageContaining(
+						String.format("%s.<init>(%s) declares parameter %s",
+								InvalidComponent.class.getName(), InternalComponentB.class.getName(), InternalComponentB.class.getName()));
 	}
 
 	@Test
 	public void verifyModulesWithoutInvalid() {
-		new Modules("", JavaClass.Predicates.resideInAPackage("..moduleC..")).verify();
+		Modules.of(Application.class, resideInAPackage("..moduleC..")).verify();
 	}
 }

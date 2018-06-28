@@ -1,4 +1,3 @@
-package de.olivergierke.moduliths.model;
 /*
  * Copyright 2018 the original author or authors.
  *
@@ -14,6 +13,7 @@ package de.olivergierke.moduliths.model;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package de.olivergierke.moduliths.model;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -21,12 +21,14 @@ import java.util.Optional;
 
 import org.junit.Test;
 
+import com.acme.myproject.Application;
+
 /**
  * @author Oliver Gierke
  */
 public class ModelIntegrationTest {
 
-	Modules modules = new Modules("../moduliths-sample");
+	Modules modules = Modules.of(Application.class);
 
 	@Test
 	public void exposesModulesForPrimaryPackages() {
