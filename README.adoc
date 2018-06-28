@@ -1,0 +1,150 @@
+= Moduliths
+
+A playground to build technology supporting the development of modular monolithic (modulithic) Java applications.
+
+== Context
+
+When it comes to designing applications we currently deal with two architectural approaches: monolithic applications and microservices.
+While often presented as opposed approaches, in their extremes, they actually form the ends of a spectrum into which a particular application architecture can be positioned.
+The trend towards smaller systems is strongly driven by the fact that monolithic applications tend to architecturally degrade over time, even if – at the beginning of their lives – an architecture is defined.
+Architecture violations creep into the projects over time unnoticed. Evolvability suffers as systems become harder to change.
+
+Microservices on the other hand promise stronger means of separation but at the same time introduce a lot of complexity as even for small applications teams have to deal with the challenges of distributed systems.
+
+This repo acts as a playground to experiment with different approaches to allow defining modular monoliths, so that it's easy to maintain modularity over time and detect violations early.
+This will keep the ability to modify and advance the codebase over time and ease the effort to to split up the system in the attempt to extract parts of it into a dedicated project.
+
+=== The architecture-code-gap
+
+In software projects, architectural design decisions and constraints are usually defined in some way and then have to be implemented in a codebase.
+Traditionally the connection between the architectural decisions and the actual have been naming conventions that easily diverge and cause the architecture actually implemented in the codebase to slowly degrade over time.
+We'd like to explore stronger means of connections between architecture and code and even look into advanced support of frameworks and libraries to e.g. allow testability of individual components within an overall system.
+
+There already exists a variety of technologies that attempts to bridge that gap from the architectural definition side, mostly by trying to capture the architectural definitions in executable form (see https://jqassistant.org/[jQAssistant] and <<existing-tools>>) and verify whether the codebase adheres to the conventions defined.
+In this playground, we're going to explore the opposite way: providing conventions as well as library and framework means, to express architectural definitions directly inside the codebase with to major goals:
+
+1. _**Getting the validation of the conventions closer to the code / developer**_ -- If architectural decisions are driven by the development team, it might feel more natural to define architectural concepts in the codebase.
+The more seamless an architectural rule validation system integrates with the codebase, the more likely it is that the system is used.
+An architectural rule that can be verified by the compiler is preferred over a rule verified by executing a test, which in turn is preferred over a verification via dedicated build steps.
+2. _**Integration with existing tools**_ - Even in combination with existing tools, it might just help them to ship generic architectural rules out of the box with the developer just following conventions or explicitly annotating code to trigger the actual validation.
+
+== Design goals
+
+* Enable developers to write architecturally evident code, i.e. provide means to express architectural concepts in code to close the gap between the two.
+* Provide means to verify defined architectectural constraints as close as possible to the code (by the compiler, through tests or additional build tools).
+* As little invasive as possible technology. I.e. we prefer documented conventions over annotations over required type dependencies.
+
+== Ideas
+
+=== In the works
+
+* <<module-model, A default module programming model based on Java packages that can be customized using annotations>>
+* <<boot-module-tests, A Spring Boot extension that allows bootstrapping individual modules in various modes>>
+* <<architectural-rule-enforcement, Out of the box module dependency tests>>
+
+=== Unapproached yet
+
+* <<apt-rule-verification, Rule verification via APT>>
+
+== Details
+
+[[module-model]]
+=== A convention based module model
+
+We define a module model that's based on package structure conventions by default but can be customized by the usage of annotations:
+
+[source]
+----
+com.acme.myapp                  <1>
+
+com.acme.myapp.moduleA          <2>
++ ….MyComponentA(MyComponentB)
+
+com.acme.myapp.moduleB          <3>
++ ….MyComponentB
+com.acme.myapp.moduleB.internal <4>
+----
+<1> The application root package.
+<2> Every direct sub-package constitues a module.
+<3> Another module that also uses sub-packages.
+<4> A sub-package containing module internals.
+
+==== Customizations via annotations an package-info.java
+
+[source, java]
+----
+public @interface Module {
+
+  /**
+   * The logical name of the module. Defaults to the
+   * local package name directly under the application
+   * package.
+   **/
+  String name() default "";
+
+  String displayName() default displayName();
+
+  String[] allowedDependencies() default {};
+}
+----
+
+[[boot-module-tests]]
+=== Spring Boot based module tests
+
+Given the module landscape described above we can create a Spring Boot extension that bootstraps the application limited to only the components of a particular module by default plus an optional set of additional modules.
+Missing required dependencies would cause the module bootstrap to fail and encourage to rather use events for module interaction instead of direct component dependencies.
+If dependencies are needed, either the upstream module has to be bootstrapped as well or mock beans for all dependencies have to be declared.
+
+[source, java]
+----
+package com.acme.myapp.moduleA;
+
+@RunWith(SpringRunner.class)
+@ModuleTests                         <1>
+public class ModuleATests {
+
+  @MockBean MyComponentB dependency; <2>
+}
+----
+<1> Triggers the bootstrap of the application and component scanning limited to the package of the test itself.
+<2> Declares a mock bean for the only module dependecy towards `moduleB`.
+
+==== Further ideas
+
+* As Spring https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#context-functionality-events[Application Events] are a recommended means to implement inter-module interaction, we could register an `ApplicationListener` that exposes API to easily verify events being triggered, event listeners being triggered etc.
+
+[[architectural-rule-enforcement]]
+=== Enforcement of architectural rules
+
+Given the module conventions we can already implement a couple of derived rules:
+
+* _**Verify module setup**_ -- We can verify the validity of the module setup to prevent configuration errors to go unnoticed:
+** Catch invalid module and named interface references in `allowedDependencies`.
+* _**Derive default allowed dependencies based on the Spring bean component tree**_ -- by default we can inspect the Spring beans in the individual modules, their dependencies and assume the beans structure describes the allowed dependency structure.
+This can be overridden by explicitly declaring `@Module(allowedDependencies = …)` on the package level.
+* _**Correlate actual dependencies with the ones defined (implicit or explicit)**_ -- Even with dependencies only defined implicitly by the Spring bean structure, the code can contain ordinary type dependencies that violate the module structure.
+* _**No cycles on the module level**_ -- We should generally disallow cycles on the module level.
+* _**Assume top-level module package the API package**_ -- If sub-packages are used, we could assume that only the top-level one contains API to be referred to from other modules.
++
+TODO: Idea - provide an annotation to be used on packages so that multiple different named interfaces to a module can be defined. `allowedDependencies` would then have to use `moduleA.API`, `moduleB.SPI`. If a single named interface exists, referring to the module implicitly refers to the single only named interface.
+
+[[apt-rule-verification]]
+=== Rule verification via APT
+
+Assuming we're able to get an APT implemented that's run on top of the current codebase, we could run the aforementioned verifications and issue compiler errors for violations.
+
+[[existing-tools]]
+== Existing tools
+
+* https://github.com/TNG/ArchUnit[ArchUnit] -- Tool to define allowed dependencies on a type and package based level, usually executed via JUnit.
+[[jqassistant]]
+* https://jqassistant.org/[jQAssistant] -- Broader tool to analyze projects using a Neo4j-based meta-model and concepts and constraints described via Cypher queries.
+* https://structurizr.com/[Structurizr] -- Software architecture description and visualization tool by Simon Brown.
+Includes Spring integration via automatic stereotype annotation detection.
+
+[appendix]
+== Appendix
+
+[glossary]
+=== Glossary
+Named Interface:: Given a module, a sub-set of types that constitute candidates for referral by other modules.
