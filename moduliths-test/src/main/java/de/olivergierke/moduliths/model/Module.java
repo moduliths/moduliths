@@ -15,18 +15,26 @@
  */
 package de.olivergierke.moduliths.model;
 
-import lombok.ToString;
-
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.tngtech.archunit.core.domain.Dependency;
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
+import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import com.tngtech.archunit.core.domain.JavaClass;
-import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
+import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
+import static com.tngtech.archunit.core.domain.Formatters.formatMethod;
+import static com.tngtech.archunit.thirdparty.com.google.common.base.Preconditions.checkState;
+import static java.lang.System.lineSeparator;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Oliver Gierke
@@ -63,7 +71,8 @@ public class Module {
 
 		Assert.notNull(modules, "Modules must not be null!");
 
-		return getTypesDependedOn() //
+		return getDependenciesToOther(modules)
+				.map(it -> it.target)
 				.map(modules::getModuleByType) //
 				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
 				.collect(Collectors.toSet());
@@ -89,44 +98,107 @@ public class Module {
 
 	public void verifyDependencies(Modules modules) {
 
-		getTypesDependedOn().forEach(it -> {
-
-			modules.getModuleByType(it).ifPresent(module -> {
-
-				Assert.state(module.isExposed(it),
-						() -> String.format("Type %s is not exposed by module %s!", it.getName(), module.getName()));
-			});
+		getDependenciesToOther(modules).forEach(it -> {
+			it.isValidDependencyWithin(modules);
 		});
 	}
 
-	private Stream<JavaClass> getTypesDependedOn() {
-
-		return javaPackage.stream() //
-				.flatMap(it -> getDependencyTypes(it)) //
-				.filter(it -> !contains(it));
+	private Stream<ModuleDependency> getDependenciesToOther(Modules modules) {
+		return javaPackage.stream().flatMap(it -> getModuleDependenciesOf(it, modules));
 	}
 
-    private static Stream<JavaClass> getDependencyTypes(JavaClass type) {
+	private Stream<ModuleDependency> getModuleDependenciesOf(JavaClass type, Modules modules) {
 
-        Stream<JavaClass> parameters = getConstructorAndMethodParameters(type);
-        Stream<JavaClass> fieldTypes = getFieldTypes(type);
-        Stream<JavaClass> directDependencies = type.getDirectDependenciesFromSelf().stream() //
-                .map(it -> it.getTargetClass());
+		Stream<ModuleDependency> parameters = getDependenciesFromCodeUnitParameters(type, modules);
+		Stream<ModuleDependency> fieldTypes = getDependenciesFromFields(type, modules);
+		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream()
+				.filter(dependency -> isDependencyToOtherModule(dependency.getTargetClass(), modules))
+				.map(ModuleDependency::new);
 
-        // FIXME: Checking for 'java' is not reliable against further external libraries, we might want to look for Source == JAR/absent again?
-        // Other than that we could limit this to dependencies that were imported as well, since those should be the ones we're interested in
-        // when we check our Modulith? The only way at the moment AFAIK unfortunately is checking JavaClasses.contain(type) :-(
-        return Stream.concat(Stream.concat(directDependencies, parameters), fieldTypes)
-                .distinct()
-                .filter(it -> !it.getPackage().startsWith("java"));
-    }
+		return Stream.concat(Stream.concat(directDependencies, parameters), fieldTypes).distinct();
+	}
 
-    private static Stream<JavaClass> getConstructorAndMethodParameters(JavaClass type) {
-        return type.getCodeUnits().stream()
-                .flatMap(it -> it.getParameters().stream());
-    }
+	private Stream<ModuleDependency> getDependenciesFromCodeUnitParameters(JavaClass type, Modules modules) {
+		return type.getCodeUnits().stream()
+				.flatMap(ModuleDependency::allFrom)
+				.filter(moduleDependency -> isDependencyToOtherModule(moduleDependency.target, modules));
+	}
 
-    private static Stream<JavaClass> getFieldTypes(JavaClass type) {
-        return type.getFields().stream().map(it -> it.getType());
-    }
+	private boolean isDependencyToOtherModule(JavaClass dependency, Modules modules) {
+		return modules.contain(dependency) && !this.contains(dependency);
+	}
+
+	private Stream<ModuleDependency> getDependenciesFromFields(JavaClass type, Modules modules) {
+		return type.getFields().stream()
+				.filter(it -> isDependencyToOtherModule(it.getType(), modules))
+				.map(ModuleDependency::fromField);
+	}
+
+	@ToString
+	@EqualsAndHashCode
+	private static class ModuleDependency {
+		private final JavaClass origin;
+		private final JavaClass target;
+		private final String description;
+
+		ModuleDependency(Dependency dependency) {
+			this(dependency.getOriginClass(), dependency.getTargetClass(), dependency.getDescription());
+		}
+
+		ModuleDependency(JavaClass origin, JavaClass target, String description) {
+			this.origin = requireNonNull(origin);
+			this.target = requireNonNull(target);
+			this.description = requireNonNull(description);
+		}
+
+		void isValidDependencyWithin(Modules modules) {
+			Module targetModule = getExistingModuleOf(target, modules);
+
+			Assert.state(targetModule.isExposed(target),
+					() -> {
+						Module originModule = getExistingModuleOf(origin, modules);
+						String violationText = String.format("Module '%s' depends on non-exposed type %s within module '%s'!",
+								originModule.getName(), target.getName(), targetModule.getName());
+						return violationText + lineSeparator() + description;
+					});
+		}
+
+		private Module getExistingModuleOf(JavaClass javaClass, Modules modules) {
+			Optional<Module> module = modules.getModuleByType(javaClass);
+			checkState(module.isPresent(),
+					"Origin/Target of a %s should always be within a module, but %s is not",
+					getClass().getSimpleName(), javaClass.getName());
+			return module.get();
+		}
+
+		static ModuleDependency fromCodeUnitParameter(JavaCodeUnit codeUnit, JavaClass parameter) {
+			String description = createDescription(codeUnit, parameter, "parameter");
+			return new ModuleDependency(codeUnit.getOwner(), parameter, description);
+		}
+
+		static ModuleDependency fromCodeUnitReturnType(JavaCodeUnit codeUnit) {
+			String description = createDescription(codeUnit, codeUnit.getReturnType(), "return type");
+			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getReturnType(), description);
+		}
+
+		static ModuleDependency fromField(JavaField field) {
+			String description = String.format("field %s is of type %s in %s",
+					field.getFullName(), field.getType().getName(), formatLocation(field.getOwner(), 0));
+			return new ModuleDependency(field.getOwner(), field.getType(), description);
+		}
+
+		static Stream<ModuleDependency> allFrom(JavaCodeUnit codeUnit) {
+			Stream<ModuleDependency> parameterDependencies =
+					codeUnit.getParameters().stream().map(it -> fromCodeUnitParameter(codeUnit, it));
+			Stream<ModuleDependency> returnType = Stream.of(fromCodeUnitReturnType(codeUnit));
+			return Stream.concat(parameterDependencies, returnType);
+		}
+
+		private static String createDescription(JavaCodeUnit codeUnit, JavaClass declaredElement, String declarationDescription) {
+			String codeUnitDescription = formatMethod(codeUnit.getOwner().getName(), codeUnit.getName(), codeUnit.getParameters());
+			String declaration = declarationDescription + " " + declaredElement.getName();
+			String location = formatLocation(codeUnit.getOwner(), 0);
+			return String.format("%s declares %s in %s", codeUnitDescription, declaration, location);
+		}
+	}
 }

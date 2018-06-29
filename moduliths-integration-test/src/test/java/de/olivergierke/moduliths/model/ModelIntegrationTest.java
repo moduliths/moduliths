@@ -15,18 +15,20 @@ package de.olivergierke.moduliths.model;
  * limitations under the License.
  */
 
-import static org.assertj.core.api.Assertions.*;
-
 import java.util.Optional;
 
+import com.acme.myproject.Application;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * @author Oliver Gierke
  */
 public class ModelIntegrationTest {
 
-	Modules modules = new Modules("../moduliths-sample");
+	Modules modules = Modules.of(Application.class);
 
 	@Test
 	public void exposesModulesForPrimaryPackages() {
