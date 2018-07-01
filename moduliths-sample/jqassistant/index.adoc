@@ -1,7 +1,7 @@
 = Modulith
 
 [[default]]
-[role=group,includesConcepts="modulith:ModuleDependencies"]
+[role=group,includesConcepts="modulith:ModuleDependencies,modulith:ModuleExposesType"]
 == Default Reports
 
 [[modulith:ModulithApplication]]
@@ -57,3 +57,17 @@ RETURN
   module1, dependsOnModule, module2
 ----
 
+[[modulith:ModuleExposesType]]
+[source,cypher,role=concept,requiresConcepts="modulith:Module"]
+.A type of a module is exposed if it is referenced at least once by a type in another module
+----
+MATCH
+  (module:Module)
+OPTIONAL MATCH
+  (dependent:Module)-[:DEPENDS_ON_MODULE]->(module),
+  (dependent)-[:CONTAINS*]->(dependentType:Type),
+  (module)-[:CONTAINS*]->(type:Type),
+  (dependentType)-[:DEPENDS_ON]->(type)
+RETURN
+  module.displayName as Module, collect(type.fqn) as ExposedTypes
+----
