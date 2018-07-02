@@ -29,7 +29,7 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 
-import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
+import static com.tngtech.archunit.base.DescribedPredicate.*;
 
 /**
  * @author Oliver Gierke
@@ -41,7 +41,7 @@ public class Classes implements DescribedIterable<JavaClass> {
 
 	/**
 	 * Returns {@link Classes} that match the given {@link DescribedPredicate}.
-	 * 
+	 *
 	 * @param predicate must not be {@literal null}.
 	 * @return
 	 */
@@ -65,10 +65,10 @@ public class Classes implements DescribedIterable<JavaClass> {
 	}
 
 	public boolean contains(JavaClass type) {
-        return classes.that(equalTo(type)).iterator().hasNext();
+		return classes.that(equalTo(type)).iterator().hasNext();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see com.tngtech.archunit.base.HasDescription#getDescription()
 	 */
@@ -77,7 +77,7 @@ public class Classes implements DescribedIterable<JavaClass> {
 		return classes.getDescription();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Iterable#iterator()
 	 */

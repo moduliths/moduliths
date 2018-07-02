@@ -15,26 +15,27 @@
  */
 package de.olivergierke.moduliths.model;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
-import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
-import static com.tngtech.archunit.core.domain.Formatters.formatMethod;
-import static com.tngtech.archunit.thirdparty.com.google.common.base.Preconditions.checkState;
-import static java.lang.System.lineSeparator;
-import static java.util.Objects.requireNonNull;
+import static com.tngtech.archunit.core.domain.Formatters.*;
+import static com.tngtech.archunit.thirdparty.com.google.common.base.Preconditions.*;
+import static java.lang.System.*;
+import static java.util.Objects.*;
 
 /**
  * @author Oliver Gierke
@@ -57,7 +58,7 @@ public class Module {
 
 	public String getDisplayName() {
 
-		return moduleAnnotation.map(de.olivergierke.moduliths.Module::displayName)//
+		return moduleAnnotation.map(de.olivergierke.moduliths.Module::displayName) //
 				.orElseGet(() -> javaPackage.getLocalName());
 	}
 
@@ -72,7 +73,7 @@ public class Module {
 		Assert.notNull(modules, "Modules must not be null!");
 
 		return getDependenciesToOther(modules)
-				.map(it -> it.target)
+				.map(it -> it.target) //
 				.map(modules::getModuleByType) //
 				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
 				.collect(Collectors.toSet());
@@ -80,7 +81,7 @@ public class Module {
 
 	public Classes getSpringBeans() {
 
-		return javaPackage.that(CanBeAnnotated.Predicates.annotatedWith(Component.class)
+		return javaPackage.that(CanBeAnnotated.Predicates.annotatedWith(Component.class) //
 				.or(CanBeAnnotated.Predicates.metaAnnotatedWith(Component.class)));
 	}
 
@@ -111,16 +112,16 @@ public class Module {
 
 		Stream<ModuleDependency> parameters = getDependenciesFromCodeUnitParameters(type, modules);
 		Stream<ModuleDependency> fieldTypes = getDependenciesFromFields(type, modules);
-		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream()
-				.filter(dependency -> isDependencyToOtherModule(dependency.getTargetClass(), modules))
+		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream() //
+				.filter(dependency -> isDependencyToOtherModule(dependency.getTargetClass(), modules)) //
 				.map(ModuleDependency::new);
 
 		return Stream.concat(Stream.concat(directDependencies, parameters), fieldTypes).distinct();
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromCodeUnitParameters(JavaClass type, Modules modules) {
-		return type.getCodeUnits().stream()
-				.flatMap(ModuleDependency::allFrom)
+		return type.getCodeUnits().stream() //
+				.flatMap(ModuleDependency::allFrom) //
 				.filter(moduleDependency -> isDependencyToOtherModule(moduleDependency.target, modules));
 	}
 
@@ -129,8 +130,8 @@ public class Module {
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromFields(JavaClass type, Modules modules) {
-		return type.getFields().stream()
-				.filter(it -> isDependencyToOtherModule(it.getType(), modules))
+		return type.getFields().stream() //
+				.filter(it -> isDependencyToOtherModule(it.getType(), modules)) //
 				.map(ModuleDependency::fromField);
 	}
 

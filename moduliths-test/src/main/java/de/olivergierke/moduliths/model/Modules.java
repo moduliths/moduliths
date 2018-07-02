@@ -29,9 +29,9 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.Location;
 import de.olivergierke.moduliths.Modulith;
 
-import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
-import static com.tngtech.archunit.thirdparty.com.google.common.base.Preconditions.checkArgument;
-import static java.util.Collections.singleton;
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.*;
+import static com.tngtech.archunit.thirdparty.com.google.common.base.Preconditions.*;
+import static java.util.Collections.*;
 
 /**
  * @author Oliver Gierke
@@ -69,9 +69,9 @@ public class Modules {
 
 	public String getRootPackage() {
 
-		return classes.that(annotatedWith(Modulith.class)).stream()
-				.findFirst()
-				.orElseThrow(IllegalStateException::new)
+		return classes.that(annotatedWith(Modulith.class)).stream() //
+				.findFirst() //
+				.orElseThrow(IllegalStateException::new) //
 				.getPackage();
 	}
 
@@ -83,9 +83,9 @@ public class Modules {
 
 		String rootPackage = getRootPackage();
 
-		return JavaPackage.forNested(classes, rootPackage)
-				.getDirectSubPackages().stream()
-				.map(Module::new)
+		return JavaPackage.forNested(classes, rootPackage) //
+				.getDirectSubPackages().stream() //
+				.map(Module::new) //
 				.collect(Collectors.toSet());
 	}
 
@@ -95,8 +95,8 @@ public class Modules {
 
 	public Optional<Module> getModuleByType(JavaClass type) {
 
-		return modules.values().stream()
-				.filter(it -> it.contains(type))
+		return modules.values().stream() //
+				.filter(it -> it.contains(type)) //
 				.findFirst();
 	}
 

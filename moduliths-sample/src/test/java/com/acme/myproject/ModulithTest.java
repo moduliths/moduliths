@@ -18,11 +18,10 @@ package com.acme.myproject;
 import com.acme.myproject.moduleB.internal.InternalComponentB;
 import com.acme.myproject.moduleC.InvalidComponent;
 import de.olivergierke.moduliths.model.Modules;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Test cases to verify the validity of the overall modulith rules
@@ -30,18 +29,17 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPac
  * @author Oliver Gierke
  */
 public class ModulithTest {
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void verifyModules() {
-		thrown.expect(IllegalStateException.class);
-		thrown.expectMessage(String.format("Module 'moduleC' depends on non-exposed type %s within module 'moduleB'",
-				InternalComponentB.class.getName()));
-		thrown.expectMessage(String.format("%s.<init>(%s) declares parameter %s",
-				InvalidComponent.class.getName(), InternalComponentB.class.getName(), InternalComponentB.class.getName()));
-
-		Modules.of(Application.class).verify();
+		assertThatThrownBy(() -> Modules.of(Application.class).verify())
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining(
+						String.format("Module 'moduleC' depends on non-exposed type %s within module 'moduleB'",
+								InternalComponentB.class.getName()))
+				.hasMessageContaining(
+						String.format("%s.<init>(%s) declares parameter %s",
+								InvalidComponent.class.getName(), InternalComponentB.class.getName(), InternalComponentB.class.getName()));
 	}
 
 	@Test
