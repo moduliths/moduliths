@@ -1,9 +1,9 @@
-package com.acme.myproject.booking.business;
+package com.acme.myproject.booking.service;
 
 import com.acme.myproject.booking.data.BookingEntity;
 import com.acme.myproject.booking.data.BookingRepository;
-import com.acme.myproject.customer.Customer;
-import com.acme.myproject.customer.CustomerRepository;
+import com.acme.myproject.customer.data.Customer;
+import com.acme.myproject.customer.data.CustomerRepository;
 import com.acme.myproject.flight.data.Flight;
 import com.acme.myproject.flight.service.FlightService;
 import java.util.Optional;

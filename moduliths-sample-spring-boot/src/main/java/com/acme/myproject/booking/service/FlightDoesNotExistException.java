@@ -1,4 +1,4 @@
-package com.acme.myproject.booking.business;
+package com.acme.myproject.booking.service;
 
 class FlightDoesNotExistException extends RuntimeException {
 

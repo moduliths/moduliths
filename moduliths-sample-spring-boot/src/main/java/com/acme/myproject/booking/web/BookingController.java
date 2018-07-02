@@ -1,6 +1,6 @@
 package com.acme.myproject.booking.web;
 
-import com.acme.myproject.booking.business.BookingService;
+import com.acme.myproject.booking.service.BookingService;
 import com.acme.myproject.booking.data.BookingEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
