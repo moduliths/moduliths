@@ -13,6 +13,7 @@
 		<module>moduliths-core</module>
 		<module>moduliths-test</module>
 		<module>moduliths-sample</module>
+		<module>moduliths-sample-spring-boot</module>
 	</modules>
 
 	<properties>
