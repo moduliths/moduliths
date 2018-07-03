@@ -26,6 +26,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.mockito.internal.creation.bytebuddy.MockAccess;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -72,6 +73,13 @@ public class ModuleBTest {
 		public void considersNestedPackagePartOfTheModuleByDefault() {
 
 			context.getBean(InternalComponentB.class);
+		}
+
+		@Test // #4
+		public void tweaksAutoConfigurationPackageToModulePackage() {
+
+			assertThat(AutoConfigurationPackages.get(context)) //
+					.containsExactly(getClass().getPackage().getName());
 		}
 	}
 }

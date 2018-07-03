@@ -21,13 +21,23 @@ import java.lang.annotation.RetentionPolicy;
 import org.springframework.boot.test.autoconfigure.filter.TypeExcludeFilters;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.test.context.BootstrapWith;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
+ * Bootstraps the module containing the package of the test class annotated with {@link ModuleTest}. Will apply the
+ * following modifications to the Spring Boot configuration:
+ * <ul>
+ * <li>Restricts the component scanning to the module's package.
+ * <li>
+ * <li>Sets the module's package as the only auto-configuration and entity scan package.
+ * <li>
+ * </ul>
+ * 
  * @author Oliver Gierke
  */
 @Retention(RetentionPolicy.RUNTIME)
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
 @TypeExcludeFilters(ModuleTypeExcludeFilter.class)
+@ContextConfiguration(loader = ModuleContextLoader.class)
 public @interface ModuleTest {
-
 }
