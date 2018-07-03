@@ -15,9 +15,14 @@
  */
 package de.olivergierke.moduliths.model.test;
 
+import de.olivergierke.moduliths.model.Module;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -38,7 +43,12 @@ import org.springframework.test.context.MergedContextConfiguration;
  * 
  * @author Oliver Gierke
  */
+@Slf4j
 class ModuleContextLoader extends SpringBootContextLoader {
+
+	private static String getSeparator(String character, String reference) {
+		return String.join("", Collections.nCopies(reference.length(), character));
+	}
 
 	/* 
 	 * (non-Javadoc)
@@ -48,7 +58,35 @@ class ModuleContextLoader extends SpringBootContextLoader {
 	protected List<ApplicationContextInitializer<?>> getInitializers(MergedContextConfiguration config,
 			SpringApplication application) {
 
-		String packageName = config.getTestClass().getPackage().getName();
+		ModuleTestClass testClass = new ModuleTestClass(config.getTestClass());
+
+		Module module = testClass.getModule();
+		String moduleName = module.getDisplayName();
+		String bootstrapMode = testClass.getBootstrapMode().name();
+
+		String message = String.format("Bootstrapping @ModuleTest for %s in mode %s…", moduleName, bootstrapMode);
+
+		LOG.info(message);
+		LOG.info(getSeparator("=", message));
+
+		Arrays.stream(module.toString().split("\n")).forEach(LOG::info);
+
+		List<Module> dependencies = testClass.getDependencies();
+
+		if (!dependencies.isEmpty()) {
+
+			LOG.info(getSeparator("=", message));
+			LOG.info("Included dependencies:");
+			LOG.info(getSeparator("=", message));
+
+			dependencies.stream() //
+					.map(Module::toString) //
+					.forEach(it -> {
+						Arrays.stream(it.split("\n")).forEach(LOG::info);
+					});
+
+			LOG.info(getSeparator("=", message));
+		}
 
 		List<ApplicationContextInitializer<?>> initializers = super.getInitializers(config, application);
 
@@ -61,10 +99,11 @@ class ModuleContextLoader extends SpringBootContextLoader {
 			@Override
 			public void initialize(ConfigurableApplicationContext applicationContext) {
 
+				List<String> basePackages = testClass.getBasePackages().collect(Collectors.toList());
+
 				applicationContext.getBeanFactory().registerSingleton(
 						"modulePackageToAutoConfigAndEntityScanPackagePostProcessor",
-						new BeanFactoryPostProcessorImplementation(packageName));
-
+						new BeanFactoryPostProcessorImplementation(basePackages));
 			}
 		});
 
@@ -77,7 +116,7 @@ class ModuleContextLoader extends SpringBootContextLoader {
 	@RequiredArgsConstructor
 	private static class BeanFactoryPostProcessorImplementation implements BeanFactoryPostProcessor {
 
-		private final String packageName;
+		private final List<String> packageNames;
 
 		/*
 		 * (non-Javadoc)
@@ -95,7 +134,7 @@ class ModuleContextLoader extends SpringBootContextLoader {
 			if (beanFactory.containsBeanDefinition(beanName)) {
 
 				BeanDefinition definition = beanFactory.getBeanDefinition(beanName);
-				definition.getConstructorArgumentValues().addIndexedArgumentValue(0, packageName);
+				definition.getConstructorArgumentValues().addIndexedArgumentValue(0, packageNames);
 			}
 		}
 	}

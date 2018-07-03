@@ -22,8 +22,8 @@ import de.olivergierke.moduliths.model.Modules;
 
 import org.junit.Test;
 
+import com.acme.myproject.invalid.InvalidComponent;
 import com.acme.myproject.moduleB.internal.InternalComponentB;
-import com.acme.myproject.moduleC.InvalidComponent;
 
 /**
  * Test cases to verify the validity of the overall modulith rules
@@ -33,6 +33,8 @@ import com.acme.myproject.moduleC.InvalidComponent;
  */
 public class ModulithTest {
 
+	private static final String INVALID_MODULE_NAME = "invalid";
+
 	@Test
 	public void verifyModules() {
 
@@ -40,14 +42,14 @@ public class ModulithTest {
 
 		assertThatExceptionOfType(IllegalStateException.class) //
 				.isThrownBy(() -> Modules.of(Application.class).verify()) //
-				.withMessageContaining(
-						String.format("Module 'moduleC' depends on non-exposed type %s within module 'moduleB'", componentName))
+				.withMessageContaining(String.format("Module '%s' depends on non-exposed type %s within module 'moduleB'",
+						INVALID_MODULE_NAME, componentName))
 				.withMessageContaining(String.format("%s.<init>(%s) declares parameter %s", InvalidComponent.class.getName(),
 						componentName, componentName));
 	}
 
 	@Test
 	public void verifyModulesWithoutInvalid() {
-		Modules.of(Application.class, resideInAPackage("..moduleC..")).verify();
+		Modules.of(Application.class, resideInAPackage("..".concat(INVALID_MODULE_NAME).concat(".."))).verify();
 	}
 }

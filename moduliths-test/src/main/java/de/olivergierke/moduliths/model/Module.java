@@ -19,12 +19,13 @@ import static com.tngtech.archunit.core.domain.Formatters.*;
 import static java.lang.System.*;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,57 +41,79 @@ import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
 /**
  * @author Oliver Gierke
  */
-@ToString
+@EqualsAndHashCode
 public class Module {
 
-	private final JavaPackage javaPackage;
+	private final @Getter JavaPackage basePackage;
 	private final Optional<de.olivergierke.moduliths.Module> moduleAnnotation;
 
-	Module(JavaPackage javaPackage) {
+	Module(JavaPackage basePackage) {
 
-		this.javaPackage = javaPackage;
-		this.moduleAnnotation = javaPackage.getAnnotation(de.olivergierke.moduliths.Module.class);
+		this.basePackage = basePackage;
+		this.moduleAnnotation = basePackage.getAnnotation(de.olivergierke.moduliths.Module.class);
 	}
 
 	public String getName() {
-		return javaPackage.getLocalName();
+		return basePackage.getLocalName();
 	}
 
 	public String getDisplayName() {
 
 		return moduleAnnotation.map(de.olivergierke.moduliths.Module::displayName) //
-				.orElseGet(() -> javaPackage.getLocalName());
+				.orElseGet(() -> basePackage.getLocalName());
 	}
 
 	/**
-	 * Returns all modules that contain the types, the types of the current module depend on.
+	 * Returns all modules that contain types which the types of the current module depend on.
 	 *
 	 * @param modules must not be {@literal null}.
 	 * @return
 	 */
-	public Set<Module> getDependentModules(Modules modules) {
+	public List<Module> getDependencies(Modules modules) {
 
 		Assert.notNull(modules, "Modules must not be null!");
 
-		return getDependenciesToOther(modules) //
-				.map(it -> it.target) //
-				.map(modules::getModuleByType) //
-				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
-				.collect(Collectors.toSet());
+		return getDependencies(modules, DependencyDepth.IMMEDIATE);
+	}
+
+	public List<Module> getDependencies(Modules modules, DependencyDepth depth) {
+
+		Assert.notNull(modules, "Modules must not be null!");
+		Assert.notNull(depth, "Dependency depth must not be null!");
+
+		return streamDependencies(modules, depth).collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns all {@link JavaPackage} for the current module including the ones by its dependencies.
+	 * 
+	 * @param modules must not be {@literal null}.
+	 * @param depth must not be {@literal null}.
+	 * @return
+	 */
+	public Stream<JavaPackage> getBasePackages(Modules modules, DependencyDepth depth) {
+
+		Assert.notNull(modules, "Modules must not be null!");
+		Assert.notNull(depth, "Dependency depth must not be null!");
+
+		Stream<Module> dependencies = streamDependencies(modules, depth);
+
+		return Stream.concat(Stream.of(this), dependencies) //
+				.map(Module::getBasePackage);
 	}
 
 	public Classes getSpringBeans() {
 
-		return javaPackage.that(CanBeAnnotated.Predicates.annotatedWith(Component.class) //
+		return basePackage.that(CanBeAnnotated.Predicates.annotatedWith(Component.class) //
 				.or(CanBeAnnotated.Predicates.metaAnnotatedWith(Component.class)));
 	}
 
 	public boolean contains(JavaClass type) {
-		return javaPackage.contains(type);
+		return basePackage.contains(type);
 	}
 
 	public NamedInterface getPrimaryNamedInterface() {
-		return new NamedInterface(javaPackage.toSingle().getClasses());
+		return new NamedInterface(basePackage.toSingle().getClasses());
 	}
 
 	public boolean isExposed(JavaClass type) {
@@ -101,8 +124,59 @@ public class Module {
 		getDependenciesToOther(modules).forEach(it -> it.isValidDependencyWithin(modules));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+
+		StringBuilder builer = new StringBuilder("## ").append(getDisplayName()).append(" ##\n");
+		builer.append("> Logical name: ").append(getName()).append('\n');
+		builer.append("> Base package: ").append(basePackage.getName()).append('\n');
+
+		Classes beans = getSpringBeans();
+
+		if (beans.isEmpty()) {
+
+			builer.append("> Spring beans: none\n");
+
+		} else {
+
+			builer.append("> Spring beans:\n");
+			beans.forEach(it -> builer.append("  ") //
+					.append(Classes.format(it, basePackage.getName()))//
+					.append('\n'));
+		}
+
+		return builer.toString();
+	}
+
+	private Stream<Module> streamDependencies(Modules modules, DependencyDepth depth) {
+
+		switch (depth) {
+
+			case NONE:
+				return Stream.empty();
+			case IMMEDIATE:
+				return getDirectDependencies(modules);
+			case ALL:
+			default:
+				return getDirectDependencies(modules) //
+						.flatMap(it -> Stream.concat(Stream.of(it), it.streamDependencies(modules, DependencyDepth.ALL))) //
+						.distinct();
+		}
+	}
+
+	private Stream<Module> getDirectDependencies(Modules modules) {
+
+		return getDependenciesToOther(modules) //
+				.map(it -> modules.getModuleByType(it.target)) //
+				.distinct() //
+				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty));
+	}
+
 	private Stream<ModuleDependency> getDependenciesToOther(Modules modules) {
-		return javaPackage.stream().flatMap(it -> getModuleDependenciesOf(it, modules));
+		return basePackage.stream().flatMap(it -> getModuleDependenciesOf(it, modules));
 	}
 
 	private Stream<ModuleDependency> getModuleDependenciesOf(JavaClass type, Modules modules) {
@@ -132,6 +206,15 @@ public class Module {
 		return type.getFields().stream() //
 				.filter(it -> isDependencyToOtherModule(it.getType(), modules)) //
 				.map(ModuleDependency::fromField);
+	}
+
+	public enum DependencyDepth {
+
+		NONE,
+
+		IMMEDIATE,
+
+		ALL;
 	}
 
 	@ToString

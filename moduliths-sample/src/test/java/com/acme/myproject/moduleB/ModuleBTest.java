@@ -18,6 +18,7 @@ package com.acme.myproject.moduleB;
 import static org.assertj.core.api.Assertions.*;
 
 import de.olivergierke.moduliths.model.test.ModuleTest;
+import de.olivergierke.moduliths.model.test.ModuleTest.BootstrapMode;
 import de.olivergierke.moduliths.model.test.TestUtils;
 
 import org.junit.Test;
@@ -71,7 +72,6 @@ public class ModuleBTest {
 
 		@Test
 		public void considersNestedPackagePartOfTheModuleByDefault() {
-
 			context.getBean(InternalComponentB.class);
 		}
 
@@ -81,5 +81,16 @@ public class ModuleBTest {
 			assertThat(AutoConfigurationPackages.get(context)) //
 					.containsExactly(getClass().getPackage().getName());
 		}
+	}
+
+	@RunWith(SpringRunner.class)
+	@ModuleTest(mode = BootstrapMode.DIRECT_DEPENDENCIES)
+	public static class TestWithUpstreamModule {
+
+		@Autowired ServiceComponentA componentA;
+		@Autowired ServiceComponentB componentB;
+
+		@Test
+		public void bootstrapsContext() {}
 	}
 }

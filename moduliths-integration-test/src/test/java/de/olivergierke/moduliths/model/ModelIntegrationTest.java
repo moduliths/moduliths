@@ -37,7 +37,7 @@ public class ModelIntegrationTest {
 		Optional<Module> module = modules.getModuleByName("moduleB");
 
 		assertThat(module).hasValueSatisfying(it -> {
-			assertThat(it.getDependentModules(modules)).anySatisfy(dep -> {
+			assertThat(it.getDependencies(modules)).anySatisfy(dep -> {
 				assertThat(dep.getName()).isEqualTo("moduleA");
 			});
 		});
@@ -56,7 +56,7 @@ public class ModelIntegrationTest {
 	@Test
 	public void rejectsDependencyIntoInternalPackage() {
 
-		Optional<Module> module = modules.getModuleByName("moduleC");
+		Optional<Module> module = modules.getModuleByName("invalid");
 
 		assertThat(module).hasValueSatisfying(it -> {
 			assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> {

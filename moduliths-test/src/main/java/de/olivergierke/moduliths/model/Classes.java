@@ -25,11 +25,13 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.base.DescribedIterable;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaModifier;
 
 /**
  * @author Oliver Gierke
@@ -84,5 +86,22 @@ public class Classes implements DescribedIterable<JavaClass> {
 	@Override
 	public Iterator<JavaClass> iterator() {
 		return classes.iterator();
+	}
+
+	public static String format(JavaClass type) {
+		return format(type, "");
+	}
+
+	public static String format(JavaClass type, String basePackage) {
+
+		Assert.notNull(type, "Type must not be null!");
+		Assert.notNull(basePackage, "Base package must not be null!");
+
+		String prefix = type.getModifiers().contains(JavaModifier.PUBLIC) ? "+" : "o";
+		String name = StringUtils.hasText(basePackage) //
+				? type.getName().replace(basePackage, "…") //
+				: type.getName();
+
+		return String.format("%s %s", prefix, name);
 	}
 }

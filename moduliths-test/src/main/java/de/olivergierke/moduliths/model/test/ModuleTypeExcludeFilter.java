@@ -20,7 +20,6 @@ import lombok.EqualsAndHashCode;
 import java.io.IOException;
 
 import org.springframework.boot.context.TypeExcludeFilter;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
@@ -31,15 +30,11 @@ import org.springframework.util.ClassUtils;
 @EqualsAndHashCode(callSuper = false)
 class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 
-	private final ModuleTest annotation;
-	private final String packageName;
+	private final ModuleTestClass type;
 
 	public ModuleTypeExcludeFilter(Class<?> testClass) {
 
-		this.annotation = AnnotatedElementUtils.getMergedAnnotation(testClass, ModuleTest.class);
-		this.packageName = testClass.getPackage().getName();
-
-		// Model model = new Model();
+		this.type = new ModuleTestClass(testClass);
 	}
 
 	/* 
@@ -51,6 +46,6 @@ class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 
 		String typePackageName = ClassUtils.getPackageName(metadataReader.getClassMetadata().getClassName());
 
-		return !typePackageName.startsWith(packageName);
+		return type.getBasePackages().noneMatch(typePackageName::startsWith);
 	}
 }

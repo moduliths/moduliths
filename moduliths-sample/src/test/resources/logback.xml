@@ -7,7 +7,8 @@
 		</encoder>
 	</appender>
 
-	<logger name="com.acme" level="error" />
+	<logger name="com.acme" level="info" />
+	<logger name="de.olivergierke" level="info" />
 
 	<root level="error">
 		<appender-ref ref="console" />

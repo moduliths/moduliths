@@ -71,6 +71,12 @@ public class Modules {
 		return new Modules(modulithType, ignored);
 	}
 
+	public static Modules ofSubpackage(String subPackage) {
+
+		ModulithConfigurationFinder finder = new ModulithConfigurationFinder();
+		return Modules.of(finder.findFromPackage(subPackage));
+	}
+
 	public String getRootPackage() {
 
 		return classes.that(annotatedWith(Modulith.class)).stream() //
@@ -101,6 +107,13 @@ public class Modules {
 
 		return modules.values().stream() //
 				.filter(it -> it.contains(type)) //
+				.findFirst();
+	}
+
+	public Optional<Module> getModuleByBasePackage(String name) {
+
+		return modules.values().stream() //
+				.filter(it -> it.getBasePackage().getName().equals(name)) //
 				.findFirst();
 	}
 
