@@ -25,6 +25,7 @@ import com.acme.myproject.Application;
 
 /**
  * @author Oliver Gierke
+ * @author Peter Gafert
  */
 public class ModelIntegrationTest {
 

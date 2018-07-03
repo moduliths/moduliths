@@ -16,11 +16,11 @@
 package de.olivergierke.moduliths.model;
 
 import static com.tngtech.archunit.core.domain.Formatters.*;
-import static com.tngtech.archunit.thirdparty.com.google.common.base.Preconditions.*;
 import static java.lang.System.*;
-import static java.util.Objects.*;
 
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.util.Optional;
@@ -72,7 +72,7 @@ public class Module {
 
 		Assert.notNull(modules, "Modules must not be null!");
 
-		return getDependenciesToOther(modules)
+		return getDependenciesToOther(modules) //
 				.map(it -> it.target) //
 				.map(modules::getModuleByType) //
 				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
@@ -98,10 +98,7 @@ public class Module {
 	}
 
 	public void verifyDependencies(Modules modules) {
-
-		getDependenciesToOther(modules).forEach(it -> {
-			it.isValidDependencyWithin(modules);
-		});
+		getDependenciesToOther(modules).forEach(it -> it.isValidDependencyWithin(modules));
 	}
 
 	private Stream<ModuleDependency> getDependenciesToOther(Modules modules) {
@@ -120,6 +117,7 @@ public class Module {
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromCodeUnitParameters(JavaClass type, Modules modules) {
+
 		return type.getCodeUnits().stream() //
 				.flatMap(ModuleDependency::allFrom) //
 				.filter(moduleDependency -> isDependencyToOtherModule(moduleDependency.target, modules));
@@ -130,6 +128,7 @@ public class Module {
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromFields(JavaClass type, Modules modules) {
+
 		return type.getFields().stream() //
 				.filter(it -> isDependencyToOtherModule(it.getType(), modules)) //
 				.map(ModuleDependency::fromField);
@@ -137,68 +136,80 @@ public class Module {
 
 	@ToString
 	@EqualsAndHashCode
+	@RequiredArgsConstructor
 	private static class ModuleDependency {
-		private final JavaClass origin;
-		private final JavaClass target;
-		private final String description;
+
+		private final @NonNull JavaClass origin, target;
+		private final @NonNull String description;
 
 		ModuleDependency(Dependency dependency) {
 			this(dependency.getOriginClass(), dependency.getTargetClass(), dependency.getDescription());
 		}
 
-		ModuleDependency(JavaClass origin, JavaClass target, String description) {
-			this.origin = requireNonNull(origin);
-			this.target = requireNonNull(target);
-			this.description = requireNonNull(description);
-		}
-
 		void isValidDependencyWithin(Modules modules) {
+
 			Module targetModule = getExistingModuleOf(target, modules);
 
-			Assert.state(targetModule.isExposed(target),
-					() -> {
-						Module originModule = getExistingModuleOf(origin, modules);
-						String violationText = String.format("Module '%s' depends on non-exposed type %s within module '%s'!",
-								originModule.getName(), target.getName(), targetModule.getName());
-						return violationText + lineSeparator() + description;
-					});
+			Assert.state(targetModule.isExposed(target), () -> {
+
+				Module originModule = getExistingModuleOf(origin, modules);
+				String violationText = String.format("Module '%s' depends on non-exposed type %s within module '%s'!",
+						originModule.getName(), target.getName(), targetModule.getName());
+
+				return violationText + lineSeparator() + description;
+			});
 		}
 
 		private Module getExistingModuleOf(JavaClass javaClass, Modules modules) {
+
 			Optional<Module> module = modules.getModuleByType(javaClass);
-			checkState(module.isPresent(),
-					"Origin/Target of a %s should always be within a module, but %s is not",
-					getClass().getSimpleName(), javaClass.getName());
-			return module.get();
+
+			return module.orElseThrow(() -> new IllegalStateException(
+					String.format("Origin/Target of a %s should always be within a module, but %s is not",
+							getClass().getSimpleName(), javaClass.getName())));
 		}
 
 		static ModuleDependency fromCodeUnitParameter(JavaCodeUnit codeUnit, JavaClass parameter) {
+
 			String description = createDescription(codeUnit, parameter, "parameter");
+
 			return new ModuleDependency(codeUnit.getOwner(), parameter, description);
 		}
 
 		static ModuleDependency fromCodeUnitReturnType(JavaCodeUnit codeUnit) {
+
 			String description = createDescription(codeUnit, codeUnit.getReturnType(), "return type");
+
 			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getReturnType(), description);
 		}
 
 		static ModuleDependency fromField(JavaField field) {
-			String description = String.format("field %s is of type %s in %s",
-					field.getFullName(), field.getType().getName(), formatLocation(field.getOwner(), 0));
+
+			String description = String.format("field %s is of type %s in %s", field.getFullName(), field.getType().getName(),
+					formatLocation(field.getOwner(), 0));
+
 			return new ModuleDependency(field.getOwner(), field.getType(), description);
 		}
 
 		static Stream<ModuleDependency> allFrom(JavaCodeUnit codeUnit) {
-			Stream<ModuleDependency> parameterDependencies =
-					codeUnit.getParameters().stream().map(it -> fromCodeUnitParameter(codeUnit, it));
+
+			Stream<ModuleDependency> parameterDependencies = codeUnit.getParameters()//
+					.stream() //
+					.map(it -> fromCodeUnitParameter(codeUnit, it));
+
 			Stream<ModuleDependency> returnType = Stream.of(fromCodeUnitReturnType(codeUnit));
+
 			return Stream.concat(parameterDependencies, returnType);
 		}
 
-		private static String createDescription(JavaCodeUnit codeUnit, JavaClass declaredElement, String declarationDescription) {
-			String codeUnitDescription = formatMethod(codeUnit.getOwner().getName(), codeUnit.getName(), codeUnit.getParameters());
+		private static String createDescription(JavaCodeUnit codeUnit, JavaClass declaredElement,
+				String declarationDescription) {
+
+			String codeUnitDescription = formatMethod(codeUnit.getOwner().getName(), codeUnit.getName(),
+					codeUnit.getParameters());
 			String declaration = declarationDescription + " " + declaredElement.getName();
 			String location = formatLocation(codeUnit.getOwner(), 0);
+
 			return String.format("%s declares %s in %s", codeUnitDescription, declaration, location);
 		}
 	}

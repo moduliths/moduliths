@@ -37,25 +37,25 @@ import com.tngtech.archunit.core.importer.Location;
 
 /**
  * @author Oliver Gierke
+ * @author Peter Gafert
  */
 public class Modules {
 
 	private final Classes classes;
-	private final Map<String, Module> modules = new HashMap<>();
+	private final Map<String, Module> modules;
 
 	private Modules(Class<?> modulithType, DescribedPredicate<JavaClass> ignored) {
+
 		URI rootUri = getRootUriOf(modulithType);
-		JavaClasses importedClasses = new ClassFileImporter().importLocations(singleton(Location.of(rootUri))).that(DescribedPredicate.not(ignored));
+
+		JavaClasses importedClasses = new ClassFileImporter() //
+				.importLocations(singleton(Location.of(rootUri))) //
+				.that(DescribedPredicate.not(ignored));
 
 		this.classes = Classes.of(importedClasses);
+		this.modules = new HashMap<>();
 
 		getModules().forEach(it -> this.modules.put(it.getName(), it));
-	}
-
-	private URI getRootUriOf(Class<?> modulithType) {
-		URI uriOfModulith = new ClassFileImporter().importClass(modulithType).getSource().get().getUri();
-		String root = uriOfModulith.toString().replaceAll("[^/]+\\.class$", "");
-		return URI.create(root);
 	}
 
 	public static Modules of(Class<?> modulithType) {
@@ -63,9 +63,11 @@ public class Modules {
 	}
 
 	public static Modules of(Class<?> modulithType, DescribedPredicate<JavaClass> ignored) {
-		checkArgument(modulithType.getAnnotation(Modulith.class) != null,
-				"Modules can only be retrieved from a @%s root type, but %s is not annotated with @%s",
-				Modulith.class.getSimpleName(), modulithType.getSimpleName(), Modulith.class.getSimpleName());
+
+		Assert.notNull(modulithType.getAnnotation(Modulith.class),
+				() -> String.format("Modules can only be retrieved from a @%s root type, but %s is not annotated with @%s",
+						Modulith.class.getSimpleName(), modulithType.getSimpleName(), Modulith.class.getSimpleName()));
+
 		return new Modules(modulithType, ignored);
 	}
 
@@ -104,5 +106,13 @@ public class Modules {
 
 	public void verify() {
 		modules.values().forEach(it -> it.verifyDependencies(this));
+	}
+
+	private static URI getRootUriOf(Class<?> modulithType) {
+
+		URI uriOfModulith = new ClassFileImporter().importClass(modulithType).getSource().get().getUri();
+		String root = uriOfModulith.toString().replaceAll("[^/]+\\.class$", "");
+
+		return URI.create(root);
 	}
 }

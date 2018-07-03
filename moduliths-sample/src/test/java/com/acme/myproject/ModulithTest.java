@@ -29,19 +29,21 @@ import com.acme.myproject.moduleC.InvalidComponent;
  * Test cases to verify the validity of the overall modulith rules
  *
  * @author Oliver Gierke
+ * @author Peter Gafert
  */
 public class ModulithTest {
 
 	@Test
 	public void verifyModules() {
-		assertThatThrownBy(() -> Modules.of(Application.class).verify())
-				.isInstanceOf(IllegalStateException.class)
-				.hasMessageContaining(
-						String.format("Module 'moduleC' depends on non-exposed type %s within module 'moduleB'",
-								InternalComponentB.class.getName()))
-				.hasMessageContaining(
-						String.format("%s.<init>(%s) declares parameter %s",
-								InvalidComponent.class.getName(), InternalComponentB.class.getName(), InternalComponentB.class.getName()));
+
+		String componentName = InternalComponentB.class.getName();
+
+		assertThatExceptionOfType(IllegalStateException.class) //
+				.isThrownBy(() -> Modules.of(Application.class).verify()) //
+				.withMessageContaining(
+						String.format("Module 'moduleC' depends on non-exposed type %s within module 'moduleB'", componentName))
+				.withMessageContaining(String.format("%s.<init>(%s) declares parameter %s", InvalidComponent.class.getName(),
+						componentName, componentName));
 	}
 
 	@Test
