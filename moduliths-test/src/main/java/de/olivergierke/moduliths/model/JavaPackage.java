@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import com.tngtech.archunit.base.DescribedIterable;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
-import com.tngtech.archunit.core.domain.properties.HasName;
+import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
 
 /**
  * @author Oliver Gierke
@@ -43,7 +43,7 @@ import com.tngtech.archunit.core.domain.properties.HasName;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class JavaPackage implements DescribedIterable<JavaClass> {
 
-	private static final String PACKAGE_INFO_NAME = ".*package-info";
+	private static final String PACKAGE_INFO_NAME = "package-info";
 
 	private final @Getter Classes classes;
 	private final @Getter String name;
@@ -66,11 +66,41 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	public Collection<JavaPackage> getDirectSubPackages() {
 
-		return classes.that(resideInAPackage(name.concat(".*"))).stream() //
+		return classes.that(resideInAPackage(name.concat(".."))).stream() //
 				.map(it -> it.getPackage()) //
+				.filter(it -> !it.equals(name)) //
+				.map(it -> extractDirectSubPackage(it)) //
 				.distinct() //
 				.map(it -> forNested(classes, it)) //
 				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Extract the direct sub-package name of the given candidate.
+	 * 
+	 * @param candidate
+	 * @return
+	 */
+	private String extractDirectSubPackage(String candidate) {
+
+		if (candidate.length() <= name.length()) {
+			return candidate;
+		}
+
+		int subSubPackageIndex = candidate.indexOf('.', name.length() + 1);
+		int endIndex = subSubPackageIndex == -1 ? candidate.length() : subSubPackageIndex;
+
+		return candidate.substring(0, endIndex);
+	}
+
+	public Stream<JavaPackage> getSubPackagesAnnotatedWith(Class<? extends Annotation> annotation) {
+
+		DescribedPredicate<JavaClass> predicate = resideInAPackage(name.concat(".."))
+				.and(CanBeAnnotated.Predicates.annotatedWith(annotation));
+
+		return classes.that(predicate).stream() //
+				.map(JavaClass::getPackage).distinct() //
+				.map(it -> forNested(classes, it));
 	}
 
 	public Classes that(DescribedPredicate<? super JavaClass> predicate) {
@@ -87,7 +117,9 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	public <A extends Annotation> Optional<A> getAnnotation(Class<A> annotationType) {
 
-		return classes.that(HasName.Predicates.nameMatching(PACKAGE_INFO_NAME)) //
+		return classes
+				.that(JavaClass.Predicates.simpleName(PACKAGE_INFO_NAME)
+						.and(CanBeAnnotated.Predicates.annotatedWith(annotationType))) //
 				.toOptional() //
 				.map(it -> it.getAnnotationOfType(annotationType));
 	}

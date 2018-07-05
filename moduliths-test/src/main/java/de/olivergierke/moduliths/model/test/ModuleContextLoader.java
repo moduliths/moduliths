@@ -33,7 +33,6 @@ import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextLoader;
 import org.springframework.test.context.MergedContextConfiguration;
 
@@ -46,10 +45,6 @@ import org.springframework.test.context.MergedContextConfiguration;
 @Slf4j
 class ModuleContextLoader extends SpringBootContextLoader {
 
-	private static String getSeparator(String character, String reference) {
-		return String.join("", Collections.nCopies(reference.length(), character));
-	}
-
 	/* 
 	 * (non-Javadoc)
 	 * @see org.springframework.boot.test.context.SpringBootContextLoader#getInitializers(org.springframework.test.context.MergedContextConfiguration, org.springframework.boot.SpringApplication)
@@ -58,11 +53,31 @@ class ModuleContextLoader extends SpringBootContextLoader {
 	protected List<ApplicationContextInitializer<?>> getInitializers(MergedContextConfiguration config,
 			SpringApplication application) {
 
-		ModuleTestClass testClass = new ModuleTestClass(config.getTestClass());
+		ModuleTestExecution execution = new ModuleTestExecution(config.getTestClass());
 
-		Module module = testClass.getModule();
+		logModules(execution);
+
+		List<ApplicationContextInitializer<?>> initializers = super.getInitializers(config, application);
+
+		initializers.add(applicationContext -> {
+
+			List<String> basePackages = execution.getBasePackages().collect(Collectors.toList());
+			ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
+
+			beanFactory.registerSingleton("__moduleTestExecution", execution);
+
+			beanFactory.registerSingleton("modulePackageToAutoConfigAndEntityScanPackagePostProcessor",
+					new BeanFactoryPostProcessorImplementation(basePackages));
+		});
+
+		return initializers;
+	}
+
+	private static void logModules(ModuleTestExecution execution) {
+
+		Module module = execution.getModule();
 		String moduleName = module.getDisplayName();
-		String bootstrapMode = testClass.getBootstrapMode().name();
+		String bootstrapMode = execution.getBootstrapMode().name();
 
 		String message = String.format("Bootstrapping @ModuleTest for %s in mode %s…", moduleName, bootstrapMode);
 
@@ -71,7 +86,7 @@ class ModuleContextLoader extends SpringBootContextLoader {
 
 		Arrays.stream(module.toString().split("\n")).forEach(LOG::info);
 
-		List<Module> dependencies = testClass.getDependencies();
+		List<Module> dependencies = execution.getDependencies();
 
 		if (!dependencies.isEmpty()) {
 
@@ -87,27 +102,10 @@ class ModuleContextLoader extends SpringBootContextLoader {
 
 			LOG.info(getSeparator("=", message));
 		}
+	}
 
-		List<ApplicationContextInitializer<?>> initializers = super.getInitializers(config, application);
-
-		initializers.add(new ApplicationContextInitializer<ConfigurableApplicationContext>() {
-
-			/*
-			 * (non-Javadoc)
-			 * @see org.springframework.context.ApplicationContextInitializer#initialize(org.springframework.context.ConfigurableApplicationContext)
-			 */
-			@Override
-			public void initialize(ConfigurableApplicationContext applicationContext) {
-
-				List<String> basePackages = testClass.getBasePackages().collect(Collectors.toList());
-
-				applicationContext.getBeanFactory().registerSingleton(
-						"modulePackageToAutoConfigAndEntityScanPackagePostProcessor",
-						new BeanFactoryPostProcessorImplementation(basePackages));
-			}
-		});
-
-		return initializers;
+	private static String getSeparator(String character, String reference) {
+		return String.join("", Collections.nCopies(reference.length(), character));
 	}
 
 	/**

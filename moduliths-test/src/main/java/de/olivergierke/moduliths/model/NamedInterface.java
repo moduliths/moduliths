@@ -15,21 +15,57 @@
  */
 package de.olivergierke.moduliths.model;
 
-import static com.tngtech.archunit.base.DescribedPredicate.*;
+import lombok.Getter;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.util.Assert;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 
 /**
  * @author Oliver Gierke
  */
-@RequiredArgsConstructor
 public class NamedInterface {
 
-	private final Classes classes;
+	private static final String UNNAMED_NAME = "<<UNNAMED>>";
+
+	private final JavaPackage javaPackage;
+	private final @Getter String name;
+
+	private NamedInterface(JavaPackage javaPackage, String name) {
+
+		Assert.notNull(javaPackage, "Package must not be null!");
+		Assert.hasText(name, "Package name must not be null or empty!");
+
+		this.javaPackage = javaPackage.toSingle();
+		this.name = name;
+	}
+
+	static NamedInterface unnamed(JavaPackage javaPackage) {
+		return new NamedInterface(javaPackage, UNNAMED_NAME);
+	}
+
+	public static NamedInterface of(JavaPackage javaPackage) {
+
+		String name = javaPackage.getAnnotation(de.olivergierke.moduliths.NamedInterface.class) //
+				.map(it -> it.value()) //
+				.orElseThrow(() -> new IllegalArgumentException("Couldn't find NamedInterface annotation on package!"));
+
+		return new NamedInterface(javaPackage, name);
+	}
+
+	public boolean isUnnamed() {
+		return name.equals(UNNAMED_NAME);
+	}
 
 	public boolean contains(JavaClass type) {
-		return !classes.that(equalTo(type)).isEmpty();
+		return javaPackage.contains(type);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return String.format("%s - %s", name, javaPackage.getName());
 	}
 }

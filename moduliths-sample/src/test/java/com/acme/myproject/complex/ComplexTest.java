@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.acme.myproject.moduleA;
+package com.acme.myproject.complex;
 
 import static org.assertj.core.api.Assertions.*;
 
+import de.olivergierke.moduliths.model.NamedInterface;
+import de.olivergierke.moduliths.model.NamedInterfaces;
+import de.olivergierke.moduliths.model.test.ModuleTestExecution;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.acme.myproject.NonVerifyingModuleTest;
-import com.acme.myproject.moduleB.ServiceComponentB;
 
 /**
  * @author Oliver Gierke
  */
-@NonVerifyingModuleTest
 @RunWith(SpringRunner.class)
-public class ModuleATest {
+@NonVerifyingModuleTest
+public class ComplexTest {
 
-	@Autowired ApplicationContext context;
+	@Autowired ModuleTestExecution moduleTest;
 
 	@Test
-	public void bootstrapsModuleAOnly() {
+	public void exposesNamedInterfaces() {
 
-		context.getBean(ServiceComponentA.class);
+		NamedInterfaces interfaces = moduleTest.getModule().getNamedInterfaces();
 
-		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-				.isThrownBy(() -> context.getBean(ServiceComponentB.class));
+		assertThat(interfaces.stream().map(NamedInterface::getName)) //
+				.containsExactlyInAnyOrder("API", "SPI");
 	}
 }

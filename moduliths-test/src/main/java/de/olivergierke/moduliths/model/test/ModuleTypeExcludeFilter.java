@@ -30,11 +30,10 @@ import org.springframework.util.ClassUtils;
 @EqualsAndHashCode(callSuper = false)
 class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 
-	private final ModuleTestClass type;
+	private final ModuleTestExecution type;
 
 	public ModuleTypeExcludeFilter(Class<?> testClass) {
-
-		this.type = new ModuleTestClass(testClass);
+		this.type = new ModuleTestExecution(testClass);
 	}
 
 	/* 

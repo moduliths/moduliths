@@ -27,7 +27,7 @@ import com.acme.myproject.Application;
  * @author Oliver Gierke
  * @author Peter Gafert
  */
-public class ModelIntegrationTest {
+public class ModulesIntegrationTest {
 
 	Modules modules = Modules.of(Application.class);
 
@@ -62,6 +62,17 @@ public class ModelIntegrationTest {
 			assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> {
 				it.verifyDependencies(modules);
 			});
+		});
+	}
+
+	@Test
+	public void complexModuleExposesNamedInterfaces() {
+
+		Optional<Module> module = modules.getModuleByName("complex");
+
+		assertThat(module).hasValueSatisfying(it -> {
+			assertThat(it.getNamedInterfaces().stream().map(NamedInterface::getName)) //
+					.containsExactlyInAnyOrder("API", "SPI");
 		});
 	}
 }

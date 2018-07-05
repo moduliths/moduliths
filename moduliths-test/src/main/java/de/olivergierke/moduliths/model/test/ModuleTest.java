@@ -52,6 +52,13 @@ public @interface ModuleTest {
 	@AliasFor("value")
 	BootstrapMode mode() default BootstrapMode.STANDALONE;
 
+	/**
+	 * Whether to automatically verify the module structure for validity.
+	 * 
+	 * @return
+	 */
+	boolean verifyAutomatically() default true;
+
 	@RequiredArgsConstructor
 	public enum BootstrapMode {
 

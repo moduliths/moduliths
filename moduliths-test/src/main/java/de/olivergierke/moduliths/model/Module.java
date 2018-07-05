@@ -24,6 +24,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,11 +47,25 @@ public class Module {
 
 	private final @Getter JavaPackage basePackage;
 	private final Optional<de.olivergierke.moduliths.Module> moduleAnnotation;
+	private final @Getter NamedInterfaces namedInterfaces;
 
 	Module(JavaPackage basePackage) {
 
 		this.basePackage = basePackage;
 		this.moduleAnnotation = basePackage.getAnnotation(de.olivergierke.moduliths.Module.class);
+		this.namedInterfaces = discoverNamedInterfaces(basePackage);
+	}
+
+	private static NamedInterfaces discoverNamedInterfaces(JavaPackage basePackage) {
+
+		List<NamedInterface> explicitlyAnnotated = basePackage
+				.getSubPackagesAnnotatedWith(de.olivergierke.moduliths.NamedInterface.class) //
+				.map(NamedInterface::of) //
+				.collect(Collectors.toList());
+
+		return NamedInterfaces.of(explicitlyAnnotated.isEmpty() //
+				? Collections.singletonList(NamedInterface.unnamed(basePackage)) //
+				: explicitlyAnnotated);
 	}
 
 	public String getName() {
@@ -112,12 +127,18 @@ public class Module {
 		return basePackage.contains(type);
 	}
 
-	public NamedInterface getPrimaryNamedInterface() {
-		return new NamedInterface(basePackage.toSingle().getClasses());
-	}
-
+	/**
+	 * Returns whether the given {@link JavaClass} is exposed by the current module, i.e. whether it's part of any of the
+	 * module's named interfaces.
+	 * 
+	 * @param type must not be {@literal null}.
+	 * @return
+	 */
 	public boolean isExposed(JavaClass type) {
-		return getPrimaryNamedInterface().contains(type);
+
+		Assert.notNull(type, "Type must not be null!");
+
+		return namedInterfaces.stream().anyMatch(it -> it.contains(type));
 	}
 
 	public void verifyDependencies(Modules modules) {
@@ -133,6 +154,15 @@ public class Module {
 		StringBuilder builer = new StringBuilder("## ").append(getDisplayName()).append(" ##\n");
 		builer.append("> Logical name: ").append(getName()).append('\n');
 		builer.append("> Base package: ").append(basePackage.getName()).append('\n');
+
+		if (namedInterfaces.hasExplicitInterfaces()) {
+
+			builer.append("> Named interfaces:\n");
+
+			namedInterfaces.forEach(it -> builer.append("  + ") //
+					.append(it.toString()) //
+					.append('\n'));
+		}
 
 		Classes beans = getSpringBeans();
 

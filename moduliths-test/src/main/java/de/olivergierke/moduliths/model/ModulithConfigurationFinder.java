@@ -31,9 +31,11 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
- * Internal utility class to scan for a {@link SpringBootConfiguration} class.
+ * Copy of Spring Boot's {@link SpringBootConfiguration} until the below mentioned ticket is fixed.
  *
  * @author Phillip Webb
+ * @author Oliver Gierke
+ * @see https://github.com/spring-projects/spring-boot/issues/13713
  */
 final class ModulithConfigurationFinder {
 
@@ -83,6 +85,7 @@ final class ModulithConfigurationFinder {
 	/**
 	 * Cache implementation based on {@link LinkedHashMap}.
 	 */
+	@SuppressWarnings("serial")
 	private static class Cache extends LinkedHashMap<String, Class<?>> {
 
 		private final int maxSize;

@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.acme.myproject.complex.api;
 
 /**
- * Annotation to customize information of a {@link Modulith} module.
- * 
+ *
  * @author Oliver Gierke
  */
-@Target({ ElementType.PACKAGE, ElementType.ANNOTATION_TYPE })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Module {
+public class ComplexApiComponent {
 
-	String displayName() default "";
-
-	String[] allowedDependencies() default {};
 }

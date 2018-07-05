@@ -17,7 +17,6 @@ package com.acme.myproject.moduleC;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.model.test.ModuleTest;
 import de.olivergierke.moduliths.model.test.ModuleTest.BootstrapMode;
 import de.olivergierke.moduliths.model.test.TestUtils;
 
@@ -29,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.acme.myproject.NonVerifyingModuleTest;
 import com.acme.myproject.moduleA.ServiceComponentA;
 import com.acme.myproject.moduleB.ServiceComponentB;
 import com.acme.myproject.moduleC.ModuleCTest.FailsStandalone;
@@ -48,7 +48,7 @@ import com.acme.myproject.moduleC.ModuleCTest.SucceedsWithDirectDependencyPlusIt
 })
 public class ModuleCTest {
 
-	@ModuleTest
+	@NonVerifyingModuleTest
 	public static class FailsStandalone {
 
 		@Test
@@ -57,7 +57,7 @@ public class ModuleCTest {
 		}
 	}
 
-	@ModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
+	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
 	public static class FailsWithDirectDependency {
 
 		@Test
@@ -67,7 +67,7 @@ public class ModuleCTest {
 	}
 
 	@RunWith(SpringRunner.class)
-	@ModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
+	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
 	public static class SucceedsWithDirectDependencyPlusItsDependenciesMocks {
 
 		@MockBean ServiceComponentA serviceComponentA;
@@ -79,7 +79,7 @@ public class ModuleCTest {
 	}
 
 	@RunWith(SpringRunner.class)
-	@ModuleTest(BootstrapMode.ALL_DEPENDENCIES)
+	@NonVerifyingModuleTest(BootstrapMode.ALL_DEPENDENCIES)
 	public static class SucceedsWithAllDependencies {
 
 		@Autowired ServiceComponentA serviceComponentA;

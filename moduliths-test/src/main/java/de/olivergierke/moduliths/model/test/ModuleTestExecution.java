@@ -21,6 +21,7 @@ import de.olivergierke.moduliths.model.Modules;
 import de.olivergierke.moduliths.model.test.ModuleTest.BootstrapMode;
 import lombok.Getter;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,31 +30,62 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 /**
  * @author Oliver Gierke
  */
-public class ModuleTestClass {
+public class ModuleTestExecution implements Iterable<Module> {
 
 	private final @Getter BootstrapMode bootstrapMode;
 	private final @Getter Module module;
 	private final Modules modules;
 
-	public ModuleTestClass(Class<?> type) {
+	public ModuleTestExecution(Class<?> type) {
 
-		String packageName = type.getPackage().getName();
 		ModuleTest annotation = AnnotatedElementUtils.findMergedAnnotation(type, ModuleTest.class);
+		String packageName = type.getPackage().getName();
 
 		this.bootstrapMode = annotation.mode();
 
 		this.modules = Modules.ofSubpackage(packageName);
-		this.module = modules.getModuleByBasePackage(packageName).orElseThrow(
-				() -> new IllegalStateException(String.format("Couldn't find module for package '%s'!", packageName)));
+		this.module = modules.getModuleByBasePackage(packageName) //
+				.orElseThrow(
+						() -> new IllegalStateException(String.format("Couldn't find module for package '%s'!", packageName)));
+
+		if (annotation.verifyAutomatically()) {
+			verify();
+		}
 	}
 
+	/**
+	 * Returns all base packages the current execution needs to use for component scanning, auto-configuration etc.
+	 * 
+	 * @return
+	 */
 	public Stream<String> getBasePackages() {
 
 		return module.getBasePackages(modules, bootstrapMode.getDepth()) //
 				.map(JavaPackage::getName);
 	}
 
+	/**
+	 * Returns all module dependencies, based on the current {@link BootstrapMode}.
+	 * 
+	 * @return
+	 */
 	public List<Module> getDependencies() {
 		return module.getDependencies(modules, bootstrapMode.getDepth());
+	}
+
+	/**
+	 * Explicitly trigger the module structure verification.
+	 */
+	public void verify() {
+		modules.verify();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see java.lang.Iterable#iterator()
+	 */
+	@Override
+	public Iterator<Module> iterator() {
+		return modules.iterator();
 	}
 }

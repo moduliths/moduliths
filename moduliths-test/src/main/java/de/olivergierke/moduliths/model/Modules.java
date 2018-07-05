@@ -23,6 +23,7 @@ import de.olivergierke.moduliths.Modulith;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,7 +40,7 @@ import com.tngtech.archunit.core.importer.Location;
  * @author Oliver Gierke
  * @author Peter Gafert
  */
-public class Modules {
+public class Modules implements Iterable<Module> {
 
 	private final Classes classes;
 	private final Map<String, Module> modules;
@@ -119,6 +120,15 @@ public class Modules {
 
 	public void verify() {
 		modules.values().forEach(it -> it.verifyDependencies(this));
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see java.lang.Iterable#iterator()
+	 */
+	@Override
+	public Iterator<Module> iterator() {
+		return modules.values().iterator();
 	}
 
 	private static URI getRootUriOf(Class<?> modulithType) {
