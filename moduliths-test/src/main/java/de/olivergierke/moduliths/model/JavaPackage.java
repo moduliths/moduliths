@@ -21,12 +21,12 @@ import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,30 +34,42 @@ import com.tngtech.archunit.base.DescribedIterable;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
+import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
+import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 
 /**
  * @author Oliver Gierke
  */
-@ToString
 @EqualsAndHashCode
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	private static final String PACKAGE_INFO_NAME = "package-info";
 
-	private final @Getter Classes classes;
 	private final @Getter String name;
+	private final Classes classes, packageClasses;
+	private final Supplier<Set<JavaPackage>> directSubPackages;
 
-	public static JavaPackage forSingle(Classes classes, String name) {
-		return new JavaPackage(classes.that(resideInAPackage(name)), name);
+	private JavaPackage(Classes classes, String name, boolean includeSubPackages) {
+
+		this.classes = classes;
+		this.packageClasses = classes.that(resideInAPackage(includeSubPackages ? name.concat("..") : name));
+		this.name = name;
+		this.directSubPackages = Suppliers.memoize(() -> packageClasses.stream() //
+				.map(it -> it.getPackage()) //
+				.filter(it -> !it.equals(name)) //
+				.map(it -> extractDirectSubPackage(it)) //
+				.distinct() //
+				.map(it -> forNested(classes, it)) //
+				.collect(Collectors.toSet()));
 	}
 
 	public static JavaPackage forNested(Classes classes, String name) {
-		return new JavaPackage(classes.that(resideInAPackage(name.concat(".."))), name);
+		return new JavaPackage(classes, name, true);
 	}
 
 	public JavaPackage toSingle() {
-		return new JavaPackage(classes.that(resideInAnyPackage(name)), name);
+		return new JavaPackage(classes, name, false);
 	}
 
 	public String getLocalName() {
@@ -65,14 +77,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 	}
 
 	public Collection<JavaPackage> getDirectSubPackages() {
-
-		return classes.that(resideInAPackage(name.concat(".."))).stream() //
-				.map(it -> it.getPackage()) //
-				.filter(it -> !it.equals(name)) //
-				.map(it -> extractDirectSubPackage(it)) //
-				.distinct() //
-				.map(it -> forNested(classes, it)) //
-				.collect(Collectors.toSet());
+		return directSubPackages.get();
 	}
 
 	/**
@@ -95,31 +100,32 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	public Stream<JavaPackage> getSubPackagesAnnotatedWith(Class<? extends Annotation> annotation) {
 
-		DescribedPredicate<JavaClass> predicate = resideInAPackage(name.concat(".."))
-				.and(CanBeAnnotated.Predicates.annotatedWith(annotation));
-
-		return classes.that(predicate).stream() //
-				.map(JavaClass::getPackage).distinct() //
+		return packageClasses.that(CanBeAnnotated.Predicates.annotatedWith(annotation)).stream() //
+				.map(JavaClass::getPackage) //
+				.distinct() //
 				.map(it -> forNested(classes, it));
 	}
 
 	public Classes that(DescribedPredicate<? super JavaClass> predicate) {
-		return classes.that(predicate);
+		return packageClasses.that(predicate);
 	}
 
 	public boolean contains(JavaClass type) {
-		return classes.contains(type);
+		return packageClasses.contains(type);
+	}
+
+	public boolean contains(String className) {
+		return packageClasses.contains(className);
 	}
 
 	public Stream<JavaClass> stream() {
-		return classes.stream();
+		return packageClasses.stream();
 	}
 
 	public <A extends Annotation> Optional<A> getAnnotation(Class<A> annotationType) {
 
-		return classes
-				.that(JavaClass.Predicates.simpleName(PACKAGE_INFO_NAME)
-						.and(CanBeAnnotated.Predicates.annotatedWith(annotationType))) //
+		return packageClasses.that(JavaClass.Predicates.simpleName(PACKAGE_INFO_NAME) //
+				.and(CanBeAnnotated.Predicates.annotatedWith(annotationType))) //
 				.toOptional() //
 				.map(it -> it.getAnnotationOfType(annotationType));
 	}
@@ -140,5 +146,19 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 	@Override
 	public Iterator<JavaClass> iterator() {
 		return classes.iterator();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		StringBuilder builder = new StringBuilder(name).append("\n\n");
+
+		packageClasses.stream().forEach(it -> builder.append(Classes.format(it, name)).append('\n'));
+
+		return builder.toString();
 	}
 }

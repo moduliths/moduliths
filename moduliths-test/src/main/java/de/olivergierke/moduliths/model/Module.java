@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -38,6 +39,8 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
+import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
+import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 
 /**
  * @author Oliver Gierke
@@ -48,12 +51,21 @@ public class Module {
 	private final @Getter JavaPackage basePackage;
 	private final Optional<de.olivergierke.moduliths.Module> moduleAnnotation;
 	private final @Getter NamedInterfaces namedInterfaces;
+	private final boolean useFullyQualifiedModuleNames;
 
-	Module(JavaPackage basePackage) {
+	private final Supplier<Classes> springBeans;
+
+	Module(JavaPackage basePackage, boolean useFullyQualifiedModuleNames) {
 
 		this.basePackage = basePackage;
 		this.moduleAnnotation = basePackage.getAnnotation(de.olivergierke.moduliths.Module.class);
 		this.namedInterfaces = discoverNamedInterfaces(basePackage);
+		this.useFullyQualifiedModuleNames = useFullyQualifiedModuleNames;
+
+		this.springBeans = Suppliers.memoize(
+				() -> basePackage.that(JavaClass.Predicates.assignableTo("org.springframework.data.repository.Repository")
+						.or(CanBeAnnotated.Predicates.annotatedWith(Component.class)) //
+						.or(CanBeAnnotated.Predicates.metaAnnotatedWith(Component.class))));
 	}
 
 	private static NamedInterfaces discoverNamedInterfaces(JavaPackage basePackage) {
@@ -69,7 +81,7 @@ public class Module {
 	}
 
 	public String getName() {
-		return basePackage.getLocalName();
+		return useFullyQualifiedModuleNames ? basePackage.getName() : basePackage.getLocalName();
 	}
 
 	public String getDisplayName() {
@@ -118,9 +130,7 @@ public class Module {
 	}
 
 	public Classes getSpringBeans() {
-
-		return basePackage.that(CanBeAnnotated.Predicates.annotatedWith(Component.class) //
-				.or(CanBeAnnotated.Predicates.metaAnnotatedWith(Component.class)));
+		return springBeans.get();
 	}
 
 	public boolean contains(JavaClass type) {
@@ -150,35 +160,49 @@ public class Module {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
+		return toString(null);
+	}
 
-		StringBuilder builer = new StringBuilder("## ").append(getDisplayName()).append(" ##\n");
-		builer.append("> Logical name: ").append(getName()).append('\n');
-		builer.append("> Base package: ").append(basePackage.getName()).append('\n');
+	public String toString(@Nullable Modules modules) {
+
+		StringBuilder builder = new StringBuilder("## ").append(getDisplayName()).append(" ##\n");
+		builder.append("> Logical name: ").append(getName()).append('\n');
+		builder.append("> Base package: ").append(basePackage.getName()).append('\n');
 
 		if (namedInterfaces.hasExplicitInterfaces()) {
 
-			builer.append("> Named interfaces:\n");
+			builder.append("> Named interfaces:\n");
 
-			namedInterfaces.forEach(it -> builer.append("  + ") //
+			namedInterfaces.forEach(it -> builder.append("  + ") //
 					.append(it.toString()) //
 					.append('\n'));
+		}
+
+		if (modules != null) {
+
+			List<Module> dependencies = getDependencies(modules);
+
+			builder.append("> Direct dependencies: ");
+			builder.append(dependencies.isEmpty() ? "none"
+					: dependencies.stream().map(Module::getName).collect(Collectors.joining(", ")));
+			builder.append('\n');
 		}
 
 		Classes beans = getSpringBeans();
 
 		if (beans.isEmpty()) {
 
-			builer.append("> Spring beans: none\n");
+			builder.append("> Spring beans: none\n");
 
 		} else {
 
-			builer.append("> Spring beans:\n");
-			beans.forEach(it -> builer.append("  ") //
+			builder.append("> Spring beans:\n");
+			beans.forEach(it -> builder.append("  ") //
 					.append(Classes.format(it, basePackage.getName()))//
 					.append('\n'));
 		}
 
-		return builer.toString();
+		return builder.toString();
 	}
 
 	private Stream<Module> streamDependencies(Modules modules, DependencyDepth depth) {
@@ -228,7 +252,7 @@ public class Module {
 	}
 
 	private boolean isDependencyToOtherModule(JavaClass dependency, Modules modules) {
-		return modules.contain(dependency) && !this.contains(dependency);
+		return modules.contains(dependency) && !this.contains(dependency);
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromFields(JavaClass type, Modules modules) {

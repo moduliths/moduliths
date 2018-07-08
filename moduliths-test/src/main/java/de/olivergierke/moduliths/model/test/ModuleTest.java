@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.filter.TypeExcludeFilters;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.core.annotation.AliasFor;
@@ -44,6 +45,7 @@ import org.springframework.test.context.ContextConfiguration;
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
 @TypeExcludeFilters(ModuleTypeExcludeFilter.class)
 @ContextConfiguration(loader = ModuleContextLoader.class)
+@ImportAutoConfiguration(ModuleTestAutoConfiguration.class)
 public @interface ModuleTest {
 
 	@AliasFor("mode")
@@ -58,6 +60,13 @@ public @interface ModuleTest {
 	 * @return
 	 */
 	boolean verifyAutomatically() default true;
+
+	/**
+	 * Module names of modules to be included in the test run independent of what the {@link #mode()} defines.
+	 * 
+	 * @return
+	 */
+	String[] extraIncludes() default {};
 
 	@RequiredArgsConstructor
 	public enum BootstrapMode {

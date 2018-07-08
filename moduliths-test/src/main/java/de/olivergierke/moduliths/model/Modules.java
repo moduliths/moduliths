@@ -15,26 +15,33 @@
  */
 package de.olivergierke.moduliths.model;
 
-import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.*;
-import static java.util.Collections.*;
+import static com.tngtech.archunit.base.DescribedPredicate.*;
+import static java.util.stream.Collectors.*;
 
 import de.olivergierke.moduliths.Modulith;
 
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 
 /**
  * @author Oliver Gierke
@@ -42,69 +49,128 @@ import com.tngtech.archunit.core.importer.Location;
  */
 public class Modules implements Iterable<Module> {
 
-	private final Classes classes;
+	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList(//
+			"org.springframework.stereotype", //
+			"org.springframework.data.repository" //
+	);
+
 	private final Map<String, Module> modules;
+	private final JavaClasses allClasses;
+	private final List<JavaPackage> rootPackages;
 
-	private Modules(Class<?> modulithType, DescribedPredicate<JavaClass> ignored) {
+	private boolean verified;
 
-		URI rootUri = getRootUriOf(modulithType);
+	private Modules(Collection<String> packages, DescribedPredicate<JavaClass> ignored,
+			boolean useFullyQualifiedModuleNames) {
 
-		JavaClasses importedClasses = new ClassFileImporter() //
-				.importLocations(singleton(Location.of(rootUri))) //
-				.that(DescribedPredicate.not(ignored));
+		List<String> toImport = new ArrayList<>(packages);
+		toImport.addAll(FRAMEWORK_PACKAGES);
 
-		this.classes = Classes.of(importedClasses);
-		this.modules = new HashMap<>();
+		this.allClasses = new ClassFileImporter() //
+				.withImportOption(new ImportOption.DontIncludeTests()) //
+				.importPackages(toImport) //
+				.that(not(ignored));
 
-		getModules().forEach(it -> this.modules.put(it.getName(), it));
+		Classes classes = Classes.of(allClasses);
+
+		this.modules = packages.stream() //
+				.flatMap(it -> getSubpackages(classes, it)) //
+				.map(it -> new Module(it, useFullyQualifiedModuleNames)) //
+				.collect(toMap(Module::getName, Function.identity()));
+
+		this.rootPackages = packages.stream() //
+				.map(it -> JavaPackage.forNested(classes, it).toSingle()) //
+				.collect(Collectors.toList());
 	}
 
+	/**
+	 * Creates a new {@link Modules} relative to the given modulith type. Will inspect the {@link Modulith} annotation on
+	 * the class given for advanced customizations of the module setup.
+	 * 
+	 * @param modulithType must not be {@literal null}.
+	 * @return
+	 */
 	public static Modules of(Class<?> modulithType) {
-		return of(modulithType, DescribedPredicate.alwaysFalse());
+		return of(modulithType, alwaysFalse());
 	}
 
+	/**
+	 * Creates a new {@link Modules} relative to the given modulith type and a {@link DescribedPredicate} which types and
+	 * packages to ignore. Will inspect the {@link Modulith} annotation on the class given for advanced customizations of
+	 * the module setup.
+	 * 
+	 * @param modulithType must not be {@literal null}.
+	 * @param ignored must not be {@literal null}.
+	 * @return
+	 */
 	public static Modules of(Class<?> modulithType, DescribedPredicate<JavaClass> ignored) {
 
-		Assert.notNull(modulithType.getAnnotation(Modulith.class),
+		Assert.notNull(modulithType, "Modulith root type must not be null!");
+		Assert.notNull(ignored, "Predicate to describe ignored types must not be null!");
+
+		Modulith modulith = AnnotatedElementUtils.findMergedAnnotation(modulithType, Modulith.class);
+
+		Assert.notNull(modulith,
 				() -> String.format("Modules can only be retrieved from a @%s root type, but %s is not annotated with @%s",
 						Modulith.class.getSimpleName(), modulithType.getSimpleName(), Modulith.class.getSimpleName()));
 
-		return new Modules(modulithType, ignored);
+		Set<String> basePackages = new HashSet<>();
+		basePackages.add(modulithType.getPackage().getName());
+		basePackages.addAll(Arrays.asList(modulith.additionalPackages()));
+
+		return new Modules(basePackages, ignored, modulith.useFullyQualifiedModuleNames());
 	}
 
-	public static Modules ofSubpackage(String subPackage) {
+	/**
+	 * Returns whether the given {@link JavaClass} is contained within the {@link Modules}.
+	 * 
+	 * @param type must not be {@literal null}.
+	 * @return
+	 */
+	public boolean contains(JavaClass type) {
 
-		ModulithConfigurationFinder finder = new ModulithConfigurationFinder();
-		return Modules.of(finder.findFromPackage(subPackage));
+		Assert.notNull(type, "Type must not be null!");
+
+		return modules.values().stream() //
+				.anyMatch(module -> module.contains(type));
 	}
 
-	public String getRootPackage() {
+	/**
+	 * Returns whether the given type is contained in one of the root packages (not including sub-packages) of the
+	 * modules.
+	 * 
+	 * @param className must not be {@literal null} or empty.
+	 * @return
+	 */
+	public boolean withinRootPackages(String className) {
 
-		return classes.that(annotatedWith(Modulith.class)).stream() //
-				.findFirst() //
-				.orElseThrow(IllegalStateException::new) //
-				.getPackage();
+		Assert.hasText(className, "Class name must not be null or empty!");
+
+		return rootPackages.stream().anyMatch(it -> it.contains(className));
 	}
 
-	public boolean contain(JavaClass javaClass) {
-		return modules.values().stream().anyMatch(module -> module.contains(javaClass));
-	}
-
-	public Collection<Module> getModules() {
-
-		String rootPackage = getRootPackage();
-
-		return JavaPackage.forNested(classes, rootPackage) //
-				.getDirectSubPackages().stream() //
-				.map(Module::new) //
-				.collect(Collectors.toSet());
-	}
-
+	/**
+	 * Returns the {@link Module} with the given name.
+	 * 
+	 * @param name must not be {@literal null} or empty.
+	 * @return
+	 */
 	public Optional<Module> getModuleByName(String name) {
+
+		Assert.hasText(name, "Module name must not be null or empty!");
+
 		return Optional.ofNullable(modules.get(name));
 	}
 
+	/**
+	 * Returns the module that contains the given {@link JavaClass}.
+	 * 
+	 * @param type must not be {@literal null}.
+	 * @return
+	 */
 	public Optional<Module> getModuleByType(JavaClass type) {
+
+		Assert.notNull(type, "Type must not be null!");
 
 		return modules.values().stream() //
 				.filter(it -> it.contains(type)) //
@@ -119,7 +185,20 @@ public class Modules implements Iterable<Module> {
 	}
 
 	public void verify() {
-		modules.values().forEach(it -> it.verifyDependencies(this));
+
+		if (verified) {
+			return;
+		}
+
+		SlicesRuleDefinition.slices().matching("") //
+				.should().beFreeOfCycles() //
+				.check(allClasses);
+
+		modules.values().forEach(it -> {
+			it.verifyDependencies(this);
+		});
+
+		this.verified = true;
 	}
 
 	/* 
@@ -131,11 +210,7 @@ public class Modules implements Iterable<Module> {
 		return modules.values().iterator();
 	}
 
-	private static URI getRootUriOf(Class<?> modulithType) {
-
-		URI uriOfModulith = new ClassFileImporter().importClass(modulithType).getSource().get().getUri();
-		String root = uriOfModulith.toString().replaceAll("[^/]+\\.class$", "");
-
-		return URI.create(root);
+	private static Stream<JavaPackage> getSubpackages(Classes types, String rootPackage) {
+		return JavaPackage.forNested(types, rootPackage).getDirectSubPackages().stream();
 	}
 }

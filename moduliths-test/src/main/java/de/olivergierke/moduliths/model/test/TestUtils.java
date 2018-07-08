@@ -21,7 +21,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.BootstrapContext;
 import org.springframework.test.context.CacheAwareContextLoaderDelegate;
 import org.springframework.test.context.MergedContextConfiguration;
@@ -45,12 +45,20 @@ public class TestUtils {
 
 		AssertableApplicationContext context = AssertableApplicationContext.get(() -> {
 
-			AnnotationConfigApplicationContext inner = new AnnotationConfigApplicationContext();
-			configuration.getContextCustomizers().forEach(it -> it.customizeContext(inner, configuration));
-			inner.register(configuration.getClasses());
-			inner.refresh();
+			ModuleContextLoader loader = new ModuleContextLoader();
 
-			return inner;
+			try {
+
+				return (ConfigurableApplicationContext) loader.loadContext(configuration);
+
+			} catch (Exception e) {
+
+				if (e instanceof RuntimeException) {
+					throw (RuntimeException) e;
+				}
+
+				throw new RuntimeException(e);
+			}
 		});
 
 		assertThat(context).hasFailed();

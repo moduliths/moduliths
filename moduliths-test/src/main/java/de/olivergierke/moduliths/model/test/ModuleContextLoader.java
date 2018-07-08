@@ -16,18 +16,14 @@
 package de.olivergierke.moduliths.model.test;
 
 import de.olivergierke.moduliths.model.Module;
-import lombok.RequiredArgsConstructor;
+import de.olivergierke.moduliths.model.Modules;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
@@ -53,21 +49,15 @@ class ModuleContextLoader extends SpringBootContextLoader {
 	protected List<ApplicationContextInitializer<?>> getInitializers(MergedContextConfiguration config,
 			SpringApplication application) {
 
-		ModuleTestExecution execution = new ModuleTestExecution(config.getTestClass());
-
-		logModules(execution);
-
-		List<ApplicationContextInitializer<?>> initializers = super.getInitializers(config, application);
+		List<ApplicationContextInitializer<?>> initializers = new ArrayList<>(super.getInitializers(config, application));
 
 		initializers.add(applicationContext -> {
 
-			List<String> basePackages = execution.getBasePackages().collect(Collectors.toList());
-			ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
+			ModuleTestExecution execution = ModuleTestExecution.of(config.getTestClass());
 
-			beanFactory.registerSingleton("__moduleTestExecution", execution);
+			logModules(execution);
 
-			beanFactory.registerSingleton("modulePackageToAutoConfigAndEntityScanPackagePostProcessor",
-					new BeanFactoryPostProcessorImplementation(basePackages));
+			applicationContext.getBeanFactory().registerSingleton(ModuleTestExecution.class.getName(), execution);
 		});
 
 		return initializers;
@@ -76,6 +66,7 @@ class ModuleContextLoader extends SpringBootContextLoader {
 	private static void logModules(ModuleTestExecution execution) {
 
 		Module module = execution.getModule();
+		Modules modules = execution.getModules();
 		String moduleName = module.getDisplayName();
 		String bootstrapMode = execution.getBootstrapMode().name();
 
@@ -84,7 +75,7 @@ class ModuleContextLoader extends SpringBootContextLoader {
 		LOG.info(message);
 		LOG.info(getSeparator("=", message));
 
-		Arrays.stream(module.toString().split("\n")).forEach(LOG::info);
+		Arrays.stream(module.toString(modules).split("\n")).forEach(LOG::info);
 
 		List<Module> dependencies = execution.getDependencies();
 
@@ -95,7 +86,7 @@ class ModuleContextLoader extends SpringBootContextLoader {
 			LOG.info(getSeparator("=", message));
 
 			dependencies.stream() //
-					.map(Module::toString) //
+					.map(it -> it.toString(modules)) //
 					.forEach(it -> {
 						Arrays.stream(it.split("\n")).forEach(LOG::info);
 					});
@@ -106,34 +97,5 @@ class ModuleContextLoader extends SpringBootContextLoader {
 
 	private static String getSeparator(String character, String reference) {
 		return String.join("", Collections.nCopies(reference.length(), character));
-	}
-
-	/**
-	 * @author Oliver Gierke
-	 */
-	@RequiredArgsConstructor
-	private static class BeanFactoryPostProcessorImplementation implements BeanFactoryPostProcessor {
-
-		private final List<String> packageNames;
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.beans.factory.config.BeanFactoryPostProcessor#postProcessBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)
-		 */
-		@Override
-		public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-
-			setPackageOnBeanNamed(beanFactory, AutoConfigurationPackages.class.getName());
-			setPackageOnBeanNamed(beanFactory, EntityScanPackages.class.getName());
-		}
-
-		private void setPackageOnBeanNamed(ConfigurableListableBeanFactory beanFactory, String beanName) {
-
-			if (beanFactory.containsBeanDefinition(beanName)) {
-
-				BeanDefinition definition = beanFactory.getBeanDefinition(beanName);
-				definition.getConstructorArgumentValues().addIndexedArgumentValue(0, packageNames);
-			}
-		}
 	}
 }

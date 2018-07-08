@@ -8,7 +8,7 @@
 	</appender>
 
 	<logger name="com.acme" level="info" />
-	<logger name="de.olivergierke" level="info" />
+	<logger name="de.olivergierke" level="debug" />
 
 	<root level="error">
 		<appender-ref ref="console" />

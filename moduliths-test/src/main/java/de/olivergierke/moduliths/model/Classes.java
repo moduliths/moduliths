@@ -15,8 +15,6 @@
  */
 package de.olivergierke.moduliths.model;
 
-import static com.tngtech.archunit.base.DescribedPredicate.*;
-
 import lombok.RequiredArgsConstructor;
 
 import java.util.Iterator;
@@ -32,6 +30,7 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaModifier;
+import com.tngtech.archunit.core.domain.properties.HasName;
 
 /**
  * @author Oliver Gierke
@@ -67,7 +66,11 @@ public class Classes implements DescribedIterable<JavaClass> {
 	}
 
 	public boolean contains(JavaClass type) {
-		return classes.that(equalTo(type)).iterator().hasNext();
+		return classes.that(new SameClass(type)).iterator().hasNext();
+	}
+
+	public boolean contains(String className) {
+		return classes.that(HasName.Predicates.name(className)).iterator().hasNext();
 	}
 
 	/*
@@ -103,5 +106,24 @@ public class Classes implements DescribedIterable<JavaClass> {
 				: type.getName();
 
 		return String.format("%s %s", prefix, name);
+	}
+
+	private static class SameClass extends DescribedPredicate<JavaClass> {
+
+		private final JavaClass reference;
+
+		public SameClass(JavaClass reference) {
+			super(" is the same class as ");
+			this.reference = reference;
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see com.tngtech.archunit.base.DescribedPredicate#apply(java.lang.Object)
+		 */
+		@Override
+		public boolean apply(JavaClass input) {
+			return reference.getName().equals(input.getName());
+		}
 	}
 }

@@ -22,7 +22,6 @@ import java.io.IOException;
 import org.springframework.boot.context.TypeExcludeFilter;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
-import org.springframework.util.ClassUtils;
 
 /**
  * @author Oliver Gierke
@@ -30,10 +29,10 @@ import org.springframework.util.ClassUtils;
 @EqualsAndHashCode(callSuper = false)
 class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 
-	private final ModuleTestExecution type;
+	private final Class<?> testClass;
 
 	public ModuleTypeExcludeFilter(Class<?> testClass) {
-		this.type = new ModuleTestExecution(testClass);
+		this.testClass = testClass;
 	}
 
 	/* 
@@ -43,8 +42,7 @@ class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 	@Override
 	public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
 
-		String typePackageName = ClassUtils.getPackageName(metadataReader.getClassMetadata().getClassName());
-
-		return type.getBasePackages().noneMatch(typePackageName::startsWith);
+		return ModuleTestExecution.of(testClass) //
+				.includes(metadataReader.getClassMetadata().getClassName());
 	}
 }

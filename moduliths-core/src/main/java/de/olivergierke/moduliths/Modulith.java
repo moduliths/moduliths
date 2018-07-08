@@ -42,4 +42,21 @@ import org.springframework.context.annotation.FilterType;
 		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
 public @interface Modulith {
 
+	/**
+	 * Whether to use fully qualified module names by default. If set to {@literal true}, hits will cause the module's
+	 * default names to be their complete package name instead of just the modulith-local one. This might be useful in
+	 * case {@link #additionalPackages()} pulls in packages that would cause module name conflicts, i.e. both root
+	 * packages declare a local sub-package of the same name.
+	 * 
+	 * @return
+	 */
+	boolean useFullyQualifiedModuleNames() default false;
+
+	/**
+	 * Defines which additional packages shall be considered shall be considered as modulith base packages in addition to
+	 * the one of the class carrying this annotation.
+	 * 
+	 * @return
+	 */
+	String[] additionalPackages() default {};
 }
