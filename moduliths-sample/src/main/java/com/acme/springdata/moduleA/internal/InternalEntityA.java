@@ -15,19 +15,17 @@
  */
 package com.acme.springdata.moduleA.internal;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.keyvalue.annotation.KeySpace;
 
-@Entity
+@KeySpace("internalEntityA")
+@Data
 public class InternalEntityA {
 
-	@Id
-	@GeneratedValue
-	private Long id;
+  @Id
+  private Long id;
 
-	@Column
-	private String field;
+  private String field;
 
 }

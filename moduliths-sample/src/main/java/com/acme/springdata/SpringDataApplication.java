@@ -16,10 +16,12 @@
 package com.acme.springdata;
 
 import de.olivergierke.moduliths.Modulith;
+import org.springframework.data.map.repository.config.EnableMapRepositories;
 
 /**
  * @author Tom Hombergs
  */
 @Modulith
+@EnableMapRepositories
 public class SpringDataApplication {
 }

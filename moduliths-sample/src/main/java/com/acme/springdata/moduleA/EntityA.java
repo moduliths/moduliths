@@ -15,25 +15,20 @@
  */
 package com.acme.springdata.moduleA;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.keyvalue.annotation.KeySpace;
 
 /**
  * @author Tom Hombergs
  */
-@Entity
+@KeySpace("entityA")
 @Data
 public class EntityA {
 
-	@Id
-	@GeneratedValue
-	private Long id;
+  @Id
+  private Long id;
 
-	@Column
-	private String fieldA;
+  private String fieldA;
 
 }

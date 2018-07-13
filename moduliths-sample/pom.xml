@@ -1,97 +1,91 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>de.olivergierke.moduliths</groupId>
-		<artifactId>moduliths</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>de.olivergierke.moduliths</groupId>
+        <artifactId>moduliths</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
 
-	<name>Moduliths - Sample</name>
-	<artifactId>moduliths-sample</artifactId>
+    <name>Moduliths - Sample</name>
+    <artifactId>moduliths-sample</artifactId>
 
-	<profiles>
-		<profile>
-			<id>jqa</id>
+    <profiles>
+        <profile>
+            <id>jqa</id>
 
 
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>com.buschmais.jqassistant</groupId>
-						<artifactId>jqassistant-maven-plugin</artifactId>
-						<version>1.4.0</version>
-						<executions>
-							<execution>
-								<id>default-cli</id>
-								<goals>
-									<goal>scan</goal>
-									<goal>analyze</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-							<reportProperties>
-								<asciidoc.report.rule.directory>${project.basedir}/jqassistant</asciidoc.report.rule.directory>
-								<asciidoc.report.rule.include>index.adoc</asciidoc.report.rule.include>
-							</reportProperties>
-						</configuration>
-						<dependencies>
-							<dependency>
-								<groupId>org.jqassistant.contrib.plugin</groupId>
-								<artifactId>jqassistant-asciidoc-report-plugin</artifactId>
-								<version>1.1.0</version>
-							</dependency>
-						</dependencies>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.buschmais.jqassistant</groupId>
+                        <artifactId>jqassistant-maven-plugin</artifactId>
+                        <version>1.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>default-cli</id>
+                                <goals>
+                                    <goal>scan</goal>
+                                    <goal>analyze</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <reportProperties>
+                                <asciidoc.report.rule.directory>${project.basedir}/jqassistant
+                                </asciidoc.report.rule.directory>
+                                <asciidoc.report.rule.include>index.adoc</asciidoc.report.rule.include>
+                            </reportProperties>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.jqassistant.contrib.plugin</groupId>
+                                <artifactId>jqassistant-asciidoc-report-plugin</artifactId>
+                                <version>1.1.0</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
-	<dependencies>
+    <dependencies>
 
-		<dependency>
-			<groupId>de.olivergierke.moduliths</groupId>
-			<artifactId>moduliths-core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>de.olivergierke.moduliths</groupId>
+            <artifactId>moduliths-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>de.olivergierke.moduliths</groupId>
-			<artifactId>moduliths-test</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>de.olivergierke.moduliths</groupId>
+            <artifactId>moduliths-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-autoconfigure</artifactId>
-			<version>${boot.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>${boot.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<version>${boot.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${boot.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-			<version>${boot.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-keyvalue</artifactId>
+            <version>${keyvalue.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<version>1.4.197</version>
-			<scope>runtime</scope>
-		</dependency>
-
-	</dependencies>
+    </dependencies>
 </project>
