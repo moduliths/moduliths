@@ -1,0 +1,48 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.olivergierke.moduliths</groupId>
+		<artifactId>moduliths</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<name>Moduliths - Docs</name>
+	<artifactId>moduliths-docs</artifactId>
+
+	<properties>
+		<structurizr.version>1.0.0-RC6</structurizr.version>
+	</properties>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>de.olivergierke.moduliths</groupId>
+			<artifactId>moduliths-test</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>de.olivergierke.moduliths</groupId>
+			<artifactId>moduliths-sample</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.structurizr</groupId>
+			<artifactId>structurizr-core</artifactId>
+			<version>${structurizr.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.structurizr</groupId>
+			<artifactId>structurizr-plantuml</artifactId>
+			<version>${structurizr.version}</version>
+		</dependency>
+
+	</dependencies>
+
+</project>
