@@ -22,11 +22,13 @@ import lombok.RequiredArgsConstructor;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.filter.TypeExcludeFilters;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.BootstrapWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Bootstraps the module containing the package of the test class annotated with {@link ModuleTest}. Will apply the
@@ -44,6 +46,7 @@ import org.springframework.test.context.BootstrapWith;
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
 @TypeExcludeFilters(ModuleTypeExcludeFilter.class)
 @ImportAutoConfiguration(ModuleTestAutoConfiguration.class)
+@ExtendWith(SpringExtension.class)
 public @interface ModuleTest {
 
 	@AliasFor("mode")

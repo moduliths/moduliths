@@ -41,6 +41,13 @@
 			<artifactId>archunit</artifactId>
 			<version>0.9.1</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.2.0</version>
+			<optional>true</optional>
+		</dependency>
 
 	</dependencies>
 </project>
