@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths.model.test;
+package de.olivergierke.moduliths.test;
 
 import lombok.EqualsAndHashCode;
 
@@ -29,10 +29,10 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 @EqualsAndHashCode(callSuper = false)
 class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 
-	private final Class<?> testClass;
+	private final ModuleTestExecution execution;
 
 	public ModuleTypeExcludeFilter(Class<?> testClass) {
-		this.testClass = testClass;
+		this.execution = ModuleTestExecution.of(testClass);
 	}
 
 	/* 
@@ -41,8 +41,6 @@ class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 	 */
 	@Override
 	public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-
-		return ModuleTestExecution.of(testClass) //
-				.includes(metadataReader.getClassMetadata().getClassName());
+		return execution.includes(metadataReader.getClassMetadata().getClassName());
 	}
 }

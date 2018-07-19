@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths.model.test;
+package de.olivergierke.moduliths.test;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,7 +37,6 @@ import org.springframework.util.StringUtils;
  * @author Oliver Gierke
  */
 @Configuration
-// @AutoConfigureBefore({ JpaRepositoriesAutoConfiguration.class, HibernateJpaAutoConfiguration.class })
 @Import(ModuleTestAutoConfiguration.AutoConfigurationAndEntityScanPackageCustomizer.class)
 class ModuleTestAutoConfiguration {
 
@@ -62,7 +61,6 @@ class ModuleTestAutoConfiguration {
 
 			setBasePackagesOn(registry, AUTOCONFIG_PACKAGES, "packages", basePackages);
 			setBasePackagesOn(registry, ENTITY_SCAN_PACKAGE, "packageNames", basePackages);
-
 		}
 
 		private void setBasePackagesOn(BeanDefinitionRegistry registry, String beanName, String fieldName,

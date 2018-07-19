@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.acme.myproject;
+package com.acme.myproject.moduleB;
 
-import de.olivergierke.moduliths.test.ModuleTest;
-import de.olivergierke.moduliths.test.ModuleTest.BootstrapMode;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import org.springframework.core.annotation.AliasFor;
+import com.acme.myproject.moduleA.SomeEventA;
 
 /**
  * @author Oliver Gierke
  */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@ModuleTest(verifyAutomatically = false)
-public @interface NonVerifyingModuleTest {
+@Component
+class SomeEventListenerB {
 
-	@AliasFor(annotation = ModuleTest.class, attribute = "mode")
-	BootstrapMode value() default BootstrapMode.STANDALONE;
+	@EventListener
+	void on(SomeEventA event) {}
 }

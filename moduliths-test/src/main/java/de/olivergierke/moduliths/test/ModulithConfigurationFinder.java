@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.olivergierke.moduliths.model.test;
+package de.olivergierke.moduliths.test;
 
 import de.olivergierke.moduliths.Modulith;
 

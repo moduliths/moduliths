@@ -17,11 +17,17 @@ package de.olivergierke.moduliths.model;
 
 import static org.assertj.core.api.Assertions.*;
 
+import de.olivergierke.moduliths.model.Module;
+import de.olivergierke.moduliths.model.Modules;
+import de.olivergierke.moduliths.model.NamedInterface;
+import de.olivergierke.moduliths.model.Module.DependencyType;
+
 import java.util.Optional;
 
 import org.junit.Test;
 
 import com.acme.myproject.Application;
+import com.acme.myproject.moduleA.SomeConfigurationA.SomeAtBeanComponentA;
 
 /**
  * @author Oliver Gierke
@@ -37,7 +43,7 @@ public class ModulesIntegrationTest {
 		Optional<Module> module = modules.getModuleByName("moduleB");
 
 		assertThat(module).hasValueSatisfying(it -> {
-			assertThat(it.getDependencies(modules)).anySatisfy(dep -> {
+			assertThat(it.getBootstrapDependencies(modules)).anySatisfy(dep -> {
 				assertThat(dep.getName()).isEqualTo("moduleA");
 			});
 		});
@@ -73,6 +79,28 @@ public class ModulesIntegrationTest {
 		assertThat(module).hasValueSatisfying(it -> {
 			assertThat(it.getNamedInterfaces().stream().map(NamedInterface::getName)) //
 					.containsExactlyInAnyOrder("API", "SPI");
+		});
+	}
+
+	@Test
+	public void discoversAtBeanComponent() {
+
+		Optional<Module> module = modules.getModuleByName("moduleA");
+
+		assertThat(module).hasValueSatisfying(it -> {
+			assertThat(it.getSpringBeans().contains(SomeAtBeanComponentA.class.getName())).isTrue();
+		});
+	}
+
+	@Test
+	public void moduleBListensToModuleA() {
+
+		Optional<Module> module = modules.getModuleByName("moduleB");
+		Module moduleA = modules.getModuleByName("moduleA").orElseThrow(IllegalStateException::new);
+
+		assertThat(module).hasValueSatisfying(it -> {
+			assertThat(it.getDependencies(modules, DependencyType.EVENT_LISTENER)) //
+					.contains(moduleA);
 		});
 	}
 }

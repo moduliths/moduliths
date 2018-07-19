@@ -16,19 +16,13 @@
 package de.olivergierke.moduliths.model;
 
 import static com.tngtech.archunit.base.DescribedPredicate.*;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 import static java.util.stream.Collectors.*;
 
 import de.olivergierke.moduliths.Modulith;
+import lombok.Value;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,9 +43,14 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
  */
 public class Modules implements Iterable<Module> {
 
+	private static final Map<Key, Modules> CACHE = new HashMap<>();
+
 	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList(//
+			"javax.persistence", //
+			"org.springframework.context.event", //
+			"org.springframework.data.repository", //
 			"org.springframework.stereotype", //
-			"org.springframework.data.repository" //
+			"org.springframework.web.bind.annotation" //
 	);
 
 	private final Map<String, Module> modules;
@@ -105,20 +104,25 @@ public class Modules implements Iterable<Module> {
 	 */
 	public static Modules of(Class<?> modulithType, DescribedPredicate<JavaClass> ignored) {
 
-		Assert.notNull(modulithType, "Modulith root type must not be null!");
-		Assert.notNull(ignored, "Predicate to describe ignored types must not be null!");
+		Key key = Key.of(modulithType, ignored);
 
-		Modulith modulith = AnnotatedElementUtils.findMergedAnnotation(modulithType, Modulith.class);
+		return CACHE.computeIfAbsent(key, it -> {
 
-		Assert.notNull(modulith,
-				() -> String.format("Modules can only be retrieved from a @%s root type, but %s is not annotated with @%s",
-						Modulith.class.getSimpleName(), modulithType.getSimpleName(), Modulith.class.getSimpleName()));
+			Assert.notNull(modulithType, "Modulith root type must not be null!");
+			Assert.notNull(ignored, "Predicate to describe ignored types must not be null!");
 
-		Set<String> basePackages = new HashSet<>();
-		basePackages.add(modulithType.getPackage().getName());
-		basePackages.addAll(Arrays.asList(modulith.additionalPackages()));
+			Modulith modulith = AnnotatedElementUtils.findMergedAnnotation(modulithType, Modulith.class);
 
-		return new Modules(basePackages, ignored, modulith.useFullyQualifiedModuleNames());
+			Assert.notNull(modulith,
+					() -> String.format("Modules can only be retrieved from a @%s root type, but %s is not annotated with @%s",
+							Modulith.class.getSimpleName(), modulithType.getSimpleName(), Modulith.class.getSimpleName()));
+
+			Set<String> basePackages = new HashSet<>();
+			basePackages.add(modulithType.getPackage().getName());
+			basePackages.addAll(Arrays.asList(modulith.additionalPackages()));
+
+			return new Modules(basePackages, ignored, modulith.useFullyQualifiedModuleNames());
+		});
 	}
 
 	/**
@@ -190,9 +194,13 @@ public class Modules implements Iterable<Module> {
 			return;
 		}
 
-		SlicesRuleDefinition.slices().matching("") //
-				.should().beFreeOfCycles() //
-				.check(allClasses);
+		rootPackages.forEach(it -> {
+
+			SlicesRuleDefinition.slices() //
+					.matching(it.getName().concat(".(*)..")) //
+					.should().beFreeOfCycles() //
+					.check(allClasses.that(resideInAPackage(it.getName().concat(".."))));
+		});
 
 		modules.values().forEach(it -> {
 			it.verifyDependencies(this);
@@ -208,6 +216,13 @@ public class Modules implements Iterable<Module> {
 	@Override
 	public Iterator<Module> iterator() {
 		return modules.values().iterator();
+	}
+
+	@Value(staticConstructor = "of")
+	private static final class Key {
+
+		Class<?> type;
+		DescribedPredicate<?> predicate;
 	}
 
 	private static Stream<JavaPackage> getSubpackages(Classes types, String rootPackage) {

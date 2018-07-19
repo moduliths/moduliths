@@ -17,8 +17,8 @@ package com.acme.myproject.moduleC;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.model.test.ModuleTest.BootstrapMode;
-import de.olivergierke.moduliths.model.test.TestUtils;
+import de.olivergierke.moduliths.test.TestUtils;
+import de.olivergierke.moduliths.test.ModuleTest.BootstrapMode;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

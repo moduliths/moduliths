@@ -16,6 +16,8 @@
 package de.olivergierke.moduliths.model;
 
 import static com.tngtech.archunit.core.domain.Formatters.*;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.*;
 import static java.lang.System.*;
 
 import lombok.EqualsAndHashCode;
@@ -24,21 +26,26 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaField;
-import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 
@@ -47,6 +54,8 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
  */
 @EqualsAndHashCode
 public class Module {
+
+	private static final DescribedPredicate<JavaClass> NO_CLASS = DescribedPredicate.alwaysFalse();
 
 	private final @Getter JavaPackage basePackage;
 	private final Optional<de.olivergierke.moduliths.Module> moduleAnnotation;
@@ -62,10 +71,21 @@ public class Module {
 		this.namedInterfaces = discoverNamedInterfaces(basePackage);
 		this.useFullyQualifiedModuleNames = useFullyQualifiedModuleNames;
 
-		this.springBeans = Suppliers.memoize(
-				() -> basePackage.that(JavaClass.Predicates.assignableTo("org.springframework.data.repository.Repository")
-						.or(CanBeAnnotated.Predicates.annotatedWith(Component.class)) //
-						.or(CanBeAnnotated.Predicates.metaAnnotatedWith(Component.class))));
+		this.springBeans = Suppliers.memoize(() -> filterSpringBeans(basePackage));
+	}
+
+	private static Classes filterSpringBeans(JavaPackage source) {
+
+		DescribedPredicate<JavaClass> atBeanTypes = source.that(annotatedWith(Configuration.class)).stream() //
+				.flatMap(it -> it.getMethods().stream()) //
+				.filter(it -> it.isAnnotatedWith(Bean.class) || it.isMetaAnnotatedWith(Bean.class)) //
+				.map(JavaMethod::getReturnType) //
+				.map(JavaClass::reflect) //
+				.reduce(NO_CLASS, (it, type) -> it.or(type(type)), (left, right) -> right);
+
+		return source.that(atBeanTypes.or(assignableTo("org.springframework.data.repository.Repository") //
+				.or(annotatedWith(Component.class)) //
+				.or(metaAnnotatedWith(Component.class))));
 	}
 
 	private static NamedInterfaces discoverNamedInterfaces(JavaPackage basePackage) {
@@ -90,20 +110,29 @@ public class Module {
 				.orElseGet(() -> basePackage.getLocalName());
 	}
 
+	public List<Module> getDependencies(Modules modules, DependencyType... type) {
+
+		return getAllModuleDependencies(modules) //
+				.filter(it -> type.length == 0 ? true : Arrays.stream(type).anyMatch(it::hasType)) //
+				.map(it -> modules.getModuleByType(it.target)) //
+				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
+				.collect(Collectors.toList());
+	}
+
 	/**
 	 * Returns all modules that contain types which the types of the current module depend on.
 	 *
 	 * @param modules must not be {@literal null}.
 	 * @return
 	 */
-	public List<Module> getDependencies(Modules modules) {
+	public List<Module> getBootstrapDependencies(Modules modules) {
 
 		Assert.notNull(modules, "Modules must not be null!");
 
-		return getDependencies(modules, DependencyDepth.IMMEDIATE);
+		return getBootstrapDependencies(modules, DependencyDepth.IMMEDIATE);
 	}
 
-	public List<Module> getDependencies(Modules modules, DependencyDepth depth) {
+	public List<Module> getBootstrapDependencies(Modules modules, DependencyDepth depth) {
 
 		Assert.notNull(modules, "Modules must not be null!");
 		Assert.notNull(depth, "Dependency depth must not be null!");
@@ -152,7 +181,9 @@ public class Module {
 	}
 
 	public void verifyDependencies(Modules modules) {
-		getDependenciesToOther(modules).forEach(it -> it.isValidDependencyWithin(modules));
+
+		getAllModuleDependencies(modules) //
+				.forEach(it -> it.isValidDependencyWithin(modules));
 	}
 
 	/*
@@ -180,7 +211,7 @@ public class Module {
 
 		if (modules != null) {
 
-			List<Module> dependencies = getDependencies(modules);
+			List<Module> dependencies = getBootstrapDependencies(modules);
 
 			builder.append("> Direct dependencies: ");
 			builder.append(dependencies.isEmpty() ? "none"
@@ -205,6 +236,12 @@ public class Module {
 		return builder.toString();
 	}
 
+	private Stream<ModuleDependency> getAllModuleDependencies(Modules modules) {
+
+		return basePackage.stream() //
+				.flatMap(it -> getModuleDependenciesOf(it, modules));
+	}
+
 	private Stream<Module> streamDependencies(Modules modules, DependencyDepth depth) {
 
 		switch (depth) {
@@ -223,14 +260,12 @@ public class Module {
 
 	private Stream<Module> getDirectDependencies(Modules modules) {
 
-		return getDependenciesToOther(modules) //
+		return getSpringBeans().stream() //
+				.flatMap(it -> ModuleDependency.fromConstructorOf(it, DependencyType.USES_COMPONENT)) //
+				.filter(it -> isDependencyToOtherModule(it.target, modules)) //
 				.map(it -> modules.getModuleByType(it.target)) //
 				.distinct() //
 				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty));
-	}
-
-	private Stream<ModuleDependency> getDependenciesToOther(Modules modules) {
-		return basePackage.stream().flatMap(it -> getModuleDependenciesOf(it, modules));
 	}
 
 	private Stream<ModuleDependency> getModuleDependenciesOf(JavaClass type, Modules modules) {
@@ -252,7 +287,7 @@ public class Module {
 	}
 
 	private boolean isDependencyToOtherModule(JavaClass dependency, Modules modules) {
-		return modules.contains(dependency) && !this.contains(dependency);
+		return modules.contains(dependency) && !contains(dependency);
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromFields(JavaClass type, Modules modules) {
@@ -276,11 +311,17 @@ public class Module {
 	@RequiredArgsConstructor
 	private static class ModuleDependency {
 
-		private final @NonNull JavaClass origin, target;
+		private final @NonNull @Getter JavaClass origin, target;
 		private final @NonNull String description;
+		private final @NonNull DependencyType type;
 
 		ModuleDependency(Dependency dependency) {
-			this(dependency.getOriginClass(), dependency.getTargetClass(), dependency.getDescription());
+			this(dependency.getOriginClass(), dependency.getTargetClass(), dependency.getDescription(),
+					DependencyType.forDependency(dependency));
+		}
+
+		boolean hasType(DependencyType type) {
+			return this.type.equals(type);
 		}
 
 		void isValidDependencyWithin(Modules modules) {
@@ -310,14 +351,17 @@ public class Module {
 
 			String description = createDescription(codeUnit, parameter, "parameter");
 
-			return new ModuleDependency(codeUnit.getOwner(), parameter, description);
+			DependencyType type = DependencyType.forCodeUnit(codeUnit) //
+					.or(() -> DependencyType.forParameter(parameter));
+
+			return new ModuleDependency(codeUnit.getOwner(), parameter, description, type);
 		}
 
 		static ModuleDependency fromCodeUnitReturnType(JavaCodeUnit codeUnit) {
 
 			String description = createDescription(codeUnit, codeUnit.getReturnType(), "return type");
 
-			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getReturnType(), description);
+			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getReturnType(), description, DependencyType.DEFAULT);
 		}
 
 		static ModuleDependency fromField(JavaField field) {
@@ -325,7 +369,17 @@ public class Module {
 			String description = String.format("field %s is of type %s in %s", field.getFullName(), field.getType().getName(),
 					formatLocation(field.getOwner(), 0));
 
-			return new ModuleDependency(field.getOwner(), field.getType(), description);
+			DependencyType type = DependencyType.forField(field);
+
+			return new ModuleDependency(field.getOwner(), field.getType(), description, type);
+		}
+
+		static Stream<ModuleDependency> fromConstructorOf(JavaClass source, DependencyType type) {
+
+			return source.getConstructors().stream() //
+					.flatMap(it -> it.getParameters().stream() //
+							.map(parameter -> new ModuleDependency(source, parameter, createDescription(it, source, "constructor"),
+									type)));
 		}
 
 		static Stream<ModuleDependency> allFrom(JavaCodeUnit codeUnit) {
@@ -348,6 +402,47 @@ public class Module {
 			String location = formatLocation(codeUnit.getOwner(), 0);
 
 			return String.format("%s declares %s in %s", codeUnitDescription, declaration, location);
+		}
+	}
+
+	public enum DependencyType {
+
+		USES_COMPONENT,
+
+		ENTITY,
+
+		EVENT_LISTENER,
+
+		DEFAULT {
+
+			/* 
+			 * (non-Javadoc)
+			 * @see de.olivergierke.moduliths.test.model.Module.ModuleDependency.DependencyType#or(com.tngtech.archunit.thirdparty.com.google.common.base.Supplier)
+			 */
+			@Override
+			public DependencyType or(Supplier<DependencyType> supplier) {
+				return supplier.get();
+			}
+		};
+
+		public static DependencyType forParameter(JavaClass type) {
+			return type.isAnnotatedWith("javax.persistence.Entity") ? ENTITY : DEFAULT;
+		}
+
+		public static DependencyType forCodeUnit(JavaCodeUnit codeUnit) {
+			return codeUnit.isAnnotatedWith(EventListener.class) ? EVENT_LISTENER : DEFAULT;
+		}
+
+		public static DependencyType forDependency(Dependency dependency) {
+			return forParameter(dependency.getTargetClass());
+		}
+
+		public static DependencyType forField(JavaField field) {
+			return forParameter(field.getType());
+		}
+
+		public DependencyType or(Supplier<DependencyType> supplier) {
+			return this;
 		}
 	}
 }

@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths.model.test;
+package de.olivergierke.moduliths.test;
 
 import de.olivergierke.moduliths.model.JavaPackage;
 import de.olivergierke.moduliths.model.Module;
 import de.olivergierke.moduliths.model.Modules;
-import de.olivergierke.moduliths.model.test.ModuleTest.BootstrapMode;
+import de.olivergierke.moduliths.test.ModuleTest.BootstrapMode;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -39,9 +43,13 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
  * @author Oliver Gierke
  */
 @Slf4j
+@EqualsAndHashCode(of = "key")
 public class ModuleTestExecution implements Iterable<Module> {
 
-	private static Map<Class<?>, ModuleTestExecution> EXECUTIONS = new HashMap<>();
+	private static Map<Class<?>, Class<?>> MODULITH_TYPES = new HashMap<>();
+	private static Map<Key, ModuleTestExecution> EXECUTIONS = new HashMap<>();
+
+	private final Key key;
 
 	private final @Getter BootstrapMode bootstrapMode;
 	private final @Getter Module module;
@@ -50,16 +58,12 @@ public class ModuleTestExecution implements Iterable<Module> {
 	private final Supplier<List<JavaPackage>> basePackages;
 	private final Supplier<List<Module>> dependencies;
 
-	private ModuleTestExecution(Class<?> type) {
+	private ModuleTestExecution(ModuleTest annotation, Modules modules, Module module) {
 
-		ModuleTest annotation = AnnotatedElementUtils.findMergedAnnotation(type, ModuleTest.class);
-		String packageName = type.getPackage().getName();
-
-		this.modules = Modules.of(new ModulithConfigurationFinder().findFromClass(type));
+		this.key = Key.of(module.getBasePackage().getName(), annotation);
+		this.modules = modules;
 		this.bootstrapMode = annotation.mode();
-		this.module = modules.getModuleByBasePackage(packageName) //
-				.orElseThrow(
-						() -> new IllegalStateException(String.format("Couldn't find module for package '%s'!", packageName)));
+		this.module = module;
 
 		this.basePackages = Suppliers.memoize(() -> {
 
@@ -71,7 +75,7 @@ public class ModuleTestExecution implements Iterable<Module> {
 			return Stream.concat(moduleBasePackages, extraPackages).collect(Collectors.toList());
 		});
 
-		this.dependencies = Suppliers.memoize(() -> module.getDependencies(modules, bootstrapMode.getDepth()));
+		this.dependencies = Suppliers.memoize(() -> module.getBootstrapDependencies(modules, bootstrapMode.getDepth()));
 
 		if (annotation.verifyAutomatically()) {
 			verify();
@@ -79,7 +83,19 @@ public class ModuleTestExecution implements Iterable<Module> {
 	}
 
 	public static ModuleTestExecution of(Class<?> type) {
-		return EXECUTIONS.computeIfAbsent(type, ModuleTestExecution::new);
+
+		ModuleTest annotation = AnnotatedElementUtils.findMergedAnnotation(type, ModuleTest.class);
+		String packageName = type.getPackage().getName();
+
+		Class<?> modulithType = MODULITH_TYPES.computeIfAbsent(type,
+				it -> new ModulithConfigurationFinder().findFromPackage(packageName));
+		Modules modules = Modules.of(modulithType);
+		Module module = modules.getModuleByBasePackage(packageName) //
+				.orElseThrow(
+						() -> new IllegalStateException(String.format("Package %s is not part of any module!", packageName)));
+
+		return EXECUTIONS.computeIfAbsent(Key.of(module.getBasePackage().getName(), annotation),
+				it -> new ModuleTestExecution(annotation, modules, module));
 	}
 
 	/**
@@ -126,5 +142,13 @@ public class ModuleTestExecution implements Iterable<Module> {
 	@Override
 	public Iterator<Module> iterator() {
 		return modules.iterator();
+	}
+
+	@Value
+	@RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
+	private static class Key {
+
+		String moduleBasePackage;
+		ModuleTest annotation;
 	}
 }

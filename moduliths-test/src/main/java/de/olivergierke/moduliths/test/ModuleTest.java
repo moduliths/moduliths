@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths.model.test;
+package de.olivergierke.moduliths.test;
 
 import de.olivergierke.moduliths.model.Module.DependencyDepth;
 import lombok.Getter;
@@ -27,7 +27,6 @@ import org.springframework.boot.test.autoconfigure.filter.TypeExcludeFilters;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.BootstrapWith;
-import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Bootstraps the module containing the package of the test class annotated with {@link ModuleTest}. Will apply the
@@ -44,7 +43,6 @@ import org.springframework.test.context.ContextConfiguration;
 @Retention(RetentionPolicy.RUNTIME)
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
 @TypeExcludeFilters(ModuleTypeExcludeFilter.class)
-@ContextConfiguration(loader = ModuleContextLoader.class)
 @ImportAutoConfiguration(ModuleTestAutoConfiguration.class)
 public @interface ModuleTest {
 

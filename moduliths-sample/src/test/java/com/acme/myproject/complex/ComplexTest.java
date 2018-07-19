@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import de.olivergierke.moduliths.model.NamedInterface;
 import de.olivergierke.moduliths.model.NamedInterfaces;
-import de.olivergierke.moduliths.model.test.ModuleTestExecution;
+import de.olivergierke.moduliths.test.ModuleTestExecution;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

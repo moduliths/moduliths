@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths.model.test;
+package de.olivergierke.moduliths.test;
 
 import static org.assertj.core.api.Assertions.*;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -45,7 +46,7 @@ public class TestUtils {
 
 		AssertableApplicationContext context = AssertableApplicationContext.get(() -> {
 
-			ModuleContextLoader loader = new ModuleContextLoader();
+			SpringBootContextLoader loader = new SpringBootContextLoader();
 
 			try {
 
