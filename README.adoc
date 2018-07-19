@@ -5,6 +5,41 @@ A playground to build technology supporting the development of modular monolithi
 NOTE: **tl;dr:** Modulith is a <<modules,convention based (but customizable) approach to use Java packages to define logical modules>> in monolithic Spring Boot applications, accompanied by an Spring Boot integration test extension to <<modules.running-tests,bootstrap tests for individual modules>> only.
 The tests also structurally validate the module structure.
 
+[[quickstart]]
+== Quickstart
+
+1. Create a simple Spring Boot application (e.g. via Spring Initializer.
+2. Add the Moduliths dependencies to your project:
++
+[source,xml]
+----
+<dependencies>
+  <!-- For the @Modulith annotation -->
+  <dependency>
+    <groupId>de.olivergierke.moduliths</groupId>
+    <artifactId>moduliths-core</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  <dependency>
+
+  <!-- Test support -->
+  <dependency>
+    <groupId>de.olivergierke.moduliths</groupId>
+    <artifactId>moduliths-test</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <scope>test</scope>
+  <dependency>
+</dependencies>
+
+<repositories>
+  <repository>
+    <id>spring-snapshots</id>
+    <url>https://repo.spring.io/libs-snapshot</url>
+  </repository>
+</repositories>
+----
+3. Setup your package structure like described <<modules,here>>.
+4. Create a module test like described <<modules.running-tests,here>>.
+
 [[context]]
 == Context
 
