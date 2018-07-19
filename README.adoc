@@ -2,6 +2,10 @@
 
 A playground to build technology supporting the development of modular monolithic (modulithic) Java applications.
 
+NOTE: **tl;dr:** Modulith is a <<modules,convention based (but customizable) approach to use Java packages to define logical modules>> in monolithic Spring Boot applications, accompanied by an Spring Boot integration test extension to <<modules.running-tests,bootstrap tests for individual modules>> only.
+The tests also structurally validate the module structure.
+
+[[context]]
 == Context
 
 When it comes to designing applications we currently deal with two architectural approaches: monolithic applications and microservices.
@@ -14,6 +18,7 @@ Microservices on the other hand promise stronger means of separation but at the 
 This repo acts as a playground to experiment with different approaches to allow defining modular monoliths, so that it's easy to maintain modularity over time and detect violations early.
 This will keep the ability to modify and advance the codebase over time and ease the effort to to split up the system in the attempt to extract parts of it into a dedicated project.
 
+[[the-architecture-code-gap]]
 === The architecture-code-gap
 
 In software projects, architectural design decisions and constraints are usually defined in some way and then have to be implemented in a codebase.
@@ -28,12 +33,14 @@ The more seamless an architectural rule validation system integrates with the co
 An architectural rule that can be verified by the compiler is preferred over a rule verified by executing a test, which in turn is preferred over a verification via dedicated build steps.
 2. _**Integration with existing tools**_ - Even in combination with existing tools, it might just help them to ship generic architectural rules out of the box with the developer just following conventions or explicitly annotating code to trigger the actual validation.
 
+[[design-goals]]
 == Design goals
 
 * Enable developers to write architecturally evident code, i.e. provide means to express architectural concepts in code to close the gap between the two.
 * Provide means to verify defined architectectural constraints as close as possible to the code (by the compiler, through tests or additional build tools).
 * As little invasive as possible technology. I.e. we prefer documented conventions over annotations over required type dependencies.
 
+[[feature-set]]
 == Current feature set
 
 [[modules]]
@@ -268,8 +275,10 @@ Includes Spring integration via automatic stereotype annotation detection.
 [bibliography]
 === Further resources
 
-- [[[sos]]] Oliver Gierke -- Refactoring to a System of Systems (Slidedeck, Recording)
+- [[[safd]]] Simon Brown -- Software Architecture for Developers (https://leanpub.com/b/software-architecture[Books], https://softwarearchitecturefordevelopers.com/[Website])
+- [[[sos]]] Oliver Gierke -- Refactoring to a System of Systems (https://speakerdeck.com/olivergierke/refactoring-to-a-system-of-systems[Slidedeck], https://www.youtube.com/watch?v=VWefNT8Lb74[Recording])
+- [[[whoops]]] Oliver Gierke -- Whoops, where did my architecture go? (http://olivergierke.de/2013/01/whoops-where-did-my-architecture-go/[Webpage])
 
 [glossary]
 === Glossary
-Named Interface:: Given a module, a sub-set of types that constitute candidates for referral by other modules.
+Named Interface:: Given a module, a sub-set of types that constitute the API of the module, i.e. candidates for referral by other modules.
