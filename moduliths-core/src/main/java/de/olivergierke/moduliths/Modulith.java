@@ -30,6 +30,8 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
 
 /**
+ * Defines a Spring Boot application to follow the Modulith structuring conventions.
+ * 
  * @author Oliver Gierke
  */
 @Documented
@@ -53,8 +55,8 @@ public @interface Modulith {
 	boolean useFullyQualifiedModuleNames() default false;
 
 	/**
-	 * Defines which additional packages shall be considered shall be considered as modulith base packages in addition to
-	 * the one of the class carrying this annotation.
+	 * Defines which additional packages shall be considered as modulith base packages in addition to the one of the class
+	 * carrying this annotation.
 	 * 
 	 * @return
 	 */
