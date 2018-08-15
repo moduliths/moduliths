@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 
 import org.moduliths.model.Module;
 import org.moduliths.model.Modules;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.test.context.ContextConfigurationAttributes;
@@ -75,7 +76,12 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
 			logModules(testExecution);
 
-			context.getBeanFactory().registerSingleton(BEAN_NAME, testExecution);
+			ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
+			beanFactory.registerSingleton(BEAN_NAME, testExecution);
+
+			DefaultPublishedEvents events = new DefaultPublishedEvents();
+			beanFactory.registerSingleton(events.getClass().getName(), events);
+			context.addApplicationListener(events);
 		}
 
 		private static void logModules(ModuleTestExecution execution) {

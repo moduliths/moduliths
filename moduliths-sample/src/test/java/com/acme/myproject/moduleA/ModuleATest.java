@@ -15,10 +15,13 @@
  */
 package com.acme.myproject.moduleA;
 
+// import static org.moduliths.test.assertj.PublishedEventAssertions.*;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.moduliths.test.PublishedEvents;
+import org.moduliths.test.PublishedEvents.TypedPublishedEvents;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -28,13 +31,14 @@ import com.acme.myproject.NonVerifyingModuleTest;
 import com.acme.myproject.moduleB.ServiceComponentB;
 
 /**
- * @author Oliver Gierke
+ * @author Oliver Drotbohm
  */
 @NonVerifyingModuleTest
 @RunWith(SpringRunner.class)
 public class ModuleATest {
 
 	@Autowired ApplicationContext context;
+	@Autowired PublishedEvents events;
 
 	@Test
 	public void bootstrapsModuleAOnly() {
@@ -43,5 +47,16 @@ public class ModuleATest {
 
 		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
 				.isThrownBy(() -> context.getBean(ServiceComponentB.class));
+	}
+
+	@Test // #17
+	public void assertEventsFired() {
+
+		context.getBean(ServiceComponentA.class).fireEvent();
+
+		TypedPublishedEvents<SomeEventA> matching = events.ofType(SomeEventA.class) //
+				.matching(it -> it.getMessage().equals("Message"));
+
+		assertThat(matching).hasSize(1);
 	}
 }
