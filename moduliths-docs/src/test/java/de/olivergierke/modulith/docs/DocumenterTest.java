@@ -1,11 +1,3 @@
-package de.olivergierke.modulith.docs;
-
-import java.io.IOException;
-
-import org.junit.Test;
-
-import com.acme.myproject.Application;
-
 /*
  * Copyright 2018 the original author or authors.
  *
@@ -21,6 +13,13 @@ import com.acme.myproject.Application;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package de.olivergierke.modulith.docs;
+
+import java.io.IOException;
+
+import org.junit.Test;
+
+import com.acme.myproject.Application;
 
 /**
  * @author Oliver Gierke
