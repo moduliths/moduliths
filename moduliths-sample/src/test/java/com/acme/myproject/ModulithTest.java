@@ -44,8 +44,8 @@ public class ModulithTest {
 				.isThrownBy(() -> Modules.of(Application.class).verify()) //
 				.withMessageContaining(String.format("Module '%s' depends on non-exposed type %s within module 'moduleB'",
 						INVALID_MODULE_NAME, componentName))
-				.withMessageContaining(String.format("%s.<init>(%s) declares parameter %s", InvalidComponent.class.getName(),
-						componentName, componentName));
+				.withMessageContaining(String.format("<%s.<init>(%s)> has parameter of type <%s>",
+						InvalidComponent.class.getName(), componentName, componentName));
 	}
 
 	@Test

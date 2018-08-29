@@ -15,16 +15,12 @@
  */
 package com.acme.myproject.invalid;
 
-import lombok.RequiredArgsConstructor;
-
 import com.acme.myproject.moduleB.internal.InternalComponentB;
 
 /**
  * @author Oliver Gierke
  */
-@RequiredArgsConstructor
 public class InvalidComponent {
 
-	// This dependency is invalid as it refers to a component in an internal package
-	private final InternalComponentB invalidComponent;
+	InvalidComponent(InternalComponentB invalidComponent) {}
 }
