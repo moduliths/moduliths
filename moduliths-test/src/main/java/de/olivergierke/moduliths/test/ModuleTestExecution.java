@@ -54,6 +54,7 @@ public class ModuleTestExecution implements Iterable<Module> {
 	private final @Getter BootstrapMode bootstrapMode;
 	private final @Getter Module module;
 	private final @Getter Modules modules;
+	private final @Getter List<Module> extraIncludes;
 
 	private final Supplier<List<JavaPackage>> basePackages;
 	private final Supplier<List<Module>> dependencies;
@@ -65,17 +66,21 @@ public class ModuleTestExecution implements Iterable<Module> {
 		this.bootstrapMode = annotation.mode();
 		this.module = module;
 
+		this.extraIncludes = getExtraModules(annotation, modules).collect(Collectors.toList());
+
 		this.basePackages = Suppliers.memoize(() -> {
 
 			Stream<JavaPackage> moduleBasePackages = module.getBasePackages(modules, bootstrapMode.getDepth());
-			Stream<JavaPackage> extraPackages = Arrays.stream(annotation.extraIncludes()) //
-					.map(modules::getModuleByName).flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
-					.map(Module::getBasePackage);
+			Stream<JavaPackage> extraPackages = extraIncludes.stream().map(Module::getBasePackage);
 
 			return Stream.concat(moduleBasePackages, extraPackages).collect(Collectors.toList());
 		});
 
-		this.dependencies = Suppliers.memoize(() -> module.getBootstrapDependencies(modules, bootstrapMode.getDepth()));
+		this.dependencies = Suppliers.memoize(() -> {
+
+			Stream<Module> bootstrapDependencies = module.getBootstrapDependencies(modules, bootstrapMode.getDepth());
+			return Stream.concat(bootstrapDependencies, extraIncludes.stream()).collect(Collectors.toList());
+		});
 
 		if (annotation.verifyAutomatically()) {
 			verify();
@@ -142,6 +147,13 @@ public class ModuleTestExecution implements Iterable<Module> {
 	@Override
 	public Iterator<Module> iterator() {
 		return modules.iterator();
+	}
+
+	private static Stream<Module> getExtraModules(ModuleTest annotation, Modules modules) {
+
+		return Arrays.stream(annotation.extraIncludes()) //
+				.map(modules::getModuleByName) //
+				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty));
 	}
 
 	@Value

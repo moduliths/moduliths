@@ -125,19 +125,19 @@ public class Module {
 	 * @param modules must not be {@literal null}.
 	 * @return
 	 */
-	public List<Module> getBootstrapDependencies(Modules modules) {
+	public Stream<Module> getBootstrapDependencies(Modules modules) {
 
 		Assert.notNull(modules, "Modules must not be null!");
 
 		return getBootstrapDependencies(modules, DependencyDepth.IMMEDIATE);
 	}
 
-	public List<Module> getBootstrapDependencies(Modules modules, DependencyDepth depth) {
+	public Stream<Module> getBootstrapDependencies(Modules modules, DependencyDepth depth) {
 
 		Assert.notNull(modules, "Modules must not be null!");
 		Assert.notNull(depth, "Dependency depth must not be null!");
 
-		return streamDependencies(modules, depth).collect(Collectors.toList());
+		return streamDependencies(modules, depth); // .collect(Collectors.toList());
 	}
 
 	/**
@@ -211,9 +211,9 @@ public class Module {
 
 		if (modules != null) {
 
-			List<Module> dependencies = getBootstrapDependencies(modules);
+			List<Module> dependencies = getBootstrapDependencies(modules).collect(Collectors.toList());
 
-			builder.append("> Direct dependencies: ");
+			builder.append("> Direct module dependencies: ");
 			builder.append(dependencies.isEmpty() ? "none"
 					: dependencies.stream().map(Module::getName).collect(Collectors.joining(", ")));
 			builder.append('\n');
@@ -249,16 +249,16 @@ public class Module {
 			case NONE:
 				return Stream.empty();
 			case IMMEDIATE:
-				return getDirectDependencies(modules);
+				return getDirectModuleDependencies(modules);
 			case ALL:
 			default:
-				return getDirectDependencies(modules) //
+				return getDirectModuleDependencies(modules) //
 						.flatMap(it -> Stream.concat(Stream.of(it), it.streamDependencies(modules, DependencyDepth.ALL))) //
 						.distinct();
 		}
 	}
 
-	private Stream<Module> getDirectDependencies(Modules modules) {
+	private Stream<Module> getDirectModuleDependencies(Modules modules) {
 
 		return getSpringBeans().stream() //
 				.flatMap(it -> ModuleDependency.fromConstructorOf(it, DependencyType.USES_COMPONENT)) //

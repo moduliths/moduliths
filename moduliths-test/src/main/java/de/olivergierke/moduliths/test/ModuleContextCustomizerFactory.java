@@ -87,13 +87,20 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
 			Arrays.stream(module.toString(modules).split("\n")).forEach(LOG::info);
 
+			List<Module> extraIncludes = execution.getExtraIncludes();
+
+			if (!extraIncludes.isEmpty()) {
+
+				logHeadline("Extra includes:", message);
+
+				extraIncludes.forEach(it -> LOG.info("> ".concat(it.getName())));
+			}
+
 			List<Module> dependencies = execution.getDependencies();
 
 			if (!dependencies.isEmpty()) {
 
-				LOG.info(getSeparator("=", message));
-				LOG.info("Included dependencies:");
-				LOG.info(getSeparator("=", message));
+				logHeadline("Included dependencies:", message);
 
 				dependencies.stream() //
 						.map(it -> it.toString(modules)) //
@@ -107,6 +114,18 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
 		private static String getSeparator(String character, String reference) {
 			return String.join("", Collections.nCopies(reference.length(), character));
+		}
+
+		private static void logHeadline(String headline, String reference) {
+			logHeadline(headline, reference, () -> {});
+		}
+
+		private static void logHeadline(String headline, String reference, Runnable additional) {
+
+			LOG.info(getSeparator("=", reference));
+			LOG.info(headline);
+			additional.run();
+			LOG.info(getSeparator("=", reference));
 		}
 	}
 }
