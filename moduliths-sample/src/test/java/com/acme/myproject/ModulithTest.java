@@ -20,10 +20,14 @@ import static org.assertj.core.api.Assertions.*;
 
 import de.olivergierke.moduliths.model.Modules;
 
+import java.util.Arrays;
+
 import org.junit.Test;
 
 import com.acme.myproject.invalid.InvalidComponent;
 import com.acme.myproject.moduleB.internal.InternalComponentB;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 
 /**
  * Test cases to verify the validity of the overall modulith rules
@@ -41,7 +45,7 @@ public class ModulithTest {
 		String componentName = InternalComponentB.class.getName();
 
 		assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> Modules.of(Application.class).verify()) //
+				.isThrownBy(() -> Modules.of(Application.class, withoutModules("cycleA", "cycleB")).verify()) //
 				.withMessageContaining(String.format("Module '%s' depends on non-exposed type %s within module 'moduleB'",
 						INVALID_MODULE_NAME, componentName))
 				.withMessageContaining(String.format("<%s.<init>(%s)> has parameter of type <%s>",
@@ -50,6 +54,32 @@ public class ModulithTest {
 
 	@Test
 	public void verifyModulesWithoutInvalid() {
-		Modules.of(Application.class, resideInAPackage("..".concat(INVALID_MODULE_NAME).concat(".."))).verify();
+		Modules.of(Application.class, withoutModules(INVALID_MODULE_NAME, "cycleA", "cycleB")).verify();
+	}
+
+	@Test // #28
+	public void detectsCycleBetweenModules() {
+
+		assertThatExceptionOfType(AssertionError.class) //
+				.isThrownBy(() -> Modules.of(Application.class, withoutModule(INVALID_MODULE_NAME)).verify()) //
+
+				// mentions modules
+				.withMessageContaining("cycleA") //
+				.withMessageContaining("cycleB") //
+
+				// mentions offending types
+				.withMessageContaining("CycleA") //
+				.withMessageContaining("CycleB");
+	}
+
+	private static DescribedPredicate<JavaClass> withoutModules(String... names) {
+
+		return Arrays.stream(names) //
+				.map(it -> withoutModule(it)) //
+				.reduce(DescribedPredicate.alwaysFalse(), DescribedPredicate::or, (__, right) -> right);
+	}
+
+	private static DescribedPredicate<JavaClass> withoutModule(String name) {
+		return resideInAPackage("..".concat(name).concat(".."));
 	}
 }
