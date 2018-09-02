@@ -44,7 +44,6 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
-import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
@@ -271,12 +270,11 @@ public class Module {
 	private Stream<ModuleDependency> getModuleDependenciesOf(JavaClass type, Modules modules) {
 
 		Stream<ModuleDependency> parameters = getDependenciesFromCodeUnitParameters(type, modules);
-		Stream<ModuleDependency> fieldTypes = getDependenciesFromFields(type, modules);
 		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream() //
 				.filter(dependency -> isDependencyToOtherModule(dependency.getTargetClass(), modules)) //
 				.map(ModuleDependency::new);
 
-		return Stream.concat(Stream.concat(directDependencies, parameters), fieldTypes).distinct();
+		return Stream.concat(directDependencies, parameters).distinct();
 	}
 
 	private Stream<ModuleDependency> getDependenciesFromCodeUnitParameters(JavaClass type, Modules modules) {
@@ -288,13 +286,6 @@ public class Module {
 
 	private boolean isDependencyToOtherModule(JavaClass dependency, Modules modules) {
 		return modules.contains(dependency) && !contains(dependency);
-	}
-
-	private Stream<ModuleDependency> getDependenciesFromFields(JavaClass type, Modules modules) {
-
-		return type.getFields().stream() //
-				.filter(it -> isDependencyToOtherModule(it.getType(), modules)) //
-				.map(ModuleDependency::fromField);
 	}
 
 	public enum DependencyDepth {
@@ -364,16 +355,6 @@ public class Module {
 			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getReturnType(), description, DependencyType.DEFAULT);
 		}
 
-		static ModuleDependency fromField(JavaField field) {
-
-			String description = String.format("field %s is of type %s in %s", field.getFullName(), field.getType().getName(),
-					formatLocation(field.getOwner(), 0));
-
-			DependencyType type = DependencyType.forField(field);
-
-			return new ModuleDependency(field.getOwner(), field.getType(), description, type);
-		}
-
 		static Stream<ModuleDependency> fromConstructorOf(JavaClass source, DependencyType type) {
 
 			return source.getConstructors().stream() //
@@ -435,10 +416,6 @@ public class Module {
 
 		public static DependencyType forDependency(Dependency dependency) {
 			return forParameter(dependency.getTargetClass());
-		}
-
-		public static DependencyType forField(JavaField field) {
-			return forParameter(field.getType());
 		}
 
 		public DependencyType or(Supplier<DependencyType> supplier) {

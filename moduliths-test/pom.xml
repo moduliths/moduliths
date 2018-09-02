@@ -38,8 +38,8 @@
 
 		<dependency>
 			<groupId>com.tngtech.archunit</groupId>
-			<artifactId>archunit-junit4</artifactId>
-			<version>0.9.0</version>
+			<artifactId>archunit</artifactId>
+			<version>0.9.1</version>
 		</dependency>
 
 	</dependencies>
