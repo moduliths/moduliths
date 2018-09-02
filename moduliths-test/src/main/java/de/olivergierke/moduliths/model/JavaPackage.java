@@ -56,7 +56,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 		this.packageClasses = classes.that(resideInAPackage(includeSubPackages ? name.concat("..") : name));
 		this.name = name;
 		this.directSubPackages = Suppliers.memoize(() -> packageClasses.stream() //
-				.map(it -> it.getPackage()) //
+				.map(it -> it.getPackageName()) //
 				.filter(it -> !it.equals(name)) //
 				.map(it -> extractDirectSubPackage(it)) //
 				.distinct() //
