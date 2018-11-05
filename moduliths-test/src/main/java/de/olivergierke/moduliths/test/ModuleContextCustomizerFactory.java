@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -55,7 +56,7 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
 		private static final String BEAN_NAME = ModuleTestExecution.class.getName();
 
-		private final ModuleTestExecution execution;
+		private final Supplier<ModuleTestExecution> execution;
 
 		private ModuleContextCustomizer(Class<?> testClass) {
 			this.execution = ModuleTestExecution.of(testClass);
@@ -68,9 +69,11 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 		@Override
 		public void customizeContext(ConfigurableApplicationContext context, MergedContextConfiguration mergedConfig) {
 
-			logModules(execution);
+			ModuleTestExecution testExecution = execution.get();
 
-			context.getBeanFactory().registerSingleton(BEAN_NAME, execution);
+			logModules(testExecution);
+
+			context.getBeanFactory().registerSingleton(BEAN_NAME, testExecution);
 		}
 
 		private static void logModules(ModuleTestExecution execution) {

@@ -71,9 +71,12 @@ public class ModuleTestExecution implements Iterable<Module> {
 		this.basePackages = Suppliers.memoize(() -> {
 
 			Stream<JavaPackage> moduleBasePackages = module.getBasePackages(modules, bootstrapMode.getDepth());
+			Stream<JavaPackage> sharedBasePackages = modules.getSharedModules().stream().map(it -> it.getBasePackage());
 			Stream<JavaPackage> extraPackages = extraIncludes.stream().map(Module::getBasePackage);
 
-			return Stream.concat(moduleBasePackages, extraPackages).collect(Collectors.toList());
+			Stream<JavaPackage> intermediate = Stream.concat(moduleBasePackages, extraPackages);
+
+			return Stream.concat(intermediate, sharedBasePackages).distinct().collect(Collectors.toList());
 		});
 
 		this.dependencies = Suppliers.memoize(() -> {
@@ -87,20 +90,23 @@ public class ModuleTestExecution implements Iterable<Module> {
 		}
 	}
 
-	public static ModuleTestExecution of(Class<?> type) {
+	public static java.util.function.Supplier<ModuleTestExecution> of(Class<?> type) {
 
-		ModuleTest annotation = AnnotatedElementUtils.findMergedAnnotation(type, ModuleTest.class);
-		String packageName = type.getPackage().getName();
+		return () -> {
 
-		Class<?> modulithType = MODULITH_TYPES.computeIfAbsent(type,
-				it -> new ModulithConfigurationFinder().findFromPackage(packageName));
-		Modules modules = Modules.of(modulithType);
-		Module module = modules.getModuleByBasePackage(packageName) //
-				.orElseThrow(
-						() -> new IllegalStateException(String.format("Package %s is not part of any module!", packageName)));
+			ModuleTest annotation = AnnotatedElementUtils.findMergedAnnotation(type, ModuleTest.class);
+			String packageName = type.getPackage().getName();
 
-		return EXECUTIONS.computeIfAbsent(Key.of(module.getBasePackage().getName(), annotation),
-				it -> new ModuleTestExecution(annotation, modules, module));
+			Class<?> modulithType = MODULITH_TYPES.computeIfAbsent(type,
+					it -> new ModulithConfigurationFinder().findFromPackage(packageName));
+			Modules modules = Modules.of(modulithType);
+			Module module = modules.getModuleByBasePackage(packageName) //
+					.orElseThrow(
+							() -> new IllegalStateException(String.format("Package %s is not part of any module!", packageName)));
+
+			return EXECUTIONS.computeIfAbsent(Key.of(module.getBasePackage().getName(), annotation),
+					it -> new ModuleTestExecution(annotation, modules, module));
+		};
 	}
 
 	/**

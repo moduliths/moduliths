@@ -18,6 +18,7 @@ package de.olivergierke.moduliths.test;
 import lombok.EqualsAndHashCode;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import org.springframework.boot.context.TypeExcludeFilter;
 import org.springframework.core.type.classreading.MetadataReader;
@@ -29,7 +30,7 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 @EqualsAndHashCode(callSuper = false)
 class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 
-	private final ModuleTestExecution execution;
+	private final Supplier<ModuleTestExecution> execution;
 
 	public ModuleTypeExcludeFilter(Class<?> testClass) {
 		this.execution = ModuleTestExecution.of(testClass);
@@ -41,6 +42,6 @@ class ModuleTypeExcludeFilter extends TypeExcludeFilter {
 	 */
 	@Override
 	public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-		return execution.includes(metadataReader.getClassMetadata().getClassName());
+		return execution.get().includes(metadataReader.getClassMetadata().getClassName());
 	}
 }
