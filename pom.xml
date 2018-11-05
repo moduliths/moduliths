@@ -24,15 +24,15 @@
 	</properties>
 
 	<organization>
-		<name>Oliver Gierke</name>
+		<name>Oliver Drotbohm</name>
 		<url>http://olivergierke.de</url>
 	</organization>
 
 	<developers>
 		<developer>
-			<id>olivergierke</id>
-			<name>Oliver Gierke</name>
-			<email>ogierke at pivotal.io</email>
+			<id>oliverdrotbohm</id>
+			<name>Oliver Drotbohm</name>
+			<email>odrotbohm at pivotal.io</email>
 			<organization>Pivotal Software, Inc.</organization>
 			<organizationUrl>http://www.spring.io</organizationUrl>
 			<roles>
@@ -119,9 +119,9 @@ limitations under the License.
 	</build>
 
 	<scm>
-		<url>https://github.com/olivergierke/moduliths</url>
-		<connection>scm:git:https://github.com/olivergierke/moduliths</connection>
-		<developerConnection>scm:git:ssh://git@github.com/olivergierke/moduliths.git</developerConnection>
+		<url>https://github.com/odrotbohm/moduliths</url>
+		<connection>scm:git:https://github.com/odrotbohm/moduliths</connection>
+		<developerConnection>scm:git:ssh://git@github.com/odrotbohm/moduliths.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
