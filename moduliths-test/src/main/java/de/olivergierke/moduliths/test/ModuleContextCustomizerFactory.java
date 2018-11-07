@@ -23,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -99,13 +101,22 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 				extraIncludes.forEach(it -> LOG.info("> ".concat(it.getName())));
 			}
 
+			Set<Module> sharedModules = modules.getSharedModules();
+
+			if (!sharedModules.isEmpty()) {
+
+				logHeadline("Shared modules:", message);
+
+				sharedModules.forEach(it -> LOG.info("> ".concat(it.getName())));
+			}
+
 			List<Module> dependencies = execution.getDependencies();
 
 			if (!dependencies.isEmpty()) {
 
 				logHeadline("Included dependencies:", message);
 
-				dependencies.stream() //
+				Stream.concat(dependencies.stream(), sharedModules.stream()) //
 						.map(it -> it.toString(modules)) //
 						.forEach(it -> {
 							Arrays.stream(it.split("\n")).forEach(LOG::info);

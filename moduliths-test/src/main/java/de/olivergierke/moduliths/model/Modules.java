@@ -20,7 +20,11 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 import static java.util.stream.Collectors.*;
 
 import de.olivergierke.moduliths.Modulith;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
+import lombok.experimental.Wither;
 
 import java.util.*;
 import java.util.function.Function;
@@ -41,6 +45,7 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
  * @author Oliver Gierke
  * @author Peter Gafert
  */
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Modules implements Iterable<Module> {
 
 	private static final Map<Key, Modules> CACHE = new HashMap<>();
@@ -56,6 +61,7 @@ public class Modules implements Iterable<Module> {
 	private final Map<String, Module> modules;
 	private final JavaClasses allClasses;
 	private final List<JavaPackage> rootPackages;
+	private final @Wither(AccessLevel.PRIVATE) @Getter Set<Module> sharedModules;
 
 	private boolean verified;
 
@@ -80,6 +86,8 @@ public class Modules implements Iterable<Module> {
 		this.rootPackages = packages.stream() //
 				.map(it -> JavaPackage.forNested(classes, it).toSingle()) //
 				.collect(Collectors.toList());
+
+		this.sharedModules = Collections.emptySet();
 	}
 
 	/**
@@ -121,7 +129,13 @@ public class Modules implements Iterable<Module> {
 			basePackages.add(modulithType.getPackage().getName());
 			basePackages.addAll(Arrays.asList(modulith.additionalPackages()));
 
-			return new Modules(basePackages, ignored, modulith.useFullyQualifiedModuleNames());
+			Modules modules = new Modules(basePackages, ignored, modulith.useFullyQualifiedModuleNames());
+
+			Set<Module> sharedModules = Arrays.stream(modulith.sharedModules()) //
+					.map(modules::getRequiredModule) //
+					.collect(Collectors.toSet());
+
+			return modules.withSharedModules(sharedModules);
 		});
 	}
 
@@ -216,6 +230,23 @@ public class Modules implements Iterable<Module> {
 	@Override
 	public Iterator<Module> iterator() {
 		return modules.values().iterator();
+	}
+
+	/**
+	 * Returns the module with the given name rejecting invalid module names.
+	 * 
+	 * @param moduleName must not be {@literal null}.
+	 * @return
+	 */
+	private Module getRequiredModule(String moduleName) {
+
+		Module module = modules.get(moduleName);
+
+		if (module == null) {
+			throw new IllegalArgumentException(String.format("Module %s does not exist!"));
+		}
+
+		return module;
 	}
 
 	@Value(staticConstructor = "of")

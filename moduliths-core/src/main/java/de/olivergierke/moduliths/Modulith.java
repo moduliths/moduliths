@@ -55,6 +55,14 @@ public @interface Modulith {
 	boolean useFullyQualifiedModuleNames() default false;
 
 	/**
+	 * The names of modules considered to be shared, i.e. which should always be included in the bootstrap no matter what.
+	 * Useful for code to contain commons Spring configuration and components.
+	 * 
+	 * @return
+	 */
+	String[] sharedModules() default {};
+
+	/**
 	 * Defines which additional packages shall be considered as modulith base packages in addition to the one of the class
 	 * carrying this annotation.
 	 * 
