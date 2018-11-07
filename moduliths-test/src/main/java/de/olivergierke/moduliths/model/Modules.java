@@ -58,6 +58,7 @@ public class Modules implements Iterable<Module> {
 			"org.springframework.web.bind.annotation" //
 	);
 
+	private final @Getter Class<?> modulithType;
 	private final Map<String, Module> modules;
 	private final JavaClasses allClasses;
 	private final List<JavaPackage> rootPackages;
@@ -65,8 +66,10 @@ public class Modules implements Iterable<Module> {
 
 	private boolean verified;
 
-	private Modules(Collection<String> packages, DescribedPredicate<JavaClass> ignored,
+	private Modules(Class<?> modulithType, Collection<String> packages, DescribedPredicate<JavaClass> ignored,
 			boolean useFullyQualifiedModuleNames) {
+
+		this.modulithType = modulithType;
 
 		List<String> toImport = new ArrayList<>(packages);
 		toImport.addAll(FRAMEWORK_PACKAGES);
@@ -129,7 +132,7 @@ public class Modules implements Iterable<Module> {
 			basePackages.add(modulithType.getPackage().getName());
 			basePackages.addAll(Arrays.asList(modulith.additionalPackages()));
 
-			Modules modules = new Modules(basePackages, ignored, modulith.useFullyQualifiedModuleNames());
+			Modules modules = new Modules(modulithType, basePackages, ignored, modulith.useFullyQualifiedModuleNames());
 
 			Set<Module> sharedModules = Arrays.stream(modulith.sharedModules()) //
 					.map(modules::getRequiredModule) //
