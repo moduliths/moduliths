@@ -246,7 +246,7 @@ public class Modules implements Iterable<Module> {
 		Module module = modules.get(moduleName);
 
 		if (module == null) {
-			throw new IllegalArgumentException(String.format("Module %s does not exist!"));
+			throw new IllegalArgumentException(String.format("Module %s does not exist!", moduleName));
 		}
 
 		return module;
