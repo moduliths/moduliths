@@ -317,3 +317,11 @@ Includes Spring integration via automatic stereotype annotation detection.
 [glossary]
 === Glossary
 Named Interface:: Given a module, a sub-set of types that constitute the API of the module, i.e. candidates for referral by other modules.
+
+=== Release instructions
+
+* `mvn versions:set -DnewVersion=$version -DgenerateBackupPoms=false`
+* Change `/scm/tag` to `$version`
+* `mvn clean deploy`
+* Tag commit
+* Push commit and tag
