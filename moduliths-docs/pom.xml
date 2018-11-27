@@ -21,13 +21,13 @@
 		<dependency>
 			<groupId>de.olivergierke.moduliths</groupId>
 			<artifactId>moduliths-test</artifactId>
-			<version>1.0.0.BUILD-SNAPSHOT</version>
+			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>de.olivergierke.moduliths</groupId>
 			<artifactId>moduliths-sample</artifactId>
-			<version>1.0.0.BUILD-SNAPSHOT</version>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 
