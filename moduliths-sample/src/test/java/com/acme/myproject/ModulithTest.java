@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import com.acme.myproject.invalid.InvalidComponent;
 import com.acme.myproject.moduleB.internal.InternalComponentB;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 
 /**
  * Test cases to verify the validity of the overall modulith rules
@@ -33,7 +35,8 @@ import com.acme.myproject.moduleB.internal.InternalComponentB;
  */
 public class ModulithTest {
 
-	private static final String INVALID_MODULE_NAME = "invalid";
+	static final DescribedPredicate<JavaClass> DEFAULT_EXCLUSIONS = Filters.withoutModules("cycleA", "cycleB",
+			"invalid2");
 
 	@Test
 	public void verifyModules() {
@@ -41,23 +44,23 @@ public class ModulithTest {
 		String componentName = InternalComponentB.class.getName();
 
 		assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> Modules.of(Application.class, Filters.withoutModules("cycleA", "cycleB")).verify()) //
+				.isThrownBy(() -> Modules.of(Application.class, DEFAULT_EXCLUSIONS).verify()) //
 				.withMessageContaining(String.format("Module '%s' depends on non-exposed type %s within module 'moduleB'",
-						INVALID_MODULE_NAME, componentName))
+						"invalid", componentName))
 				.withMessageContaining(String.format("<%s.<init>(%s)> has parameter of type <%s>",
 						InvalidComponent.class.getName(), componentName, componentName));
 	}
 
 	@Test
 	public void verifyModulesWithoutInvalid() {
-		Modules.of(Application.class, Filters.withoutModules(INVALID_MODULE_NAME, "cycleA", "cycleB")).verify();
+		Modules.of(Application.class, DEFAULT_EXCLUSIONS.or(Filters.withoutModule("invalid"))).verify();
 	}
 
 	@Test // #28
 	public void detectsCycleBetweenModules() {
 
 		assertThatExceptionOfType(AssertionError.class) //
-				.isThrownBy(() -> Modules.of(Application.class, Filters.withoutModule(INVALID_MODULE_NAME)).verify()) //
+				.isThrownBy(() -> Modules.of(Application.class, Filters.withoutModules("invalid", "invalid2")).verify()) //
 
 				// mentions modules
 				.withMessageContaining("cycleA") //

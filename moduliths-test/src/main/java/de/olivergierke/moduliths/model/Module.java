@@ -27,9 +27,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,6 +41,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
@@ -106,6 +109,7 @@ public class Module {
 	public String getDisplayName() {
 
 		return moduleAnnotation.map(de.olivergierke.moduliths.Module::displayName) //
+				.filter(StringUtils::hasText) //
 				.orElseGet(() -> basePackage.getLocalName());
 	}
 
@@ -114,6 +118,7 @@ public class Module {
 		return getAllModuleDependencies(modules) //
 				.filter(it -> type.length == 0 ? true : Arrays.stream(type).anyMatch(it::hasType)) //
 				.map(it -> modules.getModuleByType(it.target)) //
+				.distinct() //
 				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
 				.collect(Collectors.toList());
 	}
@@ -136,7 +141,7 @@ public class Module {
 		Assert.notNull(modules, "Modules must not be null!");
 		Assert.notNull(depth, "Dependency depth must not be null!");
 
-		return streamDependencies(modules, depth); // .collect(Collectors.toList());
+		return streamDependencies(modules, depth);
 	}
 
 	/**
@@ -427,10 +432,21 @@ public class Module {
 
 	public enum DependencyType {
 
+		/**
+		 * Indicates that the module depends on the other one by a component dependency, i.e. that other module needs to be
+		 * bootstrapped to run the source module.
+		 */
 		USES_COMPONENT,
 
+		/**
+		 * Indicates that the module refers to an entity of the other.
+		 */
 		ENTITY,
 
+		/**
+		 * Indicates that the module depends on the other by declaring an event listener for an event exposed by the other
+		 * module. Thus, the target module does not have to be bootstrapped to run the source one.
+		 */
 		EVENT_LISTENER,
 
 		DEFAULT {
@@ -459,6 +475,39 @@ public class Module {
 
 		public DependencyType or(Supplier<DependencyType> supplier) {
 			return this;
+		}
+
+		/**
+		 * Returns all {@link DependencyType}s except the given ones.
+		 * 
+		 * @param types must not be {@literal null}.
+		 * @return
+		 */
+		public static Stream<DependencyType> allBut(Collection<DependencyType> types) {
+
+			Assert.notNull(types, "Types must not be null!");
+
+			Predicate<DependencyType> isIncluded = types::contains;
+
+			return Arrays.stream(values()) //
+					.filter(isIncluded.negate());
+		}
+
+		public static Stream<DependencyType> allBut(Stream<DependencyType> types) {
+			return allBut(types.collect(Collectors.toList()));
+		}
+
+		/**
+		 * Returns all {@link DependencyType}s except the given ones.
+		 * 
+		 * @param types must not be {@literal null}.
+		 * @return
+		 */
+		public static Stream<DependencyType> allBut(DependencyType... types) {
+
+			Assert.notNull(types, "Types must not be null!");
+
+			return allBut(Arrays.asList(types));
 		}
 	}
 }

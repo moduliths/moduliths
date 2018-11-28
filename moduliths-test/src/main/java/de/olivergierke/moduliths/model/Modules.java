@@ -226,6 +226,15 @@ public class Modules implements Iterable<Module> {
 		this.verified = true;
 	}
 
+	/**
+	 * Returns all {@link Module}s.
+	 * 
+	 * @return will never be {@literal null}.
+	 */
+	public Stream<Module> stream() {
+		return modules.values().stream();
+	}
+
 	/* 
 	 * (non-Javadoc)
 	 * @see java.lang.Iterable#iterator()

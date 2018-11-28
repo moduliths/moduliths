@@ -15,6 +15,10 @@
  */
 package de.olivergierke.modulith.docs;
 
+import de.olivergierke.modulith.docs.Documenter.Options;
+import de.olivergierke.moduliths.model.Module;
+import de.olivergierke.moduliths.model.Module.DependencyType;
+
 import java.io.IOException;
 
 import org.junit.Test;
@@ -22,12 +26,31 @@ import org.junit.Test;
 import com.acme.myproject.Application;
 
 /**
+ * Unit tests for {@link Documenter}.
+ * 
  * @author Oliver Gierke
  */
 public class DocumenterTest {
 
+	Documenter documenter = new Documenter(Application.class);
+
 	@Test
 	public void writesComponentStructureAsPlantUml() throws IOException {
-		System.out.println(new Documenter(Application.class).toPlantUml());
+		documenter.toPlantUml();
+	}
+
+	@Test
+	public void writesSingleModuleDocumentation() throws IOException {
+
+		Module module = documenter.getModules().getModuleByName("moduleB") //
+				.orElseThrow(() -> new IllegalArgumentException());
+
+		documenter.writeModuleAsPlantUml(module);
+
+		Options options = Options.defaults() //
+				.withComponentFilter(component -> component.getRelationships().stream()
+						.anyMatch(it -> it.getTagsAsSet().contains(DependencyType.EVENT_LISTENER.toString())));
+
+		documenter.writeModulesAsPlantUml(options);
 	}
 }
