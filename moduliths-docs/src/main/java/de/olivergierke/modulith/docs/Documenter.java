@@ -102,8 +102,9 @@ public class Documenter {
 		this.workspace = new Workspace("Modulith", "");
 
 		Model model = workspace.getModel();
+		String systemName = modules.getSystemName().orElse("Modulith");
 
-		SoftwareSystem system = model.addSoftwareSystem("Modulith", "");
+		SoftwareSystem system = model.addSoftwareSystem(systemName, "");
 
 		this.container = system.addContainer("Application", "", "");
 		this.components = modules.stream() //

@@ -45,6 +45,13 @@ import org.springframework.context.annotation.FilterType;
 public @interface Modulith {
 
 	/**
+	 * A logical system name for documentation purposes.
+	 * 
+	 * @return
+	 */
+	String systemName() default "";
+
+	/**
 	 * Whether to use fully qualified module names by default. If set to {@literal true}, hits will cause the module's
 	 * default names to be their complete package name instead of just the modulith-local one. This might be useful in
 	 * case {@link #additionalPackages()} pulls in packages that would cause module name conflicts, i.e. both root

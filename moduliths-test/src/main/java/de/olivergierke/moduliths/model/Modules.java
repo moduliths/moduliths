@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -233,6 +234,18 @@ public class Modules implements Iterable<Module> {
 	 */
 	public Stream<Module> stream() {
 		return modules.values().stream();
+	}
+
+	/**
+	 * Returns the system name if defined.
+	 * 
+	 * @return
+	 */
+	public Optional<String> getSystemName() {
+
+		return Optional.ofNullable(AnnotatedElementUtils.findMergedAnnotation(modulithType, Modulith.class)) //
+				.map(it -> it.systemName()) //
+				.filter(StringUtils::hasText);
 	}
 
 	/* 
