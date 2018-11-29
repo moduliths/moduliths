@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.olivergierke.moduliths</groupId>
 		<artifactId>moduliths</artifactId>
-		<version>1.0.0.M3</version>
+		<version>1.0.0.BUILD-SNAPSHOT</version>
 	</parent>
 
 	<name>Moduliths - Integration Tests</name>
