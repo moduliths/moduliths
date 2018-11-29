@@ -235,6 +235,33 @@ public class Module {
 		return builder.toString();
 	}
 
+	/**
+	 * Returns all allowed module dependencies, either explicitly declared or defined as shared on the given
+	 * {@link Modules} instance.
+	 * 
+	 * @param modules must not be {@literal null}.
+	 * @return
+	 */
+	List<Module> getAllowedDependencies(Modules modules) {
+
+		Assert.notNull(modules, "Modules must not be null!");
+
+		List<String> allowedDependencyNames = moduleAnnotation.map(it -> Arrays.stream(it.allowedDependencies())) //
+				.orElse(Stream.empty()).collect(Collectors.toList());
+
+		if (allowedDependencyNames.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		Stream<Module> explicitlyDeclaredModules = allowedDependencyNames.stream() //
+				.map(modules::getModuleByName) //
+				.flatMap(it -> it.map(Stream::of).orElse(Stream.empty()));
+
+		return Stream.concat(explicitlyDeclaredModules, modules.getSharedModules().stream()) //
+				.distinct() //
+				.collect(Collectors.toList());
+	}
+
 	private Stream<ModuleDependency> getAllModuleDependencies(Modules modules) {
 
 		return basePackage.stream() //
@@ -317,11 +344,23 @@ public class Module {
 
 		void isValidDependencyWithin(Modules modules) {
 
+			Module originModule = getExistingModuleOf(origin, modules);
 			Module targetModule = getExistingModuleOf(target, modules);
+
+			List<Module> allowedTargets = originModule.getAllowedDependencies(modules);
+
+			Assert.state(allowedTargets.isEmpty() || allowedTargets.contains(targetModule), () -> {
+
+				String allowedTargetsString = allowedTargets.stream() //
+						.map(Module::getName) //
+						.collect(Collectors.joining(", "));
+
+				return String.format("Module '%s' depends on module '%s' via %s -> %s. Allowed target modules: %s.",
+						originModule.getName(), targetModule.getName(), origin.getName(), target.getName(), allowedTargetsString);
+			});
 
 			Assert.state(targetModule.isExposed(target), () -> {
 
-				Module originModule = getExistingModuleOf(origin, modules);
 				String violationText = String.format("Module '%s' depends on non-exposed type %s within module '%s'!",
 						originModule.getName(), target.getName(), targetModule.getName());
 

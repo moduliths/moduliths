@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.olivergierke.moduliths;
+package com.acme.myproject.invalid2;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.acme.myproject.moduleA.ServiceComponentA;
 
 /**
- * Annotation to customize information of a {@link Modulith} module.
- * 
  * @author Oliver Gierke
  */
-@Target({ ElementType.PACKAGE, ElementType.ANNOTATION_TYPE })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Module {
-
-	String displayName() default "";
+public class InvalidModuleDependency {
 
 	/**
-	 * List the names of modules that the module is allowed to depend on. Shared modules defined in {@link Modulith} will
-	 * be allowed, too.
+	 * The dependency is invalid as the module declaration only allows dependencies to Module B.
 	 * 
-	 * @return
+	 * @param dependency
 	 */
-	String[] allowedDependencies() default {};
+	public InvalidModuleDependency(ServiceComponentA dependency) {
+		// TODO Auto-generated constructor stub
+	}
 }

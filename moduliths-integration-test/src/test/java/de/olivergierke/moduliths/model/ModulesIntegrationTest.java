@@ -17,9 +17,6 @@ package de.olivergierke.moduliths.model;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.model.Module;
-import de.olivergierke.moduliths.model.Modules;
-import de.olivergierke.moduliths.model.NamedInterface;
 import de.olivergierke.moduliths.model.Module.DependencyType;
 
 import java.util.Optional;
@@ -101,6 +98,18 @@ public class ModulesIntegrationTest {
 		assertThat(module).hasValueSatisfying(it -> {
 			assertThat(it.getDependencies(modules, DependencyType.EVENT_LISTENER)) //
 					.contains(moduleA);
+		});
+	}
+
+	@Test
+	public void rejectsNotExplicitlyListedDependency() {
+
+		Optional<Module> moduleByName = modules.getModuleByName("invalid2");
+
+		assertThat(moduleByName).hasValueSatisfying(it -> {
+			assertThatExceptionOfType(IllegalStateException.class) //
+					.isThrownBy(() -> it.verifyDependencies(modules)) //
+					.withMessageContaining(it.getName()); //
 		});
 	}
 }
