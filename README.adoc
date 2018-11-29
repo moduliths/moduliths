@@ -321,7 +321,11 @@ Named Interface:: Given a module, a sub-set of types that constitute the API of 
 === Release instructions
 
 * `mvn versions:set -DnewVersion=$version -DgenerateBackupPoms=false`
-* Change `/scm/tag` to `$version`
-* `mvn clean deploy`
+* Change `/scm/tag` im `pom.xml` to `$version`
+* Commit against release ticket id
 * Tag commit
 * Push commit and tag
+* `mvn clean deploy`
+* `mvn versions:set -DnewVersion=$snapshotVersion -DgenerateBackupPoms=false`
+* Commit against release ticket id with message "Prepare next development iteration."
+* Push commit.
