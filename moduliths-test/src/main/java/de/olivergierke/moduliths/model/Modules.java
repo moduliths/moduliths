@@ -252,6 +252,20 @@ public class Modules implements Iterable<Module> {
 		return module;
 	}
 
+	public static class Filters {
+
+		public static DescribedPredicate<JavaClass> withoutModules(String... names) {
+
+			return Arrays.stream(names) //
+					.map(it -> withoutModule(it)) //
+					.reduce(DescribedPredicate.alwaysFalse(), DescribedPredicate::or, (__, right) -> right);
+		}
+
+		public static DescribedPredicate<JavaClass> withoutModule(String name) {
+			return resideInAPackage("..".concat(name).concat(".."));
+		}
+	}
+
 	@Value(staticConstructor = "of")
 	private static final class Key {
 
