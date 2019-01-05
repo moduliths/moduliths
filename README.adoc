@@ -303,6 +303,7 @@ Assuming we're able to get an APT implemented that's run on top of the current c
 * https://jqassistant.org/[jQAssistant] -- Broader tool to analyze projects using a Neo4j-based meta-model and concepts and constraints described via Cypher queries.
 * https://structurizr.com/[Structurizr] -- Software architecture description and visualization tool by Simon Brown.
 Includes Spring integration via automatic stereotype annotation detection.
+* https://github.com/janScheible/pocketsaw[Pocketsaw] -- Compile time sub-module system, aimed at package group dependency organization within a Maven project. Where the sub-modules are directly defined in the codebase by classes annotated with `@SubModule`.
 
 [appendix]
 == Appendix
