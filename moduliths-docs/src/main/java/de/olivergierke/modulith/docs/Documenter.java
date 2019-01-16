@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -193,19 +194,20 @@ public class Documenter {
 
 	private void addComponentsToView(Module module, ComponentView view, Options options) {
 
-		Stream<Module> bootstrapDependencies = module.getBootstrapDependencies(modules, options.getDependencyDepth());
-		Stream<Module> otherDependencies = options.getDependencyTypes()
+		Supplier<Stream<Module>> bootstrapDependencies = () -> module.getBootstrapDependencies(modules,
+				options.getDependencyDepth());
+		Supplier<Stream<Module>> otherDependencies = () -> options.getDependencyTypes()
 				.flatMap(it -> module.getDependencies(modules, it).stream());
 
-		Stream<Module> dependencies = Stream.concat(bootstrapDependencies, otherDependencies);
+		Supplier<Stream<Module>> dependencies = () -> Stream.concat(bootstrapDependencies.get(), otherDependencies.get());
 
 		addComponentsToView(dependencies, view, options, it -> it.add(components.get(module)));
 	}
 
-	private void addComponentsToView(Stream<Module> modules, ComponentView view, Options options,
+	private void addComponentsToView(Supplier<Stream<Module>> modules, ComponentView view, Options options,
 			Consumer<ComponentView> afterCleanup) {
 
-		modules.filter(options.getExclusions().negate()) //
+		modules.get().filter(options.getExclusions().negate()) //
 				.map(components::get) //
 				.filter(options.getComponentFilter()).forEach(view::add);
 
@@ -215,6 +217,18 @@ public class Documenter {
 				.forEach(it -> view.removeRelationshipsWithTag(it));
 
 		afterCleanup.accept(view);
+
+		// Filter outgoing relationships of target-only modules
+		modules.get().filter(options.getTargetOnly()) //
+				.forEach(module -> {
+
+					Component component = components.get(module);
+
+					view.getRelationships().stream() //
+							.map(RelationshipView::getRelationship) //
+							.filter(it -> it.getSource().equals(component)) //
+							.forEach(it -> view.remove(it));
+				});
 
 		// … as well as all elements left without a relationship
 		view.removeElementsWithNoRelationships();
@@ -270,7 +284,7 @@ public class Documenter {
 				.createComponentView(container, "modules-" + options.toString(), "");
 		componentView.setTitle(modules.getSystemName().orElse("Modules"));
 
-		addComponentsToView(modules.stream(), componentView, options, it -> {});
+		addComponentsToView(() -> modules.stream(), componentView, options, it -> {});
 
 		new PlantUMLWriter().write(componentView, writer);
 
@@ -318,9 +332,16 @@ public class Documenter {
 		private final @Wither Predicate<Module> exclusions;
 
 		/**
-		 * A Predicate to define which Structurizr {@link Component}s to be included in the diagram to be created.
+		 * A {@link Predicate} to define which Structurizr {@link Component}s to be included in the diagram to be created.
 		 */
 		private final @Wither Predicate<Component> componentFilter;
+
+		/**
+		 * A {@link Predicate} to define which of the modules shall only be considered targets, i.e. all efferent
+		 * relationships are going to be hidden from the rendered view. Modules that have no incoming relationships will
+		 * entirely be removed from the view.
+		 */
+		private final @Wither Predicate<Module> targetOnly;
 
 		/**
 		 * The target file name to be used for the diagram to be created. For individual module diagrams this needs to
@@ -336,7 +357,7 @@ public class Documenter {
 		 * @return will never be {@literal null}.
 		 */
 		public static Options defaults() {
-			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, null);
+			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null);
 		}
 
 		/**
@@ -350,7 +371,7 @@ public class Documenter {
 			Assert.notNull(types, "Dependency types must not be null!");
 
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
-			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetFileName);
+			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName);
 		}
 
 		private Optional<String> getTargetFileName() {
