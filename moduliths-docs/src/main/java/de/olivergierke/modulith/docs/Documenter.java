@@ -61,7 +61,7 @@ import com.structurizr.view.View;
 
 /**
  * API to create documentation for {@link Modules}.
- * 
+ *
  * @author Oliver Gierke
  */
 public class Documenter {
@@ -83,7 +83,7 @@ public class Documenter {
 
 	/**
 	 * Creates a new {@link Documenter} for the {@link Modules} created for the given modulith type.
-	 * 
+	 *
 	 * @param modulithType must not be {@literal null}.
 	 */
 	public Documenter(Class<?> modulithType) {
@@ -92,7 +92,7 @@ public class Documenter {
 
 	/**
 	 * Creates a new {@link Documenter} for the given {@link Modules} instance.
-	 * 
+	 *
 	 * @param modules must not be {@literal null}.
 	 */
 	public Documenter(Modules modules) {
@@ -117,7 +117,7 @@ public class Documenter {
 
 	/**
 	 * Writes the PlantUML component diagram for all {@link Modules}.
-	 * 
+	 *
 	 * @param options must not be {@literal null}.
 	 * @throws IOException
 	 */
@@ -134,7 +134,7 @@ public class Documenter {
 
 	/**
 	 * Writes the PlantUML component diagram for the given {@link Module}.
-	 * 
+	 *
 	 * @param module must not be {@literal null}.
 	 */
 	public void writeModuleAsPlantUml(Module module) {
@@ -146,7 +146,7 @@ public class Documenter {
 
 	/**
 	 * Writes the PlantUML component diagram for the given {@link Module} with the given rendering {@link Options}.
-	 * 
+	 *
 	 * @param module must not be {@literal null}.
 	 * @param options must not be {@literal null}.
 	 */
@@ -353,7 +353,7 @@ public class Documenter {
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
 		 * filters and default file names.
-		 * 
+		 *
 		 * @return will never be {@literal null}.
 		 */
 		public static Options defaults() {
@@ -362,7 +362,7 @@ public class Documenter {
 
 		/**
 		 * Select the dependency types that are supposed to be included in the diagram to be created.
-		 * 
+		 *
 		 * @param types must not be {@literal null}.
 		 * @return
 		 */
