@@ -154,7 +154,8 @@ public class Documenter {
 		Assert.notNull(module, "Module must not be null!");
 		Assert.notNull(options, "Options must not be null!");
 
-		ComponentView view = workspace.getViews().createComponentView(container, module.getDisplayName(), "");
+		ComponentView view = workspace.getViews().createComponentView(container, module.getName(), "");
+		view.setTitle(module.getDisplayName());
 
 		addComponentsToView(module, view, options);
 
@@ -267,6 +268,7 @@ public class Documenter {
 
 		ComponentView componentView = workspace.getViews() //
 				.createComponentView(container, "modules-" + options.toString(), "");
+		componentView.setTitle(modules.getSystemName().orElse("Modules"));
 
 		addComponentsToView(modules.stream(), componentView, options, it -> {});
 

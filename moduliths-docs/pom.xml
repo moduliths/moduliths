@@ -13,7 +13,7 @@
 	<artifactId>moduliths-docs</artifactId>
 
 	<properties>
-		<structurizr.version>1.0.0-RC6</structurizr.version>
+		<structurizr.version>1.2.0</structurizr.version>
 	</properties>
 
 	<dependencies>
