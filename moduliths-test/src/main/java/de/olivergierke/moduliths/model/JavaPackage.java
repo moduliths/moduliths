@@ -101,7 +101,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 	public Stream<JavaPackage> getSubPackagesAnnotatedWith(Class<? extends Annotation> annotation) {
 
 		return packageClasses.that(CanBeAnnotated.Predicates.annotatedWith(annotation)).stream() //
-				.map(JavaClass::getPackage) //
+				.map(JavaClass::getPackageName) //
 				.distinct() //
 				.map(it -> forNested(classes, it));
 	}

@@ -76,7 +76,7 @@ public class Modules implements Iterable<Module> {
 		toImport.addAll(FRAMEWORK_PACKAGES);
 
 		this.allClasses = new ClassFileImporter() //
-				.withImportOption(new ImportOption.DontIncludeTests()) //
+				.withImportOption(new ImportOption.DoNotIncludeTests()) //
 				.importPackages(toImport) //
 				.that(not(ignored));
 

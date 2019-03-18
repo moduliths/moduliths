@@ -48,6 +48,7 @@ import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.SourceCodeLocation;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 
@@ -81,7 +82,7 @@ public class Module {
 		DescribedPredicate<JavaClass> atBeanTypes = source.that(annotatedWith(Configuration.class)).stream() //
 				.flatMap(it -> it.getMethods().stream()) //
 				.filter(it -> it.isAnnotatedWith(Bean.class) || it.isMetaAnnotatedWith(Bean.class)) //
-				.map(JavaMethod::getReturnType) //
+				.map(JavaMethod::getRawReturnType) //
 				.map(JavaClass::reflect) //
 				.reduce(NO_CLASS, (it, type) -> it.or(type(type)), (left, right) -> right);
 
@@ -394,22 +395,23 @@ public class Module {
 
 		static ModuleDependency fromCodeUnitReturnType(JavaCodeUnit codeUnit) {
 
-			String description = createDescription(codeUnit, codeUnit.getReturnType(), "return type");
+			String description = createDescription(codeUnit, codeUnit.getRawReturnType(), "return type");
 
-			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getReturnType(), description, DependencyType.DEFAULT);
+			return new ModuleDependency(codeUnit.getOwner(), codeUnit.getRawReturnType(), description,
+					DependencyType.DEFAULT);
 		}
 
 		static Stream<ModuleDependency> fromConstructorOf(JavaClass source, DependencyType type) {
 
 			return source.getConstructors().stream() //
-					.flatMap(it -> it.getParameters().stream() //
+					.flatMap(it -> it.getRawParameterTypes().stream() //
 							.map(parameter -> new ModuleDependency(source, parameter, createDescription(it, source, "constructor"),
 									type)));
 		}
 
 		static Stream<ModuleDependency> allFrom(JavaCodeUnit codeUnit) {
 
-			Stream<ModuleDependency> parameterDependencies = codeUnit.getParameters()//
+			Stream<ModuleDependency> parameterDependencies = codeUnit.getRawParameterTypes()//
 					.stream() //
 					.map(it -> fromCodeUnitParameter(codeUnit, it));
 
@@ -422,9 +424,9 @@ public class Module {
 				String declarationDescription) {
 
 			String codeUnitDescription = formatMethod(codeUnit.getOwner().getName(), codeUnit.getName(),
-					codeUnit.getParameters());
+					codeUnit.getRawParameterTypes());
 			String declaration = declarationDescription + " " + declaredElement.getName();
-			String location = formatLocation(codeUnit.getOwner(), 0);
+			String location = SourceCodeLocation.of(codeUnit.getOwner(), 0).toString();
 
 			return String.format("%s declares %s in %s", codeUnitDescription, declaration, location);
 		}
