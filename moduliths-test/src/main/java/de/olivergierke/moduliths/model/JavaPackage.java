@@ -82,7 +82,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	/**
 	 * Extract the direct sub-package name of the given candidate.
-	 * 
+	 *
 	 * @param candidate
 	 * @return
 	 */
@@ -130,7 +130,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 				.map(it -> it.getAnnotationOfType(annotationType));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see com.tngtech.archunit.base.HasDescription#getDescription()
 	 */
@@ -139,7 +139,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 		return classes.getDescription();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Iterable#iterator()
 	 */
@@ -148,7 +148,7 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 		return classes.iterator();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

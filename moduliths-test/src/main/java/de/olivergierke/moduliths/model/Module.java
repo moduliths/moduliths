@@ -147,7 +147,7 @@ public class Module {
 
 	/**
 	 * Returns all {@link JavaPackage} for the current module including the ones by its dependencies.
-	 * 
+	 *
 	 * @param modules must not be {@literal null}.
 	 * @param depth must not be {@literal null}.
 	 * @return
@@ -174,7 +174,7 @@ public class Module {
 	/**
 	 * Returns whether the given {@link JavaClass} is exposed by the current module, i.e. whether it's part of any of the
 	 * module's named interfaces.
-	 * 
+	 *
 	 * @param type must not be {@literal null}.
 	 * @return
 	 */
@@ -195,6 +195,7 @@ public class Module {
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return toString(null);
 	}
@@ -244,7 +245,7 @@ public class Module {
 	/**
 	 * Returns all allowed module dependencies, either explicitly declared or defined as shared on the given
 	 * {@link Modules} instance.
-	 * 
+	 *
 	 * @param modules must not be {@literal null}.
 	 * @return
 	 */
@@ -453,7 +454,7 @@ public class Module {
 
 		DEFAULT {
 
-			/* 
+			/*
 			 * (non-Javadoc)
 			 * @see de.olivergierke.moduliths.test.model.Module.ModuleDependency.DependencyType#or(com.tngtech.archunit.thirdparty.com.google.common.base.Supplier)
 			 */
@@ -481,7 +482,7 @@ public class Module {
 
 		/**
 		 * Returns all {@link DependencyType}s except the given ones.
-		 * 
+		 *
 		 * @param types must not be {@literal null}.
 		 * @return
 		 */
@@ -501,7 +502,7 @@ public class Module {
 
 		/**
 		 * Returns all {@link DependencyType}s except the given ones.
-		 * 
+		 *
 		 * @param types must not be {@literal null}.
 		 * @return
 		 */

@@ -97,7 +97,7 @@ public class Modules implements Iterable<Module> {
 	/**
 	 * Creates a new {@link Modules} relative to the given modulith type. Will inspect the {@link Modulith} annotation on
 	 * the class given for advanced customizations of the module setup.
-	 * 
+	 *
 	 * @param modulithType must not be {@literal null}.
 	 * @return
 	 */
@@ -109,7 +109,7 @@ public class Modules implements Iterable<Module> {
 	 * Creates a new {@link Modules} relative to the given modulith type and a {@link DescribedPredicate} which types and
 	 * packages to ignore. Will inspect the {@link Modulith} annotation on the class given for advanced customizations of
 	 * the module setup.
-	 * 
+	 *
 	 * @param modulithType must not be {@literal null}.
 	 * @param ignored must not be {@literal null}.
 	 * @return
@@ -145,7 +145,7 @@ public class Modules implements Iterable<Module> {
 
 	/**
 	 * Returns whether the given {@link JavaClass} is contained within the {@link Modules}.
-	 * 
+	 *
 	 * @param type must not be {@literal null}.
 	 * @return
 	 */
@@ -160,7 +160,7 @@ public class Modules implements Iterable<Module> {
 	/**
 	 * Returns whether the given type is contained in one of the root packages (not including sub-packages) of the
 	 * modules.
-	 * 
+	 *
 	 * @param className must not be {@literal null} or empty.
 	 * @return
 	 */
@@ -173,7 +173,7 @@ public class Modules implements Iterable<Module> {
 
 	/**
 	 * Returns the {@link Module} with the given name.
-	 * 
+	 *
 	 * @param name must not be {@literal null} or empty.
 	 * @return
 	 */
@@ -186,7 +186,7 @@ public class Modules implements Iterable<Module> {
 
 	/**
 	 * Returns the module that contains the given {@link JavaClass}.
-	 * 
+	 *
 	 * @param type must not be {@literal null}.
 	 * @return
 	 */
@@ -229,7 +229,7 @@ public class Modules implements Iterable<Module> {
 
 	/**
 	 * Returns all {@link Module}s.
-	 * 
+	 *
 	 * @return will never be {@literal null}.
 	 */
 	public Stream<Module> stream() {
@@ -238,7 +238,7 @@ public class Modules implements Iterable<Module> {
 
 	/**
 	 * Returns the system name if defined.
-	 * 
+	 *
 	 * @return
 	 */
 	public Optional<String> getSystemName() {
@@ -248,7 +248,7 @@ public class Modules implements Iterable<Module> {
 				.filter(StringUtils::hasText);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Iterable#iterator()
 	 */
@@ -259,7 +259,7 @@ public class Modules implements Iterable<Module> {
 
 	/**
 	 * Returns the module with the given name rejecting invalid module names.
-	 * 
+	 *
 	 * @param moduleName must not be {@literal null}.
 	 * @return
 	 */
