@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -43,7 +44,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
@@ -55,10 +55,8 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 /**
  * @author Oliver Gierke
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(doNotUseGetters = true)
 public class Module {
-
-	private static final DescribedPredicate<JavaClass> NO_CLASS = DescribedPredicate.alwaysFalse();
 
 	private final @Getter JavaPackage basePackage;
 	private final Optional<de.olivergierke.moduliths.Module> moduleAnnotation;
@@ -79,16 +77,23 @@ public class Module {
 
 	private static Classes filterSpringBeans(JavaPackage source) {
 
-		DescribedPredicate<JavaClass> atBeanTypes = source.that(annotatedWith(Configuration.class)).stream() //
+		Classes atBeanTypes = source.that(annotatedWith(Configuration.class)).stream() //
 				.flatMap(it -> it.getMethods().stream()) //
 				.filter(it -> it.isAnnotatedWith(Bean.class) || it.isMetaAnnotatedWith(Bean.class)) //
 				.map(JavaMethod::getRawReturnType) //
-				.map(JavaClass::reflect) //
-				.reduce(NO_CLASS, (it, type) -> it.or(type(type)), (left, right) -> right);
+				.collect(Collectors.collectingAndThen(Collectors.toList(), Classes::of));
 
-		return source.that(atBeanTypes.or(assignableTo("org.springframework.data.repository.Repository") //
+		// Keep module defined beans first
+		Map<Boolean, List<JavaClass>> collect = atBeanTypes.stream() //
+				.collect(Collectors.groupingBy(it -> source.contains(it)));
+
+		Classes coreComponents = source.that(assignableTo("org.springframework.data.repository.Repository") //
 				.or(annotatedWith(Component.class)) //
-				.or(metaAnnotatedWith(Component.class))));
+				.or(metaAnnotatedWith(Component.class)));
+
+		return coreComponents //
+				.and(collect.getOrDefault(true, Collections.emptyList())) //
+				.and(collect.getOrDefault(false, Collections.emptyList()));
 	}
 
 	private static NamedInterfaces discoverNamedInterfaces(JavaPackage basePackage) {

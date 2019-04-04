@@ -15,10 +15,17 @@
  */
 package de.olivergierke.moduliths.model;
 
-import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -35,10 +42,46 @@ import com.tngtech.archunit.core.domain.properties.HasName;
 /**
  * @author Oliver Gierke
  */
-@RequiredArgsConstructor(staticName = "of")
-public class Classes implements DescribedIterable<JavaClass> {
+@ToString
+class Classes implements DescribedIterable<JavaClass> {
 
-	private final JavaClasses classes;
+	private final List<JavaClass> classes;
+
+	/**
+	 * Creates a new {@link Classes} for the given {@link JavaClass}es.
+	 *
+	 * @param classes must not be {@literal null}.
+	 */
+	private Classes(List<JavaClass> classes) {
+
+		Assert.notNull(classes, "JavaClasses must not be null!");
+
+		this.classes = classes.stream() //
+				.sorted(Comparator.comparing(JavaClass::getName)) //
+				.collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+	}
+
+	/**
+	 * Creates a new {@link Classes} for the given {@link JavaClass}es.
+	 *
+	 * @param classes must not be {@literal null}.
+	 * @return
+	 */
+	static Classes of(JavaClasses classes) {
+
+		return new Classes(StreamSupport.stream(classes.spliterator(), false) //
+				.collect(Collectors.toList()));
+	}
+
+	/**
+	 * Creates a new {@link Classes} for the given {@link JavaClass}es.
+	 *
+	 * @param classes must not be {@literal null}.
+	 * @return
+	 */
+	static Classes of(List<JavaClass> classes) {
+		return new Classes(classes);
+	}
 
 	/**
 	 * Returns {@link Classes} that match the given {@link DescribedPredicate}.
@@ -46,31 +89,58 @@ public class Classes implements DescribedIterable<JavaClass> {
 	 * @param predicate must not be {@literal null}.
 	 * @return
 	 */
-	public Classes that(DescribedPredicate<? super JavaClass> predicate) {
+	Classes that(DescribedPredicate<? super JavaClass> predicate) {
 
 		Assert.notNull(predicate, "Predicate must not be null!");
 
-		return Classes.of(classes.that(predicate));
+		return classes.stream() //
+				.filter((Predicate<JavaClass>) it -> predicate.apply(it)) //
+				.collect(Collectors.collectingAndThen(Collectors.toList(), Classes::new));
 	}
 
-	public Stream<JavaClass> stream() {
-		return StreamSupport.stream(classes.spliterator(), false);
+	/**
+	 * Returns a Classes with the current elements and the given other ones combined.
+	 *
+	 * @param others must not be {@literal null}.
+	 * @return
+	 */
+	Classes and(Collection<JavaClass> others) {
+
+		Assert.notNull(others, "JavaClasses must not be null!");
+
+		if (others.isEmpty()) {
+			return this;
+		}
+
+		List<JavaClass> result = new ArrayList<>(classes);
+
+		others.forEach(it -> {
+			if (!result.contains(it)) {
+				result.add(it);
+			}
+		});
+
+		return new Classes(result);
 	}
 
-	public boolean isEmpty() {
+	Stream<JavaClass> stream() {
+		return classes.stream();
+	}
+
+	boolean isEmpty() {
 		return !classes.iterator().hasNext();
 	}
 
-	public Optional<JavaClass> toOptional() {
+	Optional<JavaClass> toOptional() {
 		return isEmpty() ? Optional.empty() : Optional.of(classes.iterator().next());
 	}
 
-	public boolean contains(JavaClass type) {
-		return classes.that(new SameClass(type)).iterator().hasNext();
+	boolean contains(JavaClass type) {
+		return that(new SameClass(type)).iterator().hasNext();
 	}
 
-	public boolean contains(String className) {
-		return classes.that(HasName.Predicates.name(className)).iterator().hasNext();
+	boolean contains(String className) {
+		return that(HasName.Predicates.name(className)).iterator().hasNext();
 	}
 
 	/*
@@ -79,7 +149,7 @@ public class Classes implements DescribedIterable<JavaClass> {
 	 */
 	@Override
 	public String getDescription() {
-		return classes.getDescription();
+		return "";
 	}
 
 	/*
@@ -91,11 +161,11 @@ public class Classes implements DescribedIterable<JavaClass> {
 		return classes.iterator();
 	}
 
-	public static String format(JavaClass type) {
+	static String format(JavaClass type) {
 		return format(type, "");
 	}
 
-	public static String format(JavaClass type, String basePackage) {
+	static String format(JavaClass type, String basePackage) {
 
 		Assert.notNull(type, "Type must not be null!");
 		Assert.notNull(basePackage, "Base package must not be null!");
@@ -117,7 +187,7 @@ public class Classes implements DescribedIterable<JavaClass> {
 			this.reference = reference;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see com.tngtech.archunit.base.DescribedPredicate#apply(java.lang.Object)
 		 */
