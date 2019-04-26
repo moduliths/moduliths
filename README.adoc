@@ -5,6 +5,8 @@ A playground to build technology supporting the development of modular monolithi
 NOTE: **tl;dr:** Modulith is a <<modules,convention based (but customizable) approach to use Java packages to define logical modules>> in monolithic Spring Boot applications, accompanied by an Spring Boot integration test extension to <<modules.running-tests,bootstrap tests for individual modules>> only.
 The tests also structurally validate the module structure.
 
+image:https://travis-ci.org/odrotbohm/moduliths.svg?branch=master["Build Status", link="https://travis-ci.org/odrotbohm/moduliths"]
+
 [[quickstart]]
 == Quickstart
 
