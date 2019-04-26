@@ -15,7 +15,6 @@
  */
 package de.olivergierke.moduliths.model;
 
-import static com.tngtech.archunit.core.domain.Formatters.*;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.*;
 import static java.lang.System.*;
@@ -32,10 +31,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Resource;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
@@ -47,6 +50,9 @@ import org.springframework.util.StringUtils;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
+import com.tngtech.archunit.core.domain.JavaConstructor;
+import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.domain.JavaMember;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.SourceCodeLocation;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
@@ -299,7 +305,7 @@ public class Module {
 	private Stream<Module> getDirectModuleDependencies(Modules modules) {
 
 		return getSpringBeans().stream() //
-				.flatMap(it -> ModuleDependency.fromConstructorOf(it, DependencyType.USES_COMPONENT)) //
+				.flatMap(it -> ModuleDependency.fromType(it)) //
 				.filter(it -> isDependencyToOtherModule(it.target, modules)) //
 				.map(it -> modules.getModuleByType(it.target)) //
 				.distinct() //
@@ -308,19 +314,14 @@ public class Module {
 
 	private Stream<ModuleDependency> getModuleDependenciesOf(JavaClass type, Modules modules) {
 
-		Stream<ModuleDependency> parameters = getDependenciesFromCodeUnitParameters(type, modules);
+		Stream<ModuleDependency> injections = ModuleDependency.fromType(type) //
+				.filter(it -> isDependencyToOtherModule(it.getTarget(), modules)); //
+		// Stream<ModuleDependency> parameters = getDependenciesFromCodeUnitParameters(type, modules);
 		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream() //
-				.filter(dependency -> isDependencyToOtherModule(dependency.getTargetClass(), modules)) //
+				.filter(it -> isDependencyToOtherModule(it.getTargetClass(), modules)) //
 				.map(ModuleDependency::new);
 
-		return Stream.concat(directDependencies, parameters).distinct();
-	}
-
-	private Stream<ModuleDependency> getDependenciesFromCodeUnitParameters(JavaClass type, Modules modules) {
-
-		return type.getCodeUnits().stream() //
-				.flatMap(ModuleDependency::allFrom) //
-				.filter(moduleDependency -> isDependencyToOtherModule(moduleDependency.target, modules));
+		return Stream.concat(injections, directDependencies).distinct();
 	}
 
 	private boolean isDependencyToOtherModule(JavaClass dependency, Modules modules) {
@@ -339,7 +340,12 @@ public class Module {
 	@ToString
 	@EqualsAndHashCode
 	@RequiredArgsConstructor
-	private static class ModuleDependency {
+	static class ModuleDependency {
+
+		private static final List<String> INJECTION_TYPES = Arrays.asList(//
+				Autowired.class.getName(), //
+				Resource.class.getName(), //
+				"javax.inject.Inject");
 
 		private final @NonNull @Getter JavaClass origin, target;
 		private final @NonNull String description;
@@ -380,7 +386,7 @@ public class Module {
 			});
 		}
 
-		private Module getExistingModuleOf(JavaClass javaClass, Modules modules) {
+		Module getExistingModuleOf(JavaClass javaClass, Modules modules) {
 
 			Optional<Module> module = modules.getModuleByType(javaClass);
 
@@ -407,12 +413,58 @@ public class Module {
 					DependencyType.DEFAULT);
 		}
 
-		static Stream<ModuleDependency> fromConstructorOf(JavaClass source, DependencyType type) {
+		static Stream<ModuleDependency> fromType(JavaClass source) {
+			return Stream.concat(Stream.concat(fromConstructorOf(source), fromMethodsOf(source)), fromFieldsOf(source));
+		}
 
-			return source.getConstructors().stream() //
+		private static Stream<ModuleDependency> fromConstructorOf(JavaClass source) {
+
+			Set<JavaConstructor> constructors = source.getConstructors();
+
+			return constructors.stream() //
+					.filter(it -> constructors.size() == 1 || isInjectionPoint(it)) //
 					.flatMap(it -> it.getRawParameterTypes().stream() //
-							.map(parameter -> new ModuleDependency(source, parameter, createDescription(it, source, "constructor"),
-									type)));
+							.map(parameter -> new InjectionModuleDependency(source, parameter, it)));
+		}
+
+		private static Stream<ModuleDependency> fromFieldsOf(JavaClass source) {
+
+			Stream<ModuleDependency> fieldInjections = source.getAllFields().stream() //
+					.filter(ModuleDependency::isInjectionPoint) //
+					.map(field -> new InjectionModuleDependency(source, field.getRawType(), field));
+
+			return fieldInjections;
+		}
+
+		private static Stream<ModuleDependency> fromMethodsOf(JavaClass source) {
+
+			Set<JavaMethod> methods = source.getAllMethods().stream() //
+					.filter(it -> !it.getOwner().isEquivalentTo(Object.class)) //
+					.collect(Collectors.toSet());
+
+			if (methods.isEmpty()) {
+				return Stream.empty();
+			}
+
+			Stream<ModuleDependency> returnTypes = methods.stream() //
+					.filter(it -> !it.getRawReturnType().isPrimitive()) //
+					.filter(it -> !it.getRawReturnType().getPackageName().startsWith("java")) //
+					.map(it -> fromCodeUnitReturnType(it));
+
+			Set<JavaMethod> injectionMethods = methods.stream() //
+					.filter(ModuleDependency::isInjectionPoint) //
+					.collect(Collectors.toSet());
+
+			Stream<ModuleDependency> methodInjections = injectionMethods.stream() //
+					.flatMap(it -> it.getRawParameterTypes().stream() //
+							.map(parameter -> new InjectionModuleDependency(source, parameter, it)));
+
+			Stream<ModuleDependency> otherMethods = methods.stream() //
+					.filter(it -> !injectionMethods.contains(it)) //
+					.flatMap(it -> it.getRawParameterTypes().stream() //
+							.map(parameter -> fromCodeUnitParameter(it, parameter)));
+
+			return Stream.concat(Stream.concat(methodInjections, otherMethods), returnTypes);
 		}
 
 		static Stream<ModuleDependency> allFrom(JavaCodeUnit codeUnit) {
@@ -426,15 +478,88 @@ public class Module {
 			return Stream.concat(parameterDependencies, returnType);
 		}
 
-		private static String createDescription(JavaCodeUnit codeUnit, JavaClass declaredElement,
+		private static String createDescription(JavaMember codeUnit, JavaClass declaringElement,
 				String declarationDescription) {
 
-			String codeUnitDescription = formatMethod(codeUnit.getOwner().getName(), codeUnit.getName(),
-					codeUnit.getRawParameterTypes());
-			String declaration = declarationDescription + " " + declaredElement.getName();
+			String type = declaringElement.getSimpleName();
+
+			String codeUnitDescription = JavaConstructor.class.isInstance(codeUnit) //
+					? String.format("%s", declaringElement.getSimpleName()) //
+					: String.format("%s.%s", declaringElement.getSimpleName(), codeUnit.getName());
+
+			if (JavaCodeUnit.class.isInstance(codeUnit)) {
+				codeUnitDescription = String.format("%s(%s)", codeUnitDescription,
+						JavaCodeUnit.class.cast(codeUnit).getRawParameterTypes().stream() //
+								.map(JavaClass::getSimpleName) //
+								.collect(Collectors.joining(", ")));
+			}
+
+			String annotations = codeUnit.getAnnotations().stream() //
+					.filter(it -> INJECTION_TYPES.contains(it.getRawType().getName())) //
+					.map(it -> "@" + it.getRawType().getSimpleName()) //
+					.collect(Collectors.joining(" ", "", " "));
+
+			annotations = StringUtils.hasText(annotations) ? annotations : "";
+
+			String declaration = declarationDescription + " " + annotations + codeUnitDescription;
 			String location = SourceCodeLocation.of(codeUnit.getOwner(), 0).toString();
 
-			return String.format("%s declares %s in %s", codeUnitDescription, declaration, location);
+			return String.format("%s declares %s in %s", type, declaration, location);
+		}
+
+		private static boolean isInjectionPoint(JavaMember unit) {
+			return INJECTION_TYPES.stream().anyMatch(type -> unit.isAnnotatedWith(type));
+		}
+	}
+
+	private static class InjectionModuleDependency extends ModuleDependency {
+
+		private final JavaMember member;
+		private final boolean isConfigurationClass;
+
+		/**
+		 * @param origin
+		 * @param target
+		 * @param member
+		 */
+		public InjectionModuleDependency(JavaClass origin, JavaClass target, JavaMember member) {
+
+			super(origin, target, ModuleDependency.createDescription(member, origin, getDescriptionFor(member)),
+					DependencyType.USES_COMPONENT);
+
+			this.member = member;
+			this.isConfigurationClass = origin.isAnnotatedWith(Configuration.class)
+					|| origin.isMetaAnnotatedWith(Configuration.class);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see de.olivergierke.moduliths.model.Module.ModuleDependency#isValidDependencyWithin(de.olivergierke.moduliths.model.Modules)
+		 */
+		@Override
+		void isValidDependencyWithin(Modules modules) {
+
+			JavaClass owner = member.getOwner();
+			Module module = getExistingModuleOf(owner, modules);
+
+			Assert.state(!JavaField.class.isInstance(member) || isConfigurationClass,
+					String.format("Class %s in module %s uses field injection in %s! Prefer constructor injection instead.",
+							owner.getSimpleName(), module, member));
+
+			super.isValidDependencyWithin(modules);
+		}
+
+		private static String getDescriptionFor(JavaMember member) {
+
+			if (JavaConstructor.class.isInstance(member)) {
+				return "constructor";
+			} else if (JavaMethod.class.isInstance(member)) {
+				return "injection method";
+			} else if (JavaField.class.isInstance(member)) {
+				return "injected field";
+			}
+
+			throw new IllegalArgumentException(String.format("Invalid member type %s!", member.toString()));
 		}
 	}
 

@@ -111,7 +111,7 @@ public class ModuleTestExecution implements Iterable<Module> {
 
 	/**
 	 * Returns all base packages the current execution needs to use for component scanning, auto-configuration etc.
-	 * 
+	 *
 	 * @return
 	 */
 	public Stream<String> getBasePackages() {
@@ -132,7 +132,7 @@ public class ModuleTestExecution implements Iterable<Module> {
 
 	/**
 	 * Returns all module dependencies, based on the current {@link BootstrapMode}.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<Module> getDependencies() {
@@ -146,7 +146,14 @@ public class ModuleTestExecution implements Iterable<Module> {
 		modules.verify();
 	}
 
-	/* 
+	/**
+	 * Verifies the setup of the module bootstrapped by this execution.
+	 */
+	public void verifyModule() {
+		module.verifyDependencies(modules);
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Iterable#iterator()
 	 */

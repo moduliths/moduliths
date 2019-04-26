@@ -35,20 +35,20 @@ import com.tngtech.archunit.core.domain.JavaClass;
  */
 public class ModulithTest {
 
-	static final DescribedPredicate<JavaClass> DEFAULT_EXCLUSIONS = Filters.withoutModules("cycleA", "cycleB",
-			"invalid2");
+	static final DescribedPredicate<JavaClass> DEFAULT_EXCLUSIONS = Filters.withoutModules("cycleA", "cycleB", "invalid2",
+			"fieldinjected");
 
 	@Test
 	public void verifyModules() {
 
-		String componentName = InternalComponentB.class.getName();
+		String componentName = InternalComponentB.class.getSimpleName();
 
 		assertThatExceptionOfType(IllegalStateException.class) //
 				.isThrownBy(() -> Modules.of(Application.class, DEFAULT_EXCLUSIONS).verify()) //
 				.withMessageContaining(String.format("Module '%s' depends on non-exposed type %s within module 'moduleB'",
-						"invalid", componentName))
-				.withMessageContaining(String.format("<%s.<init>(%s)> has parameter of type <%s>",
-						InvalidComponent.class.getName(), componentName, componentName));
+						"invalid", InternalComponentB.class.getName()))
+				.withMessageContaining(String.format("%s declares constructor %s(%s)", InvalidComponent.class.getSimpleName(),
+						InvalidComponent.class.getSimpleName(), componentName));
 	}
 
 	@Test
