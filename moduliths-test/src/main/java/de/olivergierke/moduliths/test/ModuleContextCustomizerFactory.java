@@ -39,7 +39,7 @@ import org.springframework.test.context.MergedContextConfiguration;
  */
 class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.test.context.ContextCustomizerFactory#createContextCustomizer(java.lang.Class, java.util.List)
 	 */
@@ -64,7 +64,7 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 			this.execution = ModuleTestExecution.of(testClass);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.test.context.ContextCustomizer#customizeContext(org.springframework.context.ConfigurableApplicationContext, org.springframework.test.context.MergedContextConfiguration)
 		 */
