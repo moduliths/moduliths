@@ -113,7 +113,7 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
 			List<Module> dependencies = execution.getDependencies();
 
-			if (!dependencies.isEmpty()) {
+			if (!dependencies.isEmpty() || !sharedModules.isEmpty()) {
 
 				logHeadline("Included dependencies:", message);
 
