@@ -117,7 +117,11 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 
 				logHeadline("Included dependencies:", message);
 
-				Stream.concat(dependencies.stream(), sharedModules.stream()) //
+				Stream<Module> dependenciesPlusMissingSharedOnes = //
+						Stream.concat(dependencies.stream(), sharedModules.stream() //
+								.filter(it -> !dependencies.contains(it)));
+
+				dependenciesPlusMissingSharedOnes //
 						.map(it -> it.toString(modules)) //
 						.forEach(it -> {
 							Arrays.stream(it.split("\n")).forEach(LOG::info);
