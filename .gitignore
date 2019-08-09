@@ -2,6 +2,7 @@
 .classpath
 .settings/
 target/
+.factorypath
 
 #IntelliJ Stuff
 .idea
