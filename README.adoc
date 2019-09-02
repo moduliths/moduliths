@@ -31,6 +31,7 @@ Translates the actual module structure into a PlantUML component diagram via Str
 [source,xml]
 ----
 <dependencies>
+
   <!-- For the @Modulith annotation -->
   <dependency>
     <groupId>de.olivergierke.moduliths</groupId>
@@ -73,14 +74,14 @@ This will keep the ability to modify and advance the codebase over time and ease
 [[the-architecture-code-gap]]
 === The architecture-code-gap
 
-In software projects, architectural design decisions and constraints are usually defined in some way and then have to be implemented in a codebase.
-Traditionally the connection between the architectural decisions and the actual have been naming conventions that easily diverge and cause the architecture actually implemented in the codebase to slowly degrade over time.
+In software projects, architectural design decisions and constraints are usually defined in some way and then have to be implemented in a code base.
+Traditionally the connection between the architectural decisions and the actual have been naming conventions that easily diverge and cause the architecture actually implemented in the code base to slowly degrade over time.
 We'd like to explore stronger means of connections between architecture and code and even look into advanced support of frameworks and libraries to e.g. allow testability of individual components within an overall system.
 
-There already exists a variety of technologies that attempts to bridge that gap from the architectural definition side, mostly by trying to capture the architectural definitions in executable form (see https://jqassistant.org/[jQAssistant] and <<existing-tools>>) and verify whether the codebase adheres to the conventions defined.
-In this playground, we're going to explore the opposite way: providing conventions as well as library and framework means, to express architectural definitions directly inside the codebase with to major goals:
+There already exists a variety of technologies that attempts to bridge that gap from the architectural definition side, mostly by trying to capture the architectural definitions in executable form (see https://jqassistant.org/[jQAssistant] and <<existing-tools>>) and verify whether the code base adheres to the conventions defined.
+In this playground, we're going to explore the opposite way: providing conventions as well as library and framework means, to express architectural definitions directly inside the code base with to major goals:
 
-1. _**Getting the validation of the conventions closer to the code / developer**_ -- If architectural decisions are driven by the development team, it might feel more natural to define architectural concepts in the codebase.
+1. _**Getting the validation of the conventions closer to the code / developer**_ -- If architectural decisions are driven by the development team, it might feel more natural to define architectural concepts in the code base.
 The more seamless an architectural rule validation system integrates with the codebase, the more likely it is that the system is used.
 An architectural rule that can be verified by the compiler is preferred over a rule verified by executing a test, which in turn is preferred over a verification via dedicated build steps.
 2. _**Integration with existing tools**_ - Even in combination with existing tools, it might just help them to ship generic architectural rules out of the box with the developer just following conventions or explicitly annotating code to trigger the actual validation.
@@ -89,7 +90,7 @@ An architectural rule that can be verified by the compiler is preferred over a r
 == Design goals
 
 * Enable developers to write architecturally evident code, i.e. provide means to express architectural concepts in code to close the gap between the two.
-* Provide means to verify defined architectectural constraints as close as possible to the code (by the compiler, through tests or additional build tools).
+* Provide means to verify defined architectural constraints as close as possible to the code (by the compiler, through tests or additional build tools).
 * As little invasive as possible technology. I.e. we prefer documented conventions over annotations over required type dependencies.
 
 [[feature-set]]
@@ -138,7 +139,7 @@ com.acme.myapp.moduleC                  <4>
 <4> `moduleC`, depending on `moduleA` and thus `moduleB` in turn.
 
 In this simple scenario, the only additional means of encapsulation is the Java package scope, that allows developers to hide internal components from other modules.
-This is suprisingly simple and effective.
+This is surprisingly simple and effective.
 For more complex structural scenarios, see <<modules.complex>>.
 
 [[modules.running-tests]]
@@ -194,7 +195,7 @@ This will now inspect the module structure of the system, detect the dependency 
 If the direct dependency has dependencies in turn, you now need to mock those using `@MockBean` in the test setup.
 
 In case you want to run all modules up the dependency chain of the to be tested use `BootstrapMode.ALL_DEPENDENCIES`.
-This will cause all dependendent modules to be bootsrapped but unrelated ones to be excluded.
+This will cause all dependent modules to be bootstrapped but unrelated ones to be excluded.
 
 [[modules.general-recommendations]]
 ===== General recommendations
@@ -234,7 +235,7 @@ I.e. any type residing in another module that depends on types in either `….mo
 [[modules.complex.named-interfaces]]
 ===== Named interfaces
 
-In case a single public package defining the module root is not enough, modules can define so called named interface packages that will consitute packages that are eligible targets for dependencies from components of other modules.
+In case a single public package defining the module root is not enough, modules can define so called named interface packages that will constitute packages that are eligible targets for dependencies from components of other modules.
 
 [source]
 ----
@@ -272,7 +273,7 @@ icon:check-circle[] _**Assume top-level module package the API package**_ -- If 
 
 icon:check-circle[] _**Provide an annotation to be used on packages so that multiple different named interfaces to a module can be defined.**_
 
-icon:check-circle[] _**Prevent invalid dependencies into module internal package.**_ -- All module-subpackage by default except explicitly declared as named interface.
+icon:check-circle[] _**Prevent invalid dependencies into module internal package.**_ -- All module sub-packages by default except explicitly declared as named interface.
 
 icon:question-circle[] `allowedDependencies` would then have to use `moduleA.API`, `moduleB.SPI`. If a single named interface exists, referring to the module implicitly refers to the single only named interface.
 
@@ -310,7 +311,7 @@ icon:question-circle[] _**No cycles on the module level**_ -- We should generall
 [[apt-rule-verification]]
 === Rule verification via APT
 
-Assuming we're able to get an APT implemented that's run on top of the current codebase, we could run the aforementioned verifications and issue compiler errors for violations.
+Assuming we're able to get an APT implemented that's run on top of the current code base, we could run the aforementioned verifications and issue compiler errors for violations.
 
 [[existing-tools]]
 == Existing tools
