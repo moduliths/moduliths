@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.olivergierke.moduliths</groupId>
 		<artifactId>moduliths</artifactId>
-		<version>1.0.0.RC1</version>
+		<version>1.0.0.BUILD-SNAPSHOT</version>
 	</parent>
 
 	<name>Moduliths - Test</name>
