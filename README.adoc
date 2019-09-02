@@ -7,6 +7,21 @@ The tests also structurally validate the module structure.
 
 image:https://travis-ci.org/odrotbohm/moduliths.svg?branch=master["Build Status", link="https://travis-ci.org/odrotbohm/moduliths"]
 
+== tl;dr
+
+Modultihs is a Spring Boot extension based on ArchUnit to achieve the following goals:
+
+* _Verify modular structure between individual logical modules in monolithic Spring Boot applications._
++
+Prevents cyclic dependencies as well as explicitly defined allowed dependencies to other modules.
+Verifies access to public components in API packages (convention based, customizable).
+* _Bootstrap a subset of the modules of a monolithic Spring Boot application._
++
+Limits the bootstrap of Spring Boot (component scanning and application of auto-configuration) to a single module, a module plus its direct dependents or an entire tree.
+* _Derive PlantUML documentation about the modules._
++
+Translates the actual module structure into a PlantUML component diagram via Structurizr for easy inclusion in e.g. Asciidoctor based documentation. Diagrams can be rendered for a single module plus its collaborators or the entire system at once.
+
 [[quickstart]]
 == Quickstart
 
