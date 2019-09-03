@@ -2,14 +2,11 @@
 
 A playground to build technology supporting the development of modular monolithic (modulithic) Java applications.
 
-NOTE: **tl;dr:** Modulith is a <<modules,convention based (but customizable) approach to use Java packages to define logical modules>> in monolithic Spring Boot applications, accompanied by an Spring Boot integration test extension to <<modules.running-tests,bootstrap tests for individual modules>> only.
-The tests also structurally validate the module structure.
-
 image:https://travis-ci.org/odrotbohm/moduliths.svg?branch=master["Build Status", link="https://travis-ci.org/odrotbohm/moduliths"]
 
 == tl;dr
 
-Modultihs is a Spring Boot extension based on ArchUnit to achieve the following goals:
+Moduliths is a Spring Boot extension based on ArchUnit to achieve the following goals:
 
 * _Verify modular structure between individual logical modules in monolithic Spring Boot applications._
 +
