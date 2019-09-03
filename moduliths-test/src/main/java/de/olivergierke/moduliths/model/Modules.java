@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -59,7 +57,7 @@ public class Modules implements Iterable<Module> {
 			"org.springframework.web.bind.annotation" //
 	);
 
-	private final @Getter Class<?> modulithType;
+	private final ModulithMetadata metadata;
 	private final Map<String, Module> modules;
 	private final JavaClasses allClasses;
 	private final List<JavaPackage> rootPackages;
@@ -67,10 +65,10 @@ public class Modules implements Iterable<Module> {
 
 	private boolean verified;
 
-	private Modules(Class<?> modulithType, Collection<String> packages, DescribedPredicate<JavaClass> ignored,
+	private Modules(ModulithMetadata metadata, Collection<String> packages, DescribedPredicate<JavaClass> ignored,
 			boolean useFullyQualifiedModuleNames) {
 
-		this.modulithType = modulithType;
+		this.metadata = metadata;
 
 		List<String> toImport = new ArrayList<>(packages);
 		toImport.addAll(FRAMEWORK_PACKAGES);
@@ -123,24 +121,24 @@ public class Modules implements Iterable<Module> {
 			Assert.notNull(modulithType, "Modulith root type must not be null!");
 			Assert.notNull(ignored, "Predicate to describe ignored types must not be null!");
 
-			Modulith modulith = AnnotatedElementUtils.findMergedAnnotation(modulithType, Modulith.class);
-
-			Assert.notNull(modulith,
-					() -> String.format("Modules can only be retrieved from a @%s root type, but %s is not annotated with @%s",
-							Modulith.class.getSimpleName(), modulithType.getSimpleName(), Modulith.class.getSimpleName()));
+			ModulithMetadata metadata = ModulithMetadata.of(modulithType);
 
 			Set<String> basePackages = new HashSet<>();
 			basePackages.add(modulithType.getPackage().getName());
-			basePackages.addAll(Arrays.asList(modulith.additionalPackages()));
+			basePackages.addAll(metadata.getAdditionalPackages());
 
-			Modules modules = new Modules(modulithType, basePackages, ignored, modulith.useFullyQualifiedModuleNames());
+			Modules modules = new Modules(metadata, basePackages, ignored, metadata.useFullyQualifiedModuleNames());
 
-			Set<Module> sharedModules = Arrays.stream(modulith.sharedModules()) //
+			Set<Module> sharedModules = metadata.getSharedModuleNames() //
 					.map(modules::getRequiredModule) //
 					.collect(Collectors.toSet());
 
 			return modules.withSharedModules(sharedModules);
 		});
+	}
+
+	public Class<?> getModulithType() {
+		return metadata.getModulithType();
 	}
 
 	/**
@@ -242,10 +240,7 @@ public class Modules implements Iterable<Module> {
 	 * @return
 	 */
 	public Optional<String> getSystemName() {
-
-		return Optional.ofNullable(AnnotatedElementUtils.findMergedAnnotation(modulithType, Modulith.class)) //
-				.map(it -> it.systemName()) //
-				.filter(StringUtils::hasText);
+		return metadata.getSystemName();
 	}
 
 	/*

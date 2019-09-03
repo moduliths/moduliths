@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,37 +21,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigurationExcludeFilter;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.TypeExcludeFilter;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScan.Filter;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.core.annotation.AliasFor;
-
 /**
  * Defines a Spring Boot application to follow the Modulith structuring conventions.
  *
- * @author Oliver Gierke
+ * @author Oliver Drotbohm
  */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Modulithic
-@SpringBootConfiguration
-@EnableAutoConfiguration
-@ComponentScan(excludeFilters = { //
-		@Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
-		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
-public @interface Modulith {
+public @interface Modulithic {
 
 	/**
 	 * A logical system name for documentation purposes.
 	 *
 	 * @return
 	 */
-	@AliasFor(annotation = Modulithic.class)
 	String systemName() default "";
 
 	/**
@@ -62,7 +46,6 @@ public @interface Modulith {
 	 *
 	 * @return
 	 */
-	@AliasFor(annotation = Modulithic.class)
 	boolean useFullyQualifiedModuleNames() default false;
 
 	/**
@@ -71,7 +54,6 @@ public @interface Modulith {
 	 *
 	 * @return
 	 */
-	@AliasFor(annotation = Modulithic.class)
 	String[] sharedModules() default {};
 
 	/**
@@ -80,6 +62,5 @@ public @interface Modulith {
 	 *
 	 * @return
 	 */
-	@AliasFor(annotation = Modulithic.class)
 	String[] additionalPackages() default {};
 }

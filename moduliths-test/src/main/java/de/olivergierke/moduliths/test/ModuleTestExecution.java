@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package de.olivergierke.moduliths.test;
 
-import de.olivergierke.moduliths.Modulith;
 import de.olivergierke.moduliths.model.JavaPackage;
 import de.olivergierke.moduliths.model.Module;
 import de.olivergierke.moduliths.model.Modules;
@@ -35,6 +34,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.AnnotatedClassFinder;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 
@@ -100,7 +100,7 @@ public class ModuleTestExecution implements Iterable<Module> {
 			String packageName = type.getPackage().getName();
 
 			Class<?> modulithType = MODULITH_TYPES.computeIfAbsent(type,
-					it -> new AnnotatedClassFinder(Modulith.class).findFromPackage(packageName));
+					it -> new AnnotatedClassFinder(SpringBootApplication.class).findFromPackage(packageName));
 			Modules modules = Modules.of(modulithType);
 			Module module = modules.getModuleByBasePackage(packageName) //
 					.orElseThrow(
