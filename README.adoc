@@ -34,7 +34,7 @@ Translates the actual module structure into a PlantUML component diagram via Str
     <groupId>de.olivergierke.moduliths</groupId>
     <artifactId>moduliths-core</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-  <dependency>
+  </dependency>
 
   <!-- Test support -->
   <dependency>
@@ -42,7 +42,7 @@ Translates the actual module structure into a PlantUML component diagram via Str
     <artifactId>moduliths-test</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <scope>test</scope>
-  <dependency>
+  </dependency>
 </dependencies>
 
 <repositories>
