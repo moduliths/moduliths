@@ -35,7 +35,7 @@ public class ModuleUnitTest {
 	public void considersExternalSpringBeans() {
 
 		JavaClasses classes = importer.importPackages("com.acme.withatbean"); //
-		JavaPackage javaPackage = JavaPackage.forNested(Classes.of(classes), "");
+		JavaPackage javaPackage = JavaPackage.of(Classes.of(classes), "");
 
 		Module module = new Module(javaPackage, false);
 

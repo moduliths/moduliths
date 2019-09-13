@@ -75,7 +75,7 @@ public class Module {
 
 		this.basePackage = basePackage;
 		this.moduleAnnotation = basePackage.getAnnotation(de.olivergierke.moduliths.Module.class);
-		this.namedInterfaces = discoverNamedInterfaces(basePackage);
+		this.namedInterfaces = NamedInterfaces.discoverNamedInterfaces(basePackage);
 		this.useFullyQualifiedModuleNames = useFullyQualifiedModuleNames;
 
 		this.springBeans = Suppliers.memoize(() -> filterSpringBeans(basePackage));
@@ -100,18 +100,6 @@ public class Module {
 		return coreComponents //
 				.and(collect.getOrDefault(true, Collections.emptyList())) //
 				.and(collect.getOrDefault(false, Collections.emptyList()));
-	}
-
-	private static NamedInterfaces discoverNamedInterfaces(JavaPackage basePackage) {
-
-		List<NamedInterface> explicitlyAnnotated = basePackage
-				.getSubPackagesAnnotatedWith(de.olivergierke.moduliths.NamedInterface.class) //
-				.map(NamedInterface::of) //
-				.collect(Collectors.toList());
-
-		return NamedInterfaces.of(explicitlyAnnotated.isEmpty() //
-				? Collections.singletonList(NamedInterface.unnamed(basePackage)) //
-				: explicitlyAnnotated);
 	}
 
 	public String getName() {

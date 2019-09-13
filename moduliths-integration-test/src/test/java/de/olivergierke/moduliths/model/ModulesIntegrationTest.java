@@ -20,10 +20,13 @@ import static org.assertj.core.api.Assertions.*;
 import de.olivergierke.moduliths.model.Module.DependencyType;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
 import com.acme.myproject.Application;
+import com.acme.myproject.complex.internal.FirstTypeBasedPort;
+import com.acme.myproject.complex.internal.SecondTypeBasePort;
 import com.acme.myproject.moduleA.SomeConfigurationA.SomeAtBeanComponentA;
 
 /**
@@ -74,8 +77,24 @@ public class ModulesIntegrationTest {
 		Optional<Module> module = modules.getModuleByName("complex");
 
 		assertThat(module).hasValueSatisfying(it -> {
-			assertThat(it.getNamedInterfaces().stream().map(NamedInterface::getName)) //
-					.containsExactlyInAnyOrder("API", "SPI");
+
+			NamedInterfaces interfaces = it.getNamedInterfaces();
+
+			assertThat(interfaces.stream().map(NamedInterface::getName)) //
+					.containsExactlyInAnyOrder("API", "SPI", "Port 1", "Port 2", "Port 3");
+
+			verifyNamedInterfaces(interfaces, "Port 1", FirstTypeBasedPort.class, SecondTypeBasePort.class);
+			verifyNamedInterfaces(interfaces, "Port 2", FirstTypeBasedPort.class, SecondTypeBasePort.class);
+			verifyNamedInterfaces(interfaces, "Port 3", FirstTypeBasedPort.class, SecondTypeBasePort.class);
+		});
+	}
+
+	private static void verifyNamedInterfaces(NamedInterfaces interfaces, String name, Class<?>... types) {
+
+		Optional<NamedInterface> byName = interfaces.getByName(name);
+
+		Stream.of(types).forEach(type -> {
+			assertThat(byName).hasValueSatisfying(named -> named.contains(type));
 		});
 	}
 

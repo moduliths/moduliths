@@ -86,7 +86,7 @@ public class Modules implements Iterable<Module> {
 				.collect(toMap(Module::getName, Function.identity()));
 
 		this.rootPackages = packages.stream() //
-				.map(it -> JavaPackage.forNested(classes, it).toSingle()) //
+				.map(it -> JavaPackage.of(classes, it).toSingle()) //
 				.collect(Collectors.toList());
 
 		this.sharedModules = Collections.emptySet();
@@ -291,6 +291,6 @@ public class Modules implements Iterable<Module> {
 	}
 
 	private static Stream<JavaPackage> getSubpackages(Classes types, String rootPackage) {
-		return JavaPackage.forNested(types, rootPackage).getDirectSubPackages().stream();
+		return JavaPackage.of(types, rootPackage).getDirectSubPackages().stream();
 	}
 }

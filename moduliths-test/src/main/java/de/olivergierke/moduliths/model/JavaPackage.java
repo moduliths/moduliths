@@ -47,7 +47,8 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 	private static final String PACKAGE_INFO_NAME = "package-info";
 
 	private final @Getter String name;
-	private final Classes classes, packageClasses;
+	private final Classes classes;
+	private final Classes packageClasses;
 	private final Supplier<Set<JavaPackage>> directSubPackages;
 
 	private JavaPackage(Classes classes, String name, boolean includeSubPackages) {
@@ -60,12 +61,16 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 				.filter(it -> !it.equals(name)) //
 				.map(it -> extractDirectSubPackage(it)) //
 				.distinct() //
-				.map(it -> forNested(classes, it)) //
+				.map(it -> of(classes, it)) //
 				.collect(Collectors.toSet()));
 	}
 
-	public static JavaPackage forNested(Classes classes, String name) {
+	public static JavaPackage of(Classes classes, String name) {
 		return new JavaPackage(classes, name, true);
+	}
+
+	public static boolean isPackageInfoType(JavaClass type) {
+		return type.getSimpleName().equals(PACKAGE_INFO_NAME);
 	}
 
 	public JavaPackage toSingle() {
@@ -78,6 +83,16 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	public Collection<JavaPackage> getDirectSubPackages() {
 		return directSubPackages.get();
+	}
+
+	/**
+	 * Returns all classes residing in the current package and potentially in sub-packages if the current package was
+	 * created to include them.
+	 *
+	 * @return
+	 */
+	public Classes getClasses() {
+		return packageClasses;
 	}
 
 	/**
@@ -100,10 +115,11 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 
 	public Stream<JavaPackage> getSubPackagesAnnotatedWith(Class<? extends Annotation> annotation) {
 
-		return packageClasses.that(CanBeAnnotated.Predicates.annotatedWith(annotation)).stream() //
+		return packageClasses.that(JavaClass.Predicates.simpleName(PACKAGE_INFO_NAME) //
+				.and(CanBeAnnotated.Predicates.annotatedWith(annotation))).stream() //
 				.map(JavaClass::getPackageName) //
 				.distinct() //
-				.map(it -> forNested(classes, it));
+				.map(it -> of(classes, it));
 	}
 
 	public Classes that(DescribedPredicate<? super JavaClass> predicate) {
@@ -155,10 +171,10 @@ public class JavaPackage implements DescribedIterable<JavaClass> {
 	@Override
 	public String toString() {
 
-		StringBuilder builder = new StringBuilder(name).append("\n\n");
-
-		packageClasses.stream().forEach(it -> builder.append(Classes.format(it, name)).append('\n'));
-
-		return builder.toString();
+		return new StringBuilder(name) //
+				.append("\n") //
+				.append(getClasses().format(name)) //
+				.append('\n') //
+				.toString();
 	}
 }

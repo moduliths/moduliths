@@ -98,6 +98,10 @@ class Classes implements DescribedIterable<JavaClass> {
 				.collect(Collectors.collectingAndThen(Collectors.toList(), Classes::new));
 	}
 
+	Classes and(Classes classes) {
+		return and(classes.classes);
+	}
+
 	/**
 	 * Returns a Classes with the current elements and the given other ones combined.
 	 *
@@ -136,11 +140,11 @@ class Classes implements DescribedIterable<JavaClass> {
 	}
 
 	boolean contains(JavaClass type) {
-		return that(new SameClass(type)).iterator().hasNext();
+		return !that(new SameClass(type)).isEmpty();
 	}
 
 	boolean contains(String className) {
-		return that(HasName.Predicates.name(className)).iterator().hasNext();
+		return !that(HasName.Predicates.name(className)).isEmpty();
 	}
 
 	/*
@@ -161,7 +165,19 @@ class Classes implements DescribedIterable<JavaClass> {
 		return classes.iterator();
 	}
 
-	static String format(JavaClass type) {
+	String format() {
+		return classes.stream() //
+				.map(Classes::format) //
+				.collect(Collectors.joining("\n"));
+	}
+
+	String format(String basePackage) {
+		return classes.stream() //
+				.map(it -> Classes.format(it, basePackage)) //
+				.collect(Collectors.joining("\n"));
+	}
+
+	private static String format(JavaClass type) {
 		return format(type, "");
 	}
 
@@ -175,7 +191,7 @@ class Classes implements DescribedIterable<JavaClass> {
 				? type.getName().replace(basePackage, "…") //
 				: type.getName();
 
-		return String.format("%s %s", prefix, name);
+		return String.format("    %s %s", prefix, name);
 	}
 
 	private static class SameClass extends DescribedPredicate<JavaClass> {

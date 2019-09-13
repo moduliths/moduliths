@@ -43,6 +43,6 @@ public class ComplexTest {
 		NamedInterfaces interfaces = moduleTest.getModule().getNamedInterfaces();
 
 		assertThat(interfaces.stream().map(NamedInterface::getName)) //
-				.containsExactlyInAnyOrder("API", "SPI");
+				.containsExactlyInAnyOrder("API", "SPI", "Port 1", "Port 2", "Port 3");
 	}
 }
