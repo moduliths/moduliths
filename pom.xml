@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.olivergierke.moduliths</groupId>
 	<artifactId>moduliths</artifactId>
-	<version>1.0.0.RC2</version>
+	<version>1.0.0.BUILD-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Moduliths</name>
