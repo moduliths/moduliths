@@ -30,16 +30,16 @@ import org.springframework.events.PublicationTargetIdentifier;
 
 /**
  * Map based {@link EventPublicationRegistry}, for testing purposes only.
- * 
+ *
  * @author Oliver Gierke
  */
 public class MapEventPublicationRegistry implements EventPublicationRegistry {
 
 	private final Map<Key, CompletableEventPublication> events = new HashMap<>();
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.event.EventStore#findEventsToBePublished()
+	 * @see org.springframework.events.EventPublicationRegistry#findIncompletePublications()
 	 */
 	@Override
 	public Iterable<EventPublication> findIncompletePublications() {
@@ -50,9 +50,9 @@ public class MapEventPublicationRegistry implements EventPublicationRegistry {
 				.collect(Collectors.toList());
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.events.EventStore#store(java.lang.Object, java.util.Collection)
+	 * @see org.springframework.events.EventPublicationRegistry#store(java.lang.Object, java.util.Collection)
 	 */
 	@Override
 	public void store(Object event, Collection<ApplicationListener<?>> listeners) {
@@ -64,9 +64,9 @@ public class MapEventPublicationRegistry implements EventPublicationRegistry {
 		});
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.events.EventStore#markCompleted(java.lang.Object, de.olivergierke.events.ListenerId)
+	 * @see org.springframework.events.EventPublicationRegistry#markCompleted(java.lang.Object, org.springframework.events.PublicationTargetIdentifier)
 	 */
 	@Override
 	public void markCompleted(Object event, PublicationTargetIdentifier id) {
@@ -75,7 +75,8 @@ public class MapEventPublicationRegistry implements EventPublicationRegistry {
 
 	@Value(staticConstructor = "of")
 	private static class Key {
+
 		Object event;
-		PublicationTargetIdentifier listenerId;
+		PublicationTargetIdentifier identifier;
 	}
 }

@@ -17,6 +17,10 @@ package org.springframework.events;
 
 import java.time.Instant;
 
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.PayloadApplicationEvent;
+import org.springframework.util.Assert;
+
 /**
  * An event publication.
  *
@@ -32,6 +36,21 @@ public interface EventPublication extends Comparable<EventPublication> {
 	Object getEvent();
 
 	/**
+	 * Returns the event as Spring {@link ApplicationEvent}, effectively wrapping it into a
+	 * {@link PayloadApplicationEvent} in case it's not one already.
+	 *
+	 * @return
+	 */
+	default ApplicationEvent getApplicationEvent() {
+
+		Object event = getEvent();
+
+		return PayloadApplicationEvent.class.isInstance(event) //
+				? PayloadApplicationEvent.class.cast(event)
+				: new PayloadApplicationEvent<>(this, event);
+	}
+
+	/**
 	 * Returns the time the event is published at.
 	 *
 	 * @return
@@ -44,6 +63,19 @@ public interface EventPublication extends Comparable<EventPublication> {
 	 * @return
 	 */
 	PublicationTargetIdentifier getTargetIdentifier();
+
+	/**
+	 * Returns whether the publication is identified by the given {@link PublicationTargetIdentifier}.
+	 *
+	 * @param identifier must not be {@literal null}.
+	 * @return
+	 */
+	default boolean isIdentifiedBy(PublicationTargetIdentifier identifier) {
+
+		Assert.notNull(identifier, "Identifier must not be null!");
+
+		return this.getTargetIdentifier().equals(identifier);
+	}
 
 	/*
 	 * (non-Javadoc)
