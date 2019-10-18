@@ -17,15 +17,15 @@ package org.springframework.events;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Oliver Gierke
  */
-public class CompletableEventPublicationUnitTest {
+class CompletableEventPublicationUnitTest {
 
 	@Test
-	public void rejectsNullEvent() {
+	void rejectsNullEvent() {
 
 		assertThatExceptionOfType(IllegalArgumentException.class)//
 				.isThrownBy(() -> CompletableEventPublication.of(null, PublicationTargetIdentifier.of("foo")))//
@@ -33,7 +33,7 @@ public class CompletableEventPublicationUnitTest {
 	}
 
 	@Test
-	public void rejectsNullTargetIdentifier() {
+	void rejectsNullTargetIdentifier() {
 
 		assertThatExceptionOfType(IllegalArgumentException.class)//
 				.isThrownBy(() -> CompletableEventPublication.of(new Object(), null))//
@@ -41,7 +41,7 @@ public class CompletableEventPublicationUnitTest {
 	}
 
 	@Test
-	public void publicationIsIncompleteByDefault() {
+	void publicationIsIncompleteByDefault() {
 
 		CompletableEventPublication publication = CompletableEventPublication.of(new Object(),
 				PublicationTargetIdentifier.of("foo"));
@@ -51,7 +51,7 @@ public class CompletableEventPublicationUnitTest {
 	}
 
 	@Test
-	public void completionCapturesDate() {
+	void completionCapturesDate() {
 
 		CompletableEventPublication publication = CompletableEventPublication
 				.of(new Object(), PublicationTargetIdentifier.of("foo")).markCompleted();

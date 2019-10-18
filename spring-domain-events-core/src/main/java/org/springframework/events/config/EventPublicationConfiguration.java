@@ -15,26 +15,30 @@
  */
 package org.springframework.events.config;
 
+import java.util.function.Supplier;
+
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.events.EventPublicationRegistry;
 import org.springframework.events.support.CompletionRegisteringBeanPostProcessor;
-import org.springframework.events.support.PersistentApplicationEventMulticaster;
 import org.springframework.events.support.MapEventPublicationRegistry;
+import org.springframework.events.support.PersistentApplicationEventMulticaster;
 
 /**
  * @author Oliver Gierke
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 class EventPublicationConfiguration {
 
 	@Bean
-	public PersistentApplicationEventMulticaster applicationEventMulticaster(
-			ObjectFactory<EventPublicationRegistry> registry) {
+	PersistentApplicationEventMulticaster applicationEventMulticaster(ObjectProvider<EventPublicationRegistry> registry) {
 
-		return new PersistentApplicationEventMulticaster(
-				new DefaultingObjectFactory<EventPublicationRegistry>(registry, () -> new MapEventPublicationRegistry()));
+		Supplier<EventPublicationRegistry> supplier = () -> registry
+				.getIfAvailable(() -> new MapEventPublicationRegistry());
+
+		return new PersistentApplicationEventMulticaster(supplier);
 	}
 
 	@Bean

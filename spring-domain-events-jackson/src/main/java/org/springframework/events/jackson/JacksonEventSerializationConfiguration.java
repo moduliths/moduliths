@@ -17,10 +17,9 @@ package org.springframework.events.jackson;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.events.config.DefaultingObjectFactory;
 import org.springframework.events.config.EventSerializationConfigurationExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,15 +28,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 /**
  * @author Oliver Gierke
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
-public class JacksonEventSerializationConfiguration implements EventSerializationConfigurationExtension {
+class JacksonEventSerializationConfiguration implements EventSerializationConfigurationExtension {
 
-	private final ObjectFactory<ObjectMapper> mapper;
+	private final ObjectProvider<ObjectMapper> mapper;
 
 	@Bean
 	public JacksonEventSerializer jacksonEventSerializer() {
-		return new JacksonEventSerializer(new DefaultingObjectFactory<ObjectMapper>(mapper, () -> defaultObjectMapper()));
+		return new JacksonEventSerializer(() -> mapper.getIfAvailable(() -> defaultObjectMapper()));
 	}
 
 	private static ObjectMapper defaultObjectMapper() {

@@ -31,10 +31,10 @@ import org.springframework.util.ClassUtils;
 /**
  * @author Oliver Gierke
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Import(JpaEventPublicationConfiguration.RepositoriesEnablingImportSelector.class)
 @RequiredArgsConstructor
-public class JpaEventPublicationConfiguration implements EventPublicationConfigurationExtension {
+class JpaEventPublicationConfiguration implements EventPublicationConfigurationExtension {
 
 	private final JpaEventPublicationRepository repository;
 	private final ObjectFactory<EventSerializer> serializer;
@@ -49,7 +49,7 @@ public class JpaEventPublicationConfiguration implements EventPublicationConfigu
 		private static final boolean IN_SPRING_BOOT = ClassUtils.isPresent("org.springframework.boot.SpringApplication",
 				RepositoriesEnablingImportSelector.class.getClassLoader());
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.context.annotation.ImportSelector#selectImports(org.springframework.core.type.AnnotationMetadata)
 		 */

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.events;
+package example.events;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -21,28 +21,32 @@ import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Method;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.events.EventPublication;
+import org.springframework.events.EventPublicationRegistry;
+import org.springframework.events.PublicationTargetIdentifier;
 import org.springframework.events.config.EnablePersistentDomainEvents;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * @author Oliver Gierke
  */
-public class PersistentDomainEventIntegrationTest {
+class PersistentDomainEventIntegrationTest {
 
 	@Test
-	public void exposesEventPublicationForFailedListener() throws Exception {
+	void exposesEventPublicationForFailedListener() {
 
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.register(ApplicationConfiguration.class, InfrastructureConfiguration.class);
 		context.refresh();
 
-		Method method = SecondTxEventListener.class.getMethod("on", DomainEvent.class);
+		Method method = ReflectionUtils.findMethod(SecondTxEventListener.class, "on", DomainEvent.class);
 
 		try {
 
@@ -106,8 +110,12 @@ public class PersistentDomainEventIntegrationTest {
 
 	static class FirstTxEventListener {
 
+		boolean invoked = false;
+
 		@TransactionalEventListener
-		public void on(DomainEvent event) {}
+		public void on(DomainEvent event) {
+			invoked = true;
+		}
 	}
 
 	static class SecondTxEventListener {
@@ -120,7 +128,12 @@ public class PersistentDomainEventIntegrationTest {
 
 	static class ThirdTxEventListener {
 
+		boolean invoked = false;
+
 		@TransactionalEventListener
-		public void on(DomainEvent event) {}
+		public void on(DomainEvent event) {
+
+			invoked = true;
+		}
 	}
 }

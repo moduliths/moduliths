@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.springframework.aop.support.AopUtils;
@@ -43,7 +44,8 @@ import org.springframework.util.ReflectionUtils;
 @RequiredArgsConstructor
 public class PersistentApplicationEventMulticaster extends AbstractApplicationEventMulticaster {
 
-	private final @NonNull ObjectFactory<EventPublicationRegistry> registry;
+	private final @NonNull Supplier<EventPublicationRegistry> registry;
+
 
 	/* 
 	 * (non-Javadoc)
@@ -77,9 +79,7 @@ public class PersistentApplicationEventMulticaster extends AbstractApplicationEv
 
 			Object eventToPersist = getEventToPersist(event);
 
-			registry.getObject().store(eventToPersist, transactionalListeners);
-			// EventStore.persist(eventThis)
-			// SpringMVC Controller Atom Feed
+			registry.get().store(eventToPersist, transactionalListeners);
 		}
 
 		for (ApplicationListener listener : listeners) {

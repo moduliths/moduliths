@@ -18,8 +18,8 @@ package org.springframework.events.jackson;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.events.EventSerializer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,11 +29,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Oliver Gierke
  */
 @RequiredArgsConstructor
-public class JacksonEventSerializer implements EventSerializer {
+class JacksonEventSerializer implements EventSerializer {
 
-	private final ObjectFactory<ObjectMapper> mapper;
+	private final Supplier<ObjectMapper> mapper;
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see de.olivergierke.events.EventSerializer#serialize(java.lang.Object)
 	 */
@@ -41,13 +41,13 @@ public class JacksonEventSerializer implements EventSerializer {
 	public Object serialize(Object event) {
 
 		try {
-			return mapper.getObject().writeValueAsString(event);
+			return mapper.get().writeValueAsString(event);
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see de.olivergierke.events.EventSerializer#deserialize(java.lang.Object, java.lang.Class)
 	 */
@@ -55,7 +55,7 @@ public class JacksonEventSerializer implements EventSerializer {
 	public Object deserialize(Object serialized, Class<?> type) {
 
 		try {
-			return mapper.getObject().readerFor(type).readValue(serialized.toString());
+			return mapper.get().readerFor(type).readValue(serialized.toString());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

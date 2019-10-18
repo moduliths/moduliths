@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.events;
+package example.events;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.events.jpa.JpaEventPublicationConfiguration;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -29,21 +28,21 @@ import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableTransactionManagement
 class InfrastructureConfiguration {
 
 	@Bean
-	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+	LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
 
 		HibernateJpaVendorAdapter adapter = new HibernateJpaVendorAdapter();
 		adapter.setDatabase(Database.HSQL);
 		adapter.setGenerateDdl(true);
 
 		LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
-		factoryBean.setDataSource(dataSource());
+		factoryBean.setDataSource(dataSource);
 		factoryBean.setJpaVendorAdapter(adapter);
-		factoryBean.setPackagesToScan(JpaEventPublicationConfiguration.class.getPackage().getName());
+		factoryBean.setPackagesToScan("org.springframework.events.jpa");
 
 		return factoryBean;
 	}
