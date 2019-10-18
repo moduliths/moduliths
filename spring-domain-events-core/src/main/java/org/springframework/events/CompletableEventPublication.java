@@ -15,26 +15,26 @@
  */
 package org.springframework.events;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
  * An event publication that can be completed.
- * 
+ *
  * @author Oliver Gierke
  */
 public interface CompletableEventPublication extends EventPublication {
 
 	/**
 	 * Returns the completion date of the publication.
-	 * 
+	 *
 	 * @return will never be {@literal null}.
 	 */
-	Optional<LocalDateTime> getCompletionDate();
+	Optional<Instant> getCompletionDate();
 
 	/**
 	 * Returns whether the publication o
-	 * 
+	 *
 	 * @return
 	 */
 	default boolean isPublicationCompleted() {
@@ -43,14 +43,14 @@ public interface CompletableEventPublication extends EventPublication {
 
 	/**
 	 * Marks the event publication as completed.
-	 * 
+	 *
 	 * @return
 	 */
 	CompletableEventPublication markCompleted();
 
 	/**
 	 * Creates a {@link CompletableEventPublication} for the given event an listener identifier.
-	 * 
+	 *
 	 * @param event must not be {@literal null}.
 	 * @param id must not be {@literal null}.
 	 * @return

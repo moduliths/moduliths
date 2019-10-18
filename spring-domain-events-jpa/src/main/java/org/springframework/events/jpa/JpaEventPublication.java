@@ -21,7 +21,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import javax.persistence.Entity;
@@ -40,31 +40,29 @@ import org.springframework.data.domain.Persistable;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 class JpaEventPublication implements Persistable<UUID> {
 
-	private static final long serialVersionUID = -1923584857967532519L;
-
 	private final @Id UUID id;
-	private final LocalDateTime publicationDate;
+	private final Instant publicationDate;
 	private final String listenerId;
 	private final String serializedEvent;
 	private final Class<?> eventType;
 
-	private LocalDateTime completionDate;
+	private Instant completionDate;
 	private @Transient boolean isNew = true;
 
 	@Builder
-	static JpaEventPublication of(LocalDateTime publicationDate, String listenerId, Object serializedEvent,
+	static JpaEventPublication of(Instant publicationDate, String listenerId, Object serializedEvent,
 			Class<?> eventType) {
 		return new JpaEventPublication(UUID.randomUUID(), publicationDate, listenerId, serializedEvent.toString(),
 				eventType);
 	}
 
-	public JpaEventPublication markCompleted() {
+	JpaEventPublication markCompleted() {
 
-		this.completionDate = LocalDateTime.now();
+		this.completionDate = Instant.now();
 		return this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.domain.Persistable#isNew()
 	 */

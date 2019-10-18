@@ -20,7 +20,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
 
 /**
  * JPA based {@link EventPublicationRegistry}.
- * 
+ *
  * @author Oliver Gierke
  */
 @Slf4j
@@ -62,7 +62,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 				.forEach(it -> events.save(it));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.events.EventPublicationRegistry#findIncompletePublications()
 	 */
@@ -92,7 +92,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 				.ifPresent(it -> events.save(it.markCompleted()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.beans.factory.DisposableBean#destroy()
 	 */
@@ -109,7 +109,8 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		log.debug("Shutting down with the following publications left unfinished:");
 
-		outstandingPublications.forEach(it -> log.debug("\t{} - {}", it.getId(), it.getEventType()));
+		outstandingPublications
+				.forEach(it -> log.debug("\t{} - {} - {}", it.getId(), it.getEventType(), it.getListenerId()));
 	}
 
 	private JpaEventPublication map(EventPublication publication) {
@@ -165,7 +166,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 		 * @see org.springframework.events.EventPublication#getPublicationDate()
 		 */
 		@Override
-		public LocalDateTime getPublicationDate() {
+		public Instant getPublicationDate() {
 			return publication.getPublicationDate();
 		}
 	}

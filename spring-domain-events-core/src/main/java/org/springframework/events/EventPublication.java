@@ -15,37 +15,37 @@
  */
 package org.springframework.events;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * An event publication.
- * 
+ *
  * @author Oliver Gierke
  */
 public interface EventPublication extends Comparable<EventPublication> {
 
 	/**
 	 * Returns the event that is published.
-	 * 
+	 *
 	 * @return
 	 */
 	Object getEvent();
 
 	/**
 	 * Returns the time the event is published at.
-	 * 
+	 *
 	 * @return
 	 */
-	LocalDateTime getPublicationDate();
+	Instant getPublicationDate();
 
 	/**
 	 * Returns the identifier of the target that the event is supposed to be published to.
-	 * 
+	 *
 	 * @return
 	 */
 	PublicationTargetIdentifier getTargetIdentifier();
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */

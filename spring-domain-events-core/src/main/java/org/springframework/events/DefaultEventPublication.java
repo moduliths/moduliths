@@ -21,12 +21,12 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
  * Default {@link CompletableEventPublication} implementation.
- * 
+ *
  * @author Oliver Gierke
  */
 @Getter
@@ -37,18 +37,18 @@ class DefaultEventPublication implements CompletableEventPublication {
 
 	private final @NonNull Object event;
 	private final @NonNull PublicationTargetIdentifier targetIdentifier;
-	private final LocalDateTime publicationDate = LocalDateTime.now();
+	private final Instant publicationDate = Instant.now();
 
-	private Optional<LocalDateTime> completionDate = Optional.empty();
+	private Optional<Instant> completionDate = Optional.empty();
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see de.olivergierke.events.CompletableEventPublication#markCompleted()
 	 */
 	@Override
 	public CompletableEventPublication markCompleted() {
 
-		this.completionDate = Optional.of(LocalDateTime.now());
+		this.completionDate = Optional.of(Instant.now());
 		return this;
 	}
 }
