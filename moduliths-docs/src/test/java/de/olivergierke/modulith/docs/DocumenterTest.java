@@ -20,6 +20,7 @@ import de.olivergierke.moduliths.model.Module;
 import de.olivergierke.moduliths.model.Module.DependencyType;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -27,7 +28,7 @@ import com.acme.myproject.Application;
 
 /**
  * Unit tests for {@link Documenter}.
- * 
+ *
  * @author Oliver Gierke
  */
 public class DocumenterTest {
@@ -45,7 +46,7 @@ public class DocumenterTest {
 		Module module = documenter.getModules().getModuleByName("moduleB") //
 				.orElseThrow(() -> new IllegalArgumentException());
 
-		documenter.writeModuleAsPlantUml(module);
+		documenter.writeModuleAsPlantUml(module, Options.defaults().withColorSelector(it -> Optional.of("#ff0000")));
 
 		Options options = Options.defaults() //
 				.withComponentFilter(component -> component.getRelationships().stream()

@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -164,7 +165,7 @@ public class Documenter {
 
 		Assert.isTrue(fileNamePattern.contains("%s"), () -> String.format(INVALID_FILE_NAME_PATTERN, fileNamePattern));
 
-		writeViewAsPlantUml(view, String.format(fileNamePattern, module.getName()));
+		writeViewAsPlantUml(view, String.format(fileNamePattern, module.getName()), options);
 	}
 
 	public String toPlantUml() throws IOException {
@@ -263,19 +264,23 @@ public class Documenter {
 		}
 	}
 
-	private void writeViewAsPlantUml(View view, String filename) {
+	private void writeViewAsPlantUml(View view, String filename, Options options) {
 
 		try {
 
 			Path file = recreateFile(filename);
 
 			try (Writer writer = new FileWriter(file.toFile())) {
-				new PlantUMLWriter().write(view, writer);
+				getPlantUMLWriter(options).write(view, writer);
 			}
 
 		} catch (IOException o_O) {
 			throw new RuntimeException(o_O);
 		}
+	}
+
+	private PlantUMLWriter getPlantUMLWriter(Options options) {
+		return new CustomPlantUmlWriter(options.getColorSelector(), components);
 	}
 
 	private <T extends Writer> T createPlantUml(T writer, Options options) throws IOException {
@@ -286,7 +291,7 @@ public class Documenter {
 
 		addComponentsToView(() -> modules.stream(), componentView, options, it -> {});
 
-		new PlantUMLWriter().write(componentView, writer);
+		getPlantUMLWriter(options).write(componentView, writer);
 
 		return writer;
 	}
@@ -350,6 +355,11 @@ public class Documenter {
 		private final @Wither String targetFileName;
 
 		/**
+		 * A callback to return a hex-encoded color per {@link Module}.
+		 */
+		private final @Wither Function<Module, Optional<String>> colorSelector;
+
+		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
 		 * filters and default file names.
@@ -357,7 +367,8 @@ public class Documenter {
 		 * @return will never be {@literal null}.
 		 */
 		public static Options defaults() {
-			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null);
+			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null,
+					__ -> Optional.empty());
 		}
 
 		/**
@@ -371,7 +382,9 @@ public class Documenter {
 			Assert.notNull(types, "Dependency types must not be null!");
 
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
-			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName);
+
+			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName,
+					colorSelector);
 		}
 
 		private Optional<String> getTargetFileName() {
@@ -380,6 +393,40 @@ public class Documenter {
 
 		private Stream<DependencyType> getDependencyTypes() {
 			return dependencyTypes.stream();
+		}
+	}
+
+	/**
+	 * Custom {@link PlantUMLWriter} to apply the {@link Options#getColorSelector()}s while writing the component
+	 * instances into the PlantUML component diagram.
+	 *
+	 * @author Oliver Drotbohm
+	 */
+	@RequiredArgsConstructor
+	private static class CustomPlantUmlWriter extends PlantUMLWriter {
+
+		private final Function<Module, Optional<String>> colorSelector;
+		private final Map<Module, Component> components;
+
+		/*
+		 * (non-Javadoc)
+		 * @see com.structurizr.io.plantuml.PlantUMLWriter#backgroundOf(com.structurizr.view.View, com.structurizr.model.Element)
+		 */
+		@Override
+		protected String backgroundOf(View view, Element element) {
+
+			if (!Component.class.isInstance(element)) {
+				return super.backgroundOf(view, element);
+			}
+
+			Component component = (Component) element;
+
+			return components.entrySet().stream() //
+					.filter(it -> it.getValue().equals(component)) //
+					.map(Entry::getKey) //
+					.findFirst() //
+					.flatMap(colorSelector) //
+					.orElseGet(() -> super.backgroundOf(view, element));
 		}
 	}
 }
