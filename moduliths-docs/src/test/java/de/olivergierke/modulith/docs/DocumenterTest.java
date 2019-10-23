@@ -46,7 +46,9 @@ public class DocumenterTest {
 		Module module = documenter.getModules().getModuleByName("moduleB") //
 				.orElseThrow(() -> new IllegalArgumentException());
 
-		documenter.writeModuleAsPlantUml(module, Options.defaults().withColorSelector(it -> Optional.of("#ff0000")));
+		documenter.writeModuleAsPlantUml(module, Options.defaults() //
+				.withColorSelector(it -> Optional.of("#ff0000")) //
+				.withDefaultDisplayName(it -> it.getDisplayName().toUpperCase()));
 
 		Options options = Options.defaults() //
 				.withComponentFilter(component -> component.getRelationships().stream()

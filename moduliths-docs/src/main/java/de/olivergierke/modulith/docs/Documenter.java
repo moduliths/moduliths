@@ -80,7 +80,8 @@ public class Documenter {
 	private final @Getter Modules modules;
 	private final Workspace workspace;
 	private final Container container;
-	private final Map<Module, Component> components;
+
+	private Map<Module, Component> components;
 
 	/**
 	 * Creates a new {@link Documenter} for the {@link Modules} created for the given modulith type.
@@ -109,11 +110,20 @@ public class Documenter {
 		SoftwareSystem system = model.addSoftwareSystem(systemName, "");
 
 		this.container = system.addContainer("Application", "", "");
-		this.components = modules.stream() //
-				.collect(
-						Collectors.toMap(Function.identity(), it -> container.addComponent(it.getDisplayName(), "", "Module")));
+	}
 
-		this.components.forEach(this::addDependencies);
+	private Map<Module, Component> getComponents(Options options) {
+
+		if (components == null) {
+
+			this.components = modules.stream() //
+					.collect(Collectors.toMap(Function.identity(),
+							it -> container.addComponent(options.getDefaultDisplayName().apply(it), "", "Module")));
+
+			this.components.forEach((key, value) -> addDependencies(key, value, options));
+		}
+
+		return components;
 	}
 
 	/**
@@ -157,7 +167,7 @@ public class Documenter {
 		Assert.notNull(options, "Options must not be null!");
 
 		ComponentView view = workspace.getViews().createComponentView(container, module.getName(), "");
-		view.setTitle(module.getDisplayName());
+		view.setTitle(options.getDefaultDisplayName().apply(module));
 
 		addComponentsToView(module, view, options);
 
@@ -172,12 +182,12 @@ public class Documenter {
 		return createPlantUml(new StringWriter(), Options.defaults()).toString();
 	}
 
-	private void addDependencies(Module module, Component component) {
+	private void addDependencies(Module module, Component component, Options options) {
 
 		DEPENDENCY_DESCRIPTIONS.entrySet().stream().forEach(entry -> {
 
 			module.getDependencies(modules, entry.getKey()).stream() //
-					.map(components::get) //
+					.map(it -> getComponents(options).get(it)) //
 					// .filter(it -> !component.hasEfferentRelationshipWith(it)) //
 					.forEach(it -> {
 
@@ -188,7 +198,7 @@ public class Documenter {
 
 		module.getBootstrapDependencies(modules) //
 				.forEach(it -> {
-					Relationship relationship = component.uses(components.get(it), "uses");
+					Relationship relationship = component.uses(getComponents(options).get(it), "uses");
 					relationship.addTags(DependencyType.USES_COMPONENT.toString());
 				});
 	}
@@ -202,14 +212,14 @@ public class Documenter {
 
 		Supplier<Stream<Module>> dependencies = () -> Stream.concat(bootstrapDependencies.get(), otherDependencies.get());
 
-		addComponentsToView(dependencies, view, options, it -> it.add(components.get(module)));
+		addComponentsToView(dependencies, view, options, it -> it.add(getComponents(options).get(module)));
 	}
 
 	private void addComponentsToView(Supplier<Stream<Module>> modules, ComponentView view, Options options,
 			Consumer<ComponentView> afterCleanup) {
 
 		modules.get().filter(options.getExclusions().negate()) //
-				.map(components::get) //
+				.map(it -> getComponents(options).get(it)) //
 				.filter(options.getComponentFilter()).forEach(view::add);
 
 		// Remove filtered dependency types
@@ -223,7 +233,7 @@ public class Documenter {
 		modules.get().filter(options.getTargetOnly()) //
 				.forEach(module -> {
 
-					Component component = components.get(module);
+					Component component = getComponents(options).get(module);
 
 					view.getRelationships().stream() //
 							.map(RelationshipView::getRelationship) //
@@ -280,7 +290,7 @@ public class Documenter {
 	}
 
 	private PlantUMLWriter getPlantUMLWriter(Options options) {
-		return new CustomPlantUmlWriter(options.getColorSelector(), components);
+		return new CustomPlantUmlWriter(options.getColorSelector(), getComponents(options));
 	}
 
 	private <T extends Writer> T createPlantUml(T writer, Options options) throws IOException {
@@ -360,6 +370,12 @@ public class Documenter {
 		private final @Wither Function<Module, Optional<String>> colorSelector;
 
 		/**
+		 * A callback to return a default display names for a given {@link Module}. Default implementation just forwards to
+		 * {@link Module#getDisplayName()}.
+		 */
+		private final @Wither Function<Module, String> defaultDisplayName;
+
+		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
 		 * filters and default file names.
@@ -368,7 +384,7 @@ public class Documenter {
 		 */
 		public static Options defaults() {
 			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null,
-					__ -> Optional.empty());
+					__ -> Optional.empty(), it -> it.getDisplayName());
 		}
 
 		/**
@@ -384,7 +400,7 @@ public class Documenter {
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
 
 			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName,
-					colorSelector);
+					colorSelector, defaultDisplayName);
 		}
 
 		private Optional<String> getTargetFileName() {
