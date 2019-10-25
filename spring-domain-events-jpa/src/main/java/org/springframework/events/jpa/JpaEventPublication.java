@@ -27,6 +27,7 @@ import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
 import javax.persistence.Transient;
 
 import org.springframework.data.domain.Persistable;
@@ -72,6 +73,7 @@ class JpaEventPublication implements Persistable<UUID> {
 	}
 
 	@PostLoad
+	@PrePersist
 	public void markNotNew() {
 		this.isNew = false;
 	}

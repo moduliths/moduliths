@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package org.springframework.events;
 
 /**
- * @author Oliver Gierke
+ * @author Oliver Drotbohm
  */
 public interface EventSerializer {
 
 	/**
 	 * Serializes the given event into a storable format.
-	 * 
+	 *
 	 * @param event must not be {@literal null}.
 	 * @return
 	 */
@@ -30,7 +30,7 @@ public interface EventSerializer {
 
 	/**
 	 * Deserializes the event from the serialization format into an instance of the given type.
-	 * 
+	 *
 	 * @param serialized must not be {@literal null}.
 	 * @param type must not be {@literal null}.
 	 * @return
