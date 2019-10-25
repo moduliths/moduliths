@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package org.springframework.events.config;
 
-import java.util.function.Supplier;
-
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
@@ -27,7 +25,7 @@ import org.springframework.events.support.MapEventPublicationRegistry;
 import org.springframework.events.support.PersistentApplicationEventMulticaster;
 
 /**
- * @author Oliver Gierke
+ * @author Oliver Drotbohm
  */
 @Configuration(proxyBeanMethods = false)
 class EventPublicationConfiguration {
@@ -35,14 +33,12 @@ class EventPublicationConfiguration {
 	@Bean
 	PersistentApplicationEventMulticaster applicationEventMulticaster(ObjectProvider<EventPublicationRegistry> registry) {
 
-		Supplier<EventPublicationRegistry> supplier = () -> registry
-				.getIfAvailable(() -> new MapEventPublicationRegistry());
-
-		return new PersistentApplicationEventMulticaster(supplier);
+		return new PersistentApplicationEventMulticaster(
+				() -> registry.getIfAvailable(() -> new MapEventPublicationRegistry()));
 	}
 
 	@Bean
 	static CompletionRegisteringBeanPostProcessor bpp(ObjectFactory<EventPublicationRegistry> store) {
-		return new CompletionRegisteringBeanPostProcessor(store);
+		return new CompletionRegisteringBeanPostProcessor(() -> store.getObject());
 	}
 }
