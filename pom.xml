@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.olivergierke.moduliths</groupId>
 	<artifactId>moduliths</artifactId>
-	<version>1.0.0.BUILD-SNAPSHOT</version>
+	<version>1.0.0.RC3</version>
 	<packaging>pom</packaging>
 
 	<name>Moduliths</name>
@@ -119,7 +119,7 @@ limitations under the License.
 		<url>https://github.com/odrotbohm/moduliths</url>
 		<connection>scm:git:https://github.com/odrotbohm/moduliths</connection>
 		<developerConnection>scm:git:ssh://git@github.com/odrotbohm/moduliths.git</developerConnection>
-		<tag>1.0.0.RC2</tag>
+		<tag>1.0.0.RC3</tag>
 	</scm>
 
 	<distributionManagement>
