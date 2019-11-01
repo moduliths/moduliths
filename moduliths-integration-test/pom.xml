@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>de.olivergierke.moduliths</groupId>
+		<groupId>org.moduliths</groupId>
 		<artifactId>moduliths</artifactId>
 		<version>1.0.0.BUILD-SNAPSHOT</version>
 	</parent>
@@ -14,14 +14,14 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>de.olivergierke.moduliths</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>moduliths-test</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>de.olivergierke.moduliths</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>moduliths-sample</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
