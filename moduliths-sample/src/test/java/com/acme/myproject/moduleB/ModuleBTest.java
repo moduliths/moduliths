@@ -17,14 +17,13 @@ package com.acme.myproject.moduleB;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.test.TestUtils;
-import de.olivergierke.moduliths.test.ModuleTest.BootstrapMode;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.mockito.internal.creation.bytebuddy.MockAccess;
+import org.moduliths.test.TestUtils;
+import org.moduliths.test.ModuleTest.BootstrapMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.test.mock.mockito.MockBean;

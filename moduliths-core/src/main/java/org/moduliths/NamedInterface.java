@@ -13,14 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.acme.myproject;
+package org.moduliths;
 
-import org.moduliths.Modulith;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * Annotation to mark a package as named interface of a {@link Module} (either implicit or explicitly annotated).
+ *
  * @author Oliver Gierke
  */
-@Modulith
-public class Application {
+@Documented
+@Target({ ElementType.PACKAGE, ElementType.TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface NamedInterface {
 
+	/**
+	 * The name of the interface.
+	 *
+	 * @return
+	 */
+	String[] value();
 }

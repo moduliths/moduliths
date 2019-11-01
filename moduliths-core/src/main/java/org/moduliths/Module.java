@@ -13,14 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.acme.myproject;
+package org.moduliths;
 
-import org.moduliths.Modulith;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * Annotation to customize information of a {@link Modulith} module.
+ * 
  * @author Oliver Gierke
  */
-@Modulith
-public class Application {
+@Target({ ElementType.PACKAGE, ElementType.ANNOTATION_TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Module {
 
+	String displayName() default "";
+
+	/**
+	 * List the names of modules that the module is allowed to depend on. Shared modules defined in {@link Modulith} will
+	 * be allowed, too.
+	 * 
+	 * @return
+	 */
+	String[] allowedDependencies() default {};
 }

@@ -17,13 +17,12 @@ package com.acme.myproject.moduleC;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.test.TestUtils;
-import de.olivergierke.moduliths.test.ModuleTest.BootstrapMode;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+import org.moduliths.test.TestUtils;
+import org.moduliths.test.ModuleTest.BootstrapMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;

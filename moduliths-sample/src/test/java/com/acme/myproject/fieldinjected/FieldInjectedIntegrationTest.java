@@ -17,11 +17,10 @@ package com.acme.myproject.fieldinjected;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.model.Modules;
-import de.olivergierke.moduliths.test.ModuleTestExecution;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.moduliths.model.Modules;
+import org.moduliths.test.ModuleTestExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;

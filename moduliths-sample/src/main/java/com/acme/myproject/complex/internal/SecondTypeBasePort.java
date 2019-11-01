@@ -15,7 +15,7 @@
  */
 package com.acme.myproject.complex.internal;
 
-import de.olivergierke.moduliths.NamedInterface;
+import org.moduliths.NamedInterface;
 
 /**
  * @author Oliver Drotbohm

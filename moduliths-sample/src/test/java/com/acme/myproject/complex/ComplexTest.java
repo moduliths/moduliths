@@ -17,12 +17,11 @@ package com.acme.myproject.complex;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.model.NamedInterface;
-import de.olivergierke.moduliths.model.NamedInterfaces;
-import de.olivergierke.moduliths.test.ModuleTestExecution;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.moduliths.model.NamedInterface;
+import org.moduliths.model.NamedInterfaces;
+import org.moduliths.test.ModuleTestExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringRunner;
 

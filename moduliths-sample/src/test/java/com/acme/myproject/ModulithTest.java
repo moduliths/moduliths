@@ -17,10 +17,9 @@ package com.acme.myproject;
 
 import static org.assertj.core.api.Assertions.*;
 
-import de.olivergierke.moduliths.model.Modules;
-import de.olivergierke.moduliths.model.Modules.Filters;
-
 import org.junit.Test;
+import org.moduliths.model.Modules;
+import org.moduliths.model.Modules.Filters;
 
 import com.acme.myproject.invalid.InvalidComponent;
 import com.acme.myproject.moduleB.internal.InternalComponentB;

@@ -15,14 +15,13 @@
  */
 package com.acme.myproject;
 
-import de.olivergierke.moduliths.test.ModuleTest;
-import de.olivergierke.moduliths.test.ModuleTest.BootstrapMode;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.moduliths.test.ModuleTest;
+import org.moduliths.test.ModuleTest.BootstrapMode;
 import org.springframework.core.annotation.AliasFor;
 
 /**
