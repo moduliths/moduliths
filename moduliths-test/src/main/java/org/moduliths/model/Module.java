@@ -522,7 +522,7 @@ public class Module {
 
 		/*
 		 * (non-Javadoc)
-		 * @see de.olivergierke.moduliths.model.Module.ModuleDependency#isValidDependencyWithin(de.olivergierke.moduliths.model.Modules)
+		 * @see org.moduliths.model.Module.ModuleDependency#isValidDependencyWithin(org.moduliths.model.Modules)
 		 */
 		@Override
 		void isValidDependencyWithin(Modules modules) {
@@ -574,7 +574,7 @@ public class Module {
 
 			/*
 			 * (non-Javadoc)
-			 * @see de.olivergierke.moduliths.test.model.Module.ModuleDependency.DependencyType#or(com.tngtech.archunit.thirdparty.com.google.common.base.Supplier)
+			 * @see org.moduliths.test.model.Module.ModuleDependency.DependencyType#or(com.tngtech.archunit.thirdparty.com.google.common.base.Supplier)
 			 */
 			@Override
 			public DependencyType or(Supplier<DependencyType> supplier) {

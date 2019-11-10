@@ -57,7 +57,7 @@ class AnnotationModulithMetadata implements ModulithMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.moduliths.model.ModulithMetadata#getModulithType()
+	 * @see org.moduliths.model.ModulithMetadata#getModulithType()
 	 */
 	@Override
 	public Class<?> getModulithType() {
@@ -66,7 +66,7 @@ class AnnotationModulithMetadata implements ModulithMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.moduliths.model.Modules.ModulithSource#getAdditionalPackages()
+	 * @see org.moduliths.model.ModulithMetadata#getAdditionalPackages()
 	 */
 	@Override
 	public List<String> getAdditionalPackages() {
@@ -75,7 +75,7 @@ class AnnotationModulithMetadata implements ModulithMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.moduliths.model.Modules.ModulithSource#useFullyQualifiedModuleNames()
+	 * @see org.moduliths.model.ModulithMetadata#useFullyQualifiedModuleNames()
 	 */
 	@Override
 	public boolean useFullyQualifiedModuleNames() {
@@ -84,7 +84,7 @@ class AnnotationModulithMetadata implements ModulithMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.moduliths.model.Modules.ModulithSource#getSharedModuleNames()
+	 * @see org.moduliths.model.ModulithMetadata#getSharedModuleNames()
 	 */
 	@Override
 	public Stream<String> getSharedModuleNames() {
@@ -93,7 +93,7 @@ class AnnotationModulithMetadata implements ModulithMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.olivergierke.moduliths.model.ModulithMetadata#getSystemName()
+	 * @see org.moduliths.model.ModulithMetadata#getSystemName()
 	 */
 	@Override
 	public Optional<String> getSystemName() {
