@@ -31,20 +31,21 @@ Translates the actual module structure into a PlantUML component diagram via Str
 
   <!-- For the @Modulith annotation -->
   <dependency>
-    <groupId>de.olivergierke.moduliths</groupId>
+    <groupId>org.moduliths</groupId>
     <artifactId>moduliths-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${modulith.version}</version>
   </dependency>
 
   <!-- Test support -->
   <dependency>
-    <groupId>de.olivergierke.moduliths</groupId>
+    <groupId>org.moduliths</groupId>
     <artifactId>moduliths-test</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${modulith.version}</version>
     <scope>test</scope>
   </dependency>
 </dependencies>
 
+<!-- If you use snapshots -->
 <repositories>
   <repository>
     <id>spring-snapshots</id>
