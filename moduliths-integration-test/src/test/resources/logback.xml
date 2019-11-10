@@ -7,7 +7,7 @@
 		</encoder>
 	</appender>
 
-	<logger name="de.olivergierke.moduliths" level="error" />
+	<logger name="org.moduliths" level="error" />
 
 	<root level="error">
 		<appender-ref ref="console" />

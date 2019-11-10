@@ -126,7 +126,7 @@ public abstract class NamedInterface implements Iterable<JavaClass> {
 
 		/*
 		 * (non-Javadoc)
-		 * @see de.olivergierke.moduliths.model.NamedInterface#merge(de.olivergierke.moduliths.model.NamedInterface.TypeBasedNamedInterface)
+		 * @see org.moduliths.model.NamedInterface#merge(org.moduliths.model.NamedInterface.TypeBasedNamedInterface)
 		 */
 		@Override
 		public NamedInterface merge(TypeBasedNamedInterface other) {
@@ -135,7 +135,7 @@ public abstract class NamedInterface implements Iterable<JavaClass> {
 
 		/*
 		 * (non-Javadoc)
-		 * @see de.olivergierke.moduliths.model.NamedInterface#toString()
+		 * @see org.moduliths.model.NamedInterface#toString()
 		 */
 		@Override
 		public String toString() {
@@ -158,7 +158,7 @@ public abstract class NamedInterface implements Iterable<JavaClass> {
 
 		/*
 		 * (non-Javadoc)
-		 * @see de.olivergierke.moduliths.model.NamedInterface#merge(de.olivergierke.moduliths.model.NamedInterface.TypeBasedNamedInterface)
+		 * @see org.moduliths.model.NamedInterface#merge(org.moduliths.model.NamedInterface.TypeBasedNamedInterface)
 		 */
 		@Override
 		public NamedInterface merge(TypeBasedNamedInterface other) {
@@ -167,7 +167,7 @@ public abstract class NamedInterface implements Iterable<JavaClass> {
 
 		/*
 		 * (non-Javadoc)
-		 * @see de.olivergierke.moduliths.model.NamedInterface#toString()
+		 * @see org.moduliths.model.NamedInterface#toString()
 		 */
 		@Override
 		public String toString() {
