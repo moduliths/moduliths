@@ -33,7 +33,7 @@ import org.springframework.context.PayloadApplicationEvent;
  *
  * @author Oliver Drotbohm
  */
-public class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<ApplicationEvent> {
+class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<ApplicationEvent> {
 
 	private List<Object> events = new ArrayList<>();
 

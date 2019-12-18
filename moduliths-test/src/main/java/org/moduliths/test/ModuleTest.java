@@ -39,7 +39,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * <li>Sets the module's package as the only auto-configuration and entity scan package.
  * <li>
  * </ul>
- * 
+ *
  * @author Oliver Gierke
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -47,6 +47,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @TypeExcludeFilters(ModuleTypeExcludeFilter.class)
 @ImportAutoConfiguration(ModuleTestAutoConfiguration.class)
 @ExtendWith(SpringExtension.class)
+@ExtendWith(PublishedEventsParameterResolver.class)
 public @interface ModuleTest {
 
 	@AliasFor("mode")
@@ -57,14 +58,14 @@ public @interface ModuleTest {
 
 	/**
 	 * Whether to automatically verify the module structure for validity.
-	 * 
+	 *
 	 * @return
 	 */
 	boolean verifyAutomatically() default true;
 
 	/**
 	 * Module names of modules to be included in the test run independent of what the {@link #mode()} defines.
-	 * 
+	 *
 	 * @return
 	 */
 	String[] extraIncludes() default {};

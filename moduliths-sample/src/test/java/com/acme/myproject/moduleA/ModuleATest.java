@@ -56,4 +56,9 @@ class ModuleATest {
 
 		assertThat(matching).hasSize(1);
 	}
+
+	@Test // #17
+	void injectsPublishedEventsIntoMethod(PublishedEvents events) {
+		assertThat(events).isNotNull();
+	}
 }
