@@ -18,8 +18,7 @@ package org.modulith.docs;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.junit.Test;
-import org.modulith.docs.Documenter;
+import org.junit.jupiter.api.Test;
 import org.modulith.docs.Documenter.Options;
 import org.moduliths.model.Module;
 import org.moduliths.model.Module.DependencyType;
@@ -31,17 +30,17 @@ import com.acme.myproject.Application;
  *
  * @author Oliver Gierke
  */
-public class DocumenterTest {
+class DocumenterTest {
 
 	Documenter documenter = new Documenter(Application.class);
 
 	@Test
-	public void writesComponentStructureAsPlantUml() throws IOException {
+	void writesComponentStructureAsPlantUml() throws IOException {
 		documenter.toPlantUml();
 	}
 
 	@Test
-	public void writesSingleModuleDocumentation() throws IOException {
+	void writesSingleModuleDocumentation() throws IOException {
 
 		Module module = documenter.getModules().getModuleByName("moduleB") //
 				.orElseThrow(() -> new IllegalArgumentException());

@@ -17,27 +17,24 @@ package com.acme.myproject.complex;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.moduliths.model.NamedInterface;
 import org.moduliths.model.NamedInterfaces;
 import org.moduliths.test.ModuleTestExecution;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.acme.myproject.NonVerifyingModuleTest;
 
 /**
  * @author Oliver Gierke
  */
-@RunWith(SpringRunner.class)
 @NonVerifyingModuleTest
-public class ComplexTest {
+class ComplexTest {
 
 	@Autowired ModuleTestExecution moduleTest;
 
 	@Test
-	public void exposesNamedInterfaces() {
+	void exposesNamedInterfaces() {
 
 		NamedInterfaces interfaces = moduleTest.getModule().getNamedInterfaces();
 

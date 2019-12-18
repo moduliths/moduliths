@@ -17,7 +17,7 @@ package com.acme.myproject;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.moduliths.model.Modules;
 import org.moduliths.model.Modules.Filters;
 
@@ -32,13 +32,13 @@ import com.tngtech.archunit.core.domain.JavaClass;
  * @author Oliver Gierke
  * @author Peter Gafert
  */
-public class ModulithTest {
+class ModulithTest {
 
 	static final DescribedPredicate<JavaClass> DEFAULT_EXCLUSIONS = Filters.withoutModules("cycleA", "cycleB", "invalid2",
 			"fieldinjected");
 
 	@Test
-	public void verifyModules() {
+	void verifyModules() {
 
 		String componentName = InternalComponentB.class.getSimpleName();
 
@@ -51,12 +51,12 @@ public class ModulithTest {
 	}
 
 	@Test
-	public void verifyModulesWithoutInvalid() {
+	void verifyModulesWithoutInvalid() {
 		Modules.of(Application.class, DEFAULT_EXCLUSIONS.or(Filters.withoutModule("invalid"))).verify();
 	}
 
 	@Test // #28
-	public void detectsCycleBetweenModules() {
+	void detectsCycleBetweenModules() {
 
 		assertThatExceptionOfType(AssertionError.class) //
 				.isThrownBy(() -> Modules.of(Application.class, Filters.withoutModules("invalid", "invalid2")).verify()) //

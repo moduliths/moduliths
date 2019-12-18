@@ -17,10 +17,8 @@ package com.acme.myproject.moduleB;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.mockito.internal.creation.bytebuddy.MockAccess;
 import org.moduliths.test.ModuleTest.BootstrapMode;
 import org.moduliths.test.TestUtils;
@@ -28,41 +26,39 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.acme.myproject.NonVerifyingModuleTest;
 import com.acme.myproject.moduleA.ServiceComponentA;
-import com.acme.myproject.moduleB.ModuleBTest.TestWithMocks;
-import com.acme.myproject.moduleB.ModuleBTest.TestWithoutMocks;
 import com.acme.myproject.moduleB.internal.InternalComponentB;
 
 /**
  * @author Oliver Gierke
  */
-@RunWith(Suite.class)
-@SuiteClasses({ TestWithoutMocks.class, TestWithMocks.class })
-public class ModuleBTest {
+class ModuleBTest {
 
-	@NonVerifyingModuleTest
-	public static class TestWithoutMocks {
+	@Nested
+	static class TestWithoutMocks {
 
 		@Autowired ServiceComponentB serviceComponentB;
 
+		@NonVerifyingModuleTest
+		static class Config {}
+
 		@Test
-		public void failsToStartBecauseServiceComponentAIsMissing() throws Exception {
-			TestUtils.assertDependencyMissing(TestWithoutMocks.class, ServiceComponentA.class);
+		void failsToStartBecauseServiceComponentAIsMissing() throws Exception {
+			TestUtils.assertDependencyMissing(TestWithoutMocks.Config.class, ServiceComponentA.class);
 		}
 	}
 
+	@Nested
 	@NonVerifyingModuleTest
-	@RunWith(SpringRunner.class)
-	public static class TestWithMocks {
+	static class TestWithMocks {
 
 		@Autowired ApplicationContext context;
 		@MockBean ServiceComponentA serviceComponentA;
 
 		@Test
-		public void bootstrapsModuleB() {
+		void bootstrapsModuleB() {
 
 			context.getBean(ServiceComponentB.class);
 
@@ -70,26 +66,26 @@ public class ModuleBTest {
 		}
 
 		@Test
-		public void considersNestedPackagePartOfTheModuleByDefault() {
+		void considersNestedPackagePartOfTheModuleByDefault() {
 			context.getBean(InternalComponentB.class);
 		}
 
 		@Test // #4
-		public void tweaksAutoConfigurationPackageToModulePackage() {
+		void tweaksAutoConfigurationPackageToModulePackage() {
 
 			assertThat(AutoConfigurationPackages.get(context)) //
 					.containsExactly(getClass().getPackage().getName());
 		}
 	}
 
-	@RunWith(SpringRunner.class)
+	@Nested
 	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
-	public static class TestWithUpstreamModule {
+	static class TestWithUpstreamModule {
 
 		@Autowired ServiceComponentA componentA;
 		@Autowired ServiceComponentB componentB;
 
 		@Test
-		public void bootstrapsContext() {}
+		void bootstrapsContext() {}
 	}
 }

@@ -17,75 +17,67 @@ package com.acme.myproject.moduleC;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
-import org.moduliths.test.TestUtils;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.moduliths.test.ModuleTest.BootstrapMode;
+import org.moduliths.test.TestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.acme.myproject.NonVerifyingModuleTest;
 import com.acme.myproject.moduleA.ServiceComponentA;
 import com.acme.myproject.moduleB.ServiceComponentB;
-import com.acme.myproject.moduleC.ModuleCTest.FailsStandalone;
-import com.acme.myproject.moduleC.ModuleCTest.FailsWithDirectDependency;
-import com.acme.myproject.moduleC.ModuleCTest.SucceedsWithAllDependencies;
-import com.acme.myproject.moduleC.ModuleCTest.SucceedsWithDirectDependencyPlusItsDependenciesMocks;
 
 /**
  * @author Oliver Gierke
  */
-@RunWith(Suite.class)
-@SuiteClasses({ //
-		FailsStandalone.class, //
-		FailsWithDirectDependency.class, //
-		SucceedsWithDirectDependencyPlusItsDependenciesMocks.class, //
-		SucceedsWithAllDependencies.class //
-})
-public class ModuleCTest {
+class ModuleCTest {
 
-	@NonVerifyingModuleTest
-	public static class FailsStandalone {
+	@Nested
+	static class FailsStandalone {
+
+		@NonVerifyingModuleTest
+		static class Config {}
 
 		@Test
-		public void failsStandalone() {
+		void failsStandalone() {
 			TestUtils.assertDependencyMissing(FailsStandalone.class, ServiceComponentB.class);
 		}
 	}
 
-	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
-	public static class FailsWithDirectDependency {
+	@Nested
+	static class FailsWithDirectDependency {
+
+		@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
+		static class Config {}
 
 		@Test
-		public void failsWithDirectDependency() {
-			TestUtils.assertDependencyMissing(FailsWithDirectDependency.class, ServiceComponentA.class);
+		void failsWithDirectDependency() {
+			TestUtils.assertDependencyMissing(FailsWithDirectDependency.Config.class, ServiceComponentA.class);
 		}
 	}
 
-	@RunWith(SpringRunner.class)
+	@Nested
 	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
-	public static class SucceedsWithDirectDependencyPlusItsDependenciesMocks {
+	static class SucceedsWithDirectDependencyPlusItsDependenciesMocks {
 
 		@MockBean ServiceComponentA serviceComponentA;
 
 		@Test
-		public void bootstrapsContext() {
+		void bootstrapsContext() {
 			assertThat(serviceComponentA).isNotNull();
 		}
 	}
 
-	@RunWith(SpringRunner.class)
+	@Nested
 	@NonVerifyingModuleTest(BootstrapMode.ALL_DEPENDENCIES)
-	public static class SucceedsWithAllDependencies {
+	static class SucceedsWithAllDependencies {
 
 		@Autowired ServiceComponentA serviceComponentA;
 		@Autowired ServiceComponentB serviceComponentB;
 
 		@Test
-		public void bootstrapsContext() {
+		void bootstrapsContext() {
 			assertThat(serviceComponentA).isNotNull();
 			assertThat(serviceComponentB).isNotNull();
 		}

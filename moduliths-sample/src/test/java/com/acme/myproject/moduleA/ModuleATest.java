@@ -18,14 +18,12 @@ package com.acme.myproject.moduleA;
 // import static org.moduliths.test.assertj.PublishedEventAssertions.*;
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.moduliths.test.PublishedEvents;
 import org.moduliths.test.PublishedEvents.TypedPublishedEvents;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.acme.myproject.NonVerifyingModuleTest;
 import com.acme.myproject.moduleB.ServiceComponentB;
@@ -34,14 +32,13 @@ import com.acme.myproject.moduleB.ServiceComponentB;
  * @author Oliver Drotbohm
  */
 @NonVerifyingModuleTest
-@RunWith(SpringRunner.class)
-public class ModuleATest {
+class ModuleATest {
 
 	@Autowired ApplicationContext context;
 	@Autowired PublishedEvents events;
 
 	@Test
-	public void bootstrapsModuleAOnly() {
+	void bootstrapsModuleAOnly() {
 
 		context.getBean(ServiceComponentA.class);
 
@@ -50,7 +47,7 @@ public class ModuleATest {
 	}
 
 	@Test // #17
-	public void assertEventsFired() {
+	void assertEventsFired() {
 
 		context.getBean(ServiceComponentA.class).fireEvent();
 

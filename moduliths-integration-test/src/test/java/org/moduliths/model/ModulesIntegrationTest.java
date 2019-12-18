@@ -20,11 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.moduliths.model.Module;
-import org.moduliths.model.Modules;
-import org.moduliths.model.NamedInterface;
-import org.moduliths.model.NamedInterfaces;
+import org.junit.jupiter.api.Test;
 import org.moduliths.model.Module.DependencyType;
 
 import com.acme.myproject.Application;
@@ -36,12 +32,12 @@ import com.acme.myproject.moduleA.SomeConfigurationA.SomeAtBeanComponentA;
  * @author Oliver Gierke
  * @author Peter Gafert
  */
-public class ModulesIntegrationTest {
+class ModulesIntegrationTest {
 
 	Modules modules = Modules.of(Application.class);
 
 	@Test
-	public void exposesModulesForPrimaryPackages() {
+	void exposesModulesForPrimaryPackages() {
 
 		Optional<Module> module = modules.getModuleByName("moduleB");
 

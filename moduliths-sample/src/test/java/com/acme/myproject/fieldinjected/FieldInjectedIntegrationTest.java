@@ -17,13 +17,11 @@ package com.acme.myproject.fieldinjected;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.moduliths.model.Modules;
 import org.moduliths.test.ModuleTestExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.acme.myproject.NonVerifyingModuleTest;
 import com.acme.myproject.moduleA.ServiceComponentA;
@@ -33,16 +31,15 @@ import com.acme.myproject.moduleA.ServiceComponentA;
  *
  * @author Oliver Drotbohm
  */
-@RunWith(SpringRunner.class)
 @NonVerifyingModuleTest
-public class FieldInjectedIntegrationTest {
+class FieldInjectedIntegrationTest {
 
 	@Autowired ModuleTestExecution execution;
 
 	@MockBean ServiceComponentA dependency;
 
 	@Test // #52
-	public void rejectsFieldInjection() {
+	void rejectsFieldInjection() {
 
 		Modules modules = execution.getModules();
 

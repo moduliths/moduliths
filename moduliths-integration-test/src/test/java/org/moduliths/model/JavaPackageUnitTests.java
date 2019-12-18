@@ -17,9 +17,7 @@ package org.moduliths.model;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.moduliths.model.Classes;
-import org.moduliths.model.JavaPackage;
+import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -29,14 +27,14 @@ import com.tngtech.archunit.core.importer.ImportOptions;
 /**
  * @author Oliver Drotbohm
  */
-public class JavaPackageUnitTests {
+class JavaPackageUnitTests {
 
 	static final ImportOptions NO_TESTS = new ImportOptions().with(new ImportOption.DoNotIncludeTests());
 	static final JavaClasses ALL_CLASSES = new ClassFileImporter(NO_TESTS) //
 			.importPackages("com.acme.myproject");
 
 	@Test
-	public void testName() throws Exception {
+	void testName() throws Exception {
 
 		Classes classes = Classes.of(ALL_CLASSES);
 		JavaPackage pkg = JavaPackage.of(classes, "com.acme.myproject.complex");
