@@ -13,7 +13,7 @@ include::jQA:Summary[]
 .Classes annotated by `de.olivergierke.moduliths.Modulith` are labeled with `Modulith` and `Application`.
 ----
 MATCH
-  (:Artifact)-[:CONTAINS]->(modulith:Type)-[:ANNOTATED_BY]->()-[:OF_TYPE]->(:Type{fqn:"de.olivergierke.moduliths.Modulith"})
+  (:Artifact)-[:CONTAINS]->(modulith:Type)-[:ANNOTATED_BY]->()-[:OF_TYPE]->(:Type{fqn:"org.moduliths.Modulith"})
 SET
   modulith:Modulith:Application
 RETURN
@@ -29,7 +29,7 @@ MATCH
   (root)-[:CONTAINS]->(module:Package)
 OPTIONAL MATCH
   (module)-[:CONTAINS]->(:Type{name:"package-info"})-[:ANNOTATED_BY]->(moduleInfo),
-  (moduleInfo)-[:OF_TYPE]->(:Type{fqn:"de.olivergierke.moduliths.Module"}),
+  (moduleInfo)-[:OF_TYPE]->(:Type{fqn:"org.moduliths.Module"}),
   (moduleInfo)-[:HAS]->(displayName:Value{name:"displayName"})
 SET
   module:Module
