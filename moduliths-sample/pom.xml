@@ -16,14 +16,12 @@
 	<profiles>
 		<profile>
 			<id>jqa</id>
-
-
 			<build>
 				<plugins>
 					<plugin>
 						<groupId>com.buschmais.jqassistant</groupId>
 						<artifactId>jqassistant-maven-plugin</artifactId>
-						<version>1.4.0</version>
+						<version>1.8.0</version>
 						<executions>
 							<execution>
 								<id>default-cli</id>
@@ -33,19 +31,6 @@
 								</goals>
 							</execution>
 						</executions>
-						<configuration>
-							<reportProperties>
-								<asciidoc.report.rule.directory>${project.basedir}/jqassistant</asciidoc.report.rule.directory>
-								<asciidoc.report.rule.include>index.adoc</asciidoc.report.rule.include>
-							</reportProperties>
-						</configuration>
-						<dependencies>
-							<dependency>
-								<groupId>org.jqassistant.contrib.plugin</groupId>
-								<artifactId>jqassistant-asciidoc-report-plugin</artifactId>
-								<version>1.1.0</version>
-							</dependency>
-						</dependencies>
 					</plugin>
 				</plugins>
 			</build>
