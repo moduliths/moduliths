@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.modulith.docs;
+package org.moduliths.docs;
 
 import java.io.IOException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.modulith.docs.Documenter.Options;
+import org.moduliths.docs.Documenter;
+import org.moduliths.docs.Documenter.Options;
 import org.moduliths.model.Module;
 import org.moduliths.model.Module.DependencyType;
 
