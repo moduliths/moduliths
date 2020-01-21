@@ -19,7 +19,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.moduliths.model.Module;
-import org.moduliths.model.Modules;
 import org.moduliths.model.Module.DependencyDepth;
 import org.moduliths.model.Module.DependencyType;
+import org.moduliths.model.Modules;
 import org.springframework.util.Assert;
 
 import com.structurizr.Workspace;
@@ -339,41 +339,41 @@ public class Documenter {
 		/**
 		 * The {@link DependencyDepth} to define which other modules to be included in the diagram to be created.
 		 */
-		private final @Wither DependencyDepth dependencyDepth;
+		private final @With DependencyDepth dependencyDepth;
 
 		/**
 		 * A {@link Predicate} to define the which modules to exclude from the diagram to be created.
 		 */
-		private final @Wither Predicate<Module> exclusions;
+		private final @With Predicate<Module> exclusions;
 
 		/**
 		 * A {@link Predicate} to define which Structurizr {@link Component}s to be included in the diagram to be created.
 		 */
-		private final @Wither Predicate<Component> componentFilter;
+		private final @With Predicate<Component> componentFilter;
 
 		/**
 		 * A {@link Predicate} to define which of the modules shall only be considered targets, i.e. all efferent
 		 * relationships are going to be hidden from the rendered view. Modules that have no incoming relationships will
 		 * entirely be removed from the view.
 		 */
-		private final @Wither Predicate<Module> targetOnly;
+		private final @With Predicate<Module> targetOnly;
 
 		/**
 		 * The target file name to be used for the diagram to be created. For individual module diagrams this needs to
 		 * include a {@code %s} placeholder for the module names.
 		 */
-		private final @Wither String targetFileName;
+		private final @With String targetFileName;
 
 		/**
 		 * A callback to return a hex-encoded color per {@link Module}.
 		 */
-		private final @Wither Function<Module, Optional<String>> colorSelector;
+		private final @With Function<Module, Optional<String>> colorSelector;
 
 		/**
 		 * A callback to return a default display names for a given {@link Module}. Default implementation just forwards to
 		 * {@link Module#getDisplayName()}.
 		 */
-		private final @Wither Function<Module, String> defaultDisplayName;
+		private final @With Function<Module, String> defaultDisplayName;
 
 		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate

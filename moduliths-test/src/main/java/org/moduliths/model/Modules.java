@@ -23,7 +23,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.*;
 import java.util.function.Function;
@@ -61,7 +61,7 @@ public class Modules implements Iterable<Module> {
 	private final Map<String, Module> modules;
 	private final JavaClasses allClasses;
 	private final List<JavaPackage> rootPackages;
-	private final @Wither(AccessLevel.PRIVATE) @Getter Set<Module> sharedModules;
+	private final @With(AccessLevel.PRIVATE) @Getter Set<Module> sharedModules;
 
 	private boolean verified;
 
