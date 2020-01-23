@@ -38,12 +38,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Resource;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -83,9 +78,9 @@ public class Module {
 
 	private static Classes filterSpringBeans(JavaPackage source) {
 
-		Classes atBeanTypes = source.that(annotatedWith(Configuration.class)).stream() //
+		Classes atBeanTypes = source.that(annotatedWith(SpringTypes.AT_CONFIGURATION)).stream() //
 				.flatMap(it -> it.getMethods().stream()) //
-				.filter(it -> it.isAnnotatedWith(Bean.class) || it.isMetaAnnotatedWith(Bean.class)) //
+				.filter(it -> it.isAnnotatedWith(SpringTypes.AT_BEAN) || it.isMetaAnnotatedWith(SpringTypes.AT_BEAN)) //
 				.map(JavaMethod::getRawReturnType) //
 				.collect(Collectors.collectingAndThen(Collectors.toList(), Classes::of));
 
@@ -94,8 +89,8 @@ public class Module {
 				.collect(Collectors.groupingBy(it -> source.contains(it)));
 
 		Classes coreComponents = source.that(assignableTo("org.springframework.data.repository.Repository") //
-				.or(annotatedWith(Component.class)) //
-				.or(metaAnnotatedWith(Component.class)));
+				.or(annotatedWith(SpringTypes.AT_COMPONENT)) //
+				.or(metaAnnotatedWith(SpringTypes.AT_COMPONENT)));
 
 		return coreComponents //
 				.and(collect.getOrDefault(true, Collections.emptyList())) //
@@ -331,7 +326,7 @@ public class Module {
 	static class ModuleDependency {
 
 		private static final List<String> INJECTION_TYPES = Arrays.asList(//
-				Autowired.class.getName(), //
+				SpringTypes.AT_AUTOWIRED, //
 				Resource.class.getName(), //
 				"javax.inject.Inject");
 
@@ -516,8 +511,8 @@ public class Module {
 					DependencyType.USES_COMPONENT);
 
 			this.member = member;
-			this.isConfigurationClass = origin.isAnnotatedWith(Configuration.class)
-					|| origin.isMetaAnnotatedWith(Configuration.class);
+			this.isConfigurationClass = origin.isAnnotatedWith(SpringTypes.AT_CONFIGURATION) //
+					|| origin.isMetaAnnotatedWith(SpringTypes.AT_CONFIGURATION);
 		}
 
 		/*
@@ -587,7 +582,8 @@ public class Module {
 		}
 
 		public static DependencyType forCodeUnit(JavaCodeUnit codeUnit) {
-			return codeUnit.isAnnotatedWith(EventListener.class) ? EVENT_LISTENER : DEFAULT;
+			return codeUnit.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER) //
+					|| codeUnit.isMetaAnnotatedWith(SpringTypes.AT_EVENT_LISTENER) ? EVENT_LISTENER : DEFAULT;
 		}
 
 		public static DependencyType forDependency(Dependency dependency) {

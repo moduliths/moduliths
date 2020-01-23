@@ -34,12 +34,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.tngtech.archunit</groupId>
-			<artifactId>archunit</artifactId>
-			<version>${archunit.version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<optional>true</optional>

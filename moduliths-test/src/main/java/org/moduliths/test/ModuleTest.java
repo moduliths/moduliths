@@ -84,7 +84,7 @@ public @interface ModuleTest {
 		DIRECT_DEPENDENCIES(DependencyDepth.IMMEDIATE),
 
 		/**
-		 * Bootstraps the current module as well as all upstream dependencies (inculding transitive ones).
+		 * Bootstraps the current module as well as all upstream dependencies (including transitive ones).
 		 */
 		ALL_DEPENDENCIES(DependencyDepth.ALL);
 

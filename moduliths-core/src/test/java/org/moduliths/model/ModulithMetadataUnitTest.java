@@ -19,10 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.stream.Stream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
-import org.moduliths.model.ModulithMetadata;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**

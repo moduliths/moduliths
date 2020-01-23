@@ -13,11 +13,25 @@
 	<artifactId>moduliths-core</artifactId>
 
 	<dependencies>
+
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-autoconfigure</artifactId>
-			<scope>provided</scope>
+			<groupId>org.moduliths</groupId>
+			<artifactId>moduliths-api</artifactId>
+			<version>${project.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit</artifactId>
+			<version>${archunit.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+		</dependency>
+
+
 	</dependencies>
 
 </project>

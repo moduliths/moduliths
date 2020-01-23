@@ -18,6 +18,7 @@ package org.moduliths.model;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
+import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -25,9 +26,9 @@ import java.util.stream.Stream;
 
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
  * Creates a new {@link ModulithMetadata} representing the defaults of {@link Modulithic} but without the annotation
@@ -35,10 +36,22 @@ import org.springframework.util.Assert;
  *
  * @author Oliver Drotbohm
  */
+@SuppressWarnings("unchecked")
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 class DefaultModulithMetadata implements ModulithMetadata {
 
+	private static final Class<? extends Annotation> AT_SPRING_BOOT_APPLICATION;
+
 	private final Class<?> modulithType;
+
+	static {
+
+		ClassLoader classLoader = DefaultModulithMetadata.class.getClassLoader();
+
+		AT_SPRING_BOOT_APPLICATION = ClassUtils.isPresent(SpringTypes.AT_SPRING_BOOT_APPLICATION, classLoader) //
+				? (Class<? extends Annotation>) ClassUtils.resolveClassName(SpringTypes.AT_SPRING_BOOT_APPLICATION, classLoader) //
+				: null;
+	}
 
 	/**
 	 * Creates a new {@link ModulithMetadata} representing the defaults of a class annotated but not customized with
@@ -51,10 +64,9 @@ class DefaultModulithMetadata implements ModulithMetadata {
 
 		Assert.notNull(annotated, "Annotated type must not be null!");
 
-		SpringBootApplication annotation = AnnotatedElementUtils.findMergedAnnotation(annotated,
-				SpringBootApplication.class);
-
-		return Optional.ofNullable(annotation).map(__ -> new DefaultModulithMetadata(annotated));
+		return Optional.ofNullable(AT_SPRING_BOOT_APPLICATION) //
+				.filter(it -> AnnotatedElementUtils.hasAnnotation(annotated, it)) //
+				.map(__ -> new DefaultModulithMetadata(annotated));
 	}
 
 	/*

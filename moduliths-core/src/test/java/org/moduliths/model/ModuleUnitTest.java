@@ -17,10 +17,7 @@ package org.moduliths.model;
 
 import javax.sql.DataSource;
 
-import org.junit.Test;
-import org.moduliths.model.Classes;
-import org.moduliths.model.JavaPackage;
-import org.moduliths.model.Module;
+import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;

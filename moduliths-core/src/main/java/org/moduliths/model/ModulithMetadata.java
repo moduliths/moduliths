@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.util.Assert;
 
 interface ModulithMetadata {
@@ -43,7 +42,7 @@ interface ModulithMetadata {
 
 		Supplier<IllegalArgumentException> exception = () -> new IllegalArgumentException(
 				String.format(ANNOTATION_MISSING, annotated.getSimpleName(), Modulith.class.getSimpleName(),
-						Modulithic.class.getSimpleName(), SpringBootApplication.class.getSimpleName()));
+						Modulithic.class.getSimpleName(), SpringTypes.AT_SPRING_BOOT_APPLICATION));
 
 		Supplier<ModulithMetadata> withDefaults = () -> DefaultModulithMetadata.of(annotated).orElseThrow(exception);
 

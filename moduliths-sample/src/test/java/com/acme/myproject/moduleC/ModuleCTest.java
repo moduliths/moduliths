@@ -34,32 +34,32 @@ import com.acme.myproject.moduleB.ServiceComponentB;
 class ModuleCTest {
 
 	@Nested
-	static class FailsStandalone {
+	public static class FailsStandaloneTest {
 
 		@NonVerifyingModuleTest
 		static class Config {}
 
 		@Test
 		void failsStandalone() {
-			TestUtils.assertDependencyMissing(FailsStandalone.class, ServiceComponentB.class);
+			TestUtils.assertDependencyMissing(FailsStandaloneTest.Config.class, ServiceComponentB.class);
 		}
 	}
 
 	@Nested
-	static class FailsWithDirectDependency {
+	static class FailsWithDirectDependencyTest {
 
 		@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
 		static class Config {}
 
 		@Test
 		void failsWithDirectDependency() {
-			TestUtils.assertDependencyMissing(FailsWithDirectDependency.Config.class, ServiceComponentA.class);
+			TestUtils.assertDependencyMissing(FailsWithDirectDependencyTest.Config.class, ServiceComponentA.class);
 		}
 	}
 
 	@Nested
 	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
-	static class SucceedsWithDirectDependencyPlusItsDependenciesMocks {
+	static class SucceedsWithDirectDependencyPlusItsDependenciesMocksTest {
 
 		@MockBean ServiceComponentA serviceComponentA;
 
@@ -71,7 +71,7 @@ class ModuleCTest {
 
 	@Nested
 	@NonVerifyingModuleTest(BootstrapMode.ALL_DEPENDENCIES)
-	static class SucceedsWithAllDependencies {
+	static class SucceedsWithAllDependenciesTest {
 
 		@Autowired ServiceComponentA serviceComponentA;
 		@Autowired ServiceComponentB serviceComponentB;
