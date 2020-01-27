@@ -21,7 +21,7 @@
 					<plugin>
 						<groupId>com.buschmais.jqassistant</groupId>
 						<artifactId>jqassistant-maven-plugin</artifactId>
-						<version>1.8.0-MS1</version>
+						<version>1.8.0</version>
 						<executions>
 							<execution>
 								<id>default-cli</id>
