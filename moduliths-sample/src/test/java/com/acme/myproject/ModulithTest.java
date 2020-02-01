@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.moduliths.model.Modules;
 import org.moduliths.model.Modules.Filters;
+import org.moduliths.model.Violations;
 
 import com.acme.myproject.invalid.InvalidComponent;
 import com.acme.myproject.moduleB.internal.InternalComponentB;
@@ -42,7 +43,7 @@ class ModulithTest {
 
 		String componentName = InternalComponentB.class.getSimpleName();
 
-		assertThatExceptionOfType(IllegalStateException.class) //
+		assertThatExceptionOfType(Violations.class) //
 				.isThrownBy(() -> Modules.of(Application.class, DEFAULT_EXCLUSIONS).verify()) //
 				.withMessageContaining(String.format("Module '%s' depends on non-exposed type %s within module 'moduleB'",
 						"invalid", InternalComponentB.class.getName()))
@@ -58,7 +59,7 @@ class ModulithTest {
 	@Test // #28
 	void detectsCycleBetweenModules() {
 
-		assertThatExceptionOfType(AssertionError.class) //
+		assertThatExceptionOfType(Violations.class) //
 				.isThrownBy(() -> Modules.of(Application.class, Filters.withoutModules("invalid", "invalid2")).verify()) //
 
 				// mentions modules

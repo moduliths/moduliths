@@ -52,7 +52,8 @@ class AnnotationModulithMetadata implements ModulithMetadata {
 
 		Modulithic annotation = AnnotatedElementUtils.findMergedAnnotation(annotated, Modulithic.class);
 
-		return Optional.ofNullable(annotation).map(it -> new AnnotationModulithMetadata(annotated, annotation));
+		return Optional.ofNullable(annotation) //
+				.map(it -> new AnnotationModulithMetadata(annotated, it));
 	}
 
 	/*

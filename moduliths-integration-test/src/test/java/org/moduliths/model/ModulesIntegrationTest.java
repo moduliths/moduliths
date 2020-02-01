@@ -64,9 +64,8 @@ class ModulesIntegrationTest {
 		Optional<Module> module = modules.getModuleByName("invalid");
 
 		assertThat(module).hasValueSatisfying(it -> {
-			assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> {
-				it.verifyDependencies(modules);
-			});
+			assertThatExceptionOfType(Violations.class) //
+					.isThrownBy(() -> it.verifyDependencies(modules));
 		});
 	}
 
@@ -125,9 +124,10 @@ class ModulesIntegrationTest {
 		Optional<Module> moduleByName = modules.getModuleByName("invalid2");
 
 		assertThat(moduleByName).hasValueSatisfying(it -> {
-			assertThatExceptionOfType(IllegalStateException.class) //
+
+			assertThatExceptionOfType(Violations.class) //
 					.isThrownBy(() -> it.verifyDependencies(modules)) //
-					.withMessageContaining(it.getName()); //
+					.withMessageContaining(it.getName());
 		});
 	}
 }

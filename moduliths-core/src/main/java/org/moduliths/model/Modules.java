@@ -38,6 +38,8 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.EvaluationResult;
+import com.tngtech.archunit.lang.FailureReport;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 
 /**
@@ -210,19 +212,34 @@ public class Modules implements Iterable<Module> {
 			return;
 		}
 
-		rootPackages.forEach(it -> {
-
-			SlicesRuleDefinition.slices() //
-					.matching(it.getName().concat(".(*)..")) //
-					.should().beFreeOfCycles() //
-					.check(allClasses.that(resideInAPackage(it.getName().concat(".."))));
-		});
-
-		modules.values().forEach(it -> {
-			it.verifyDependencies(this);
-		});
+		Violations violations = detectViolations();
 
 		this.verified = true;
+
+		violations.throwIfPresent();
+	}
+
+	public Violations detectViolations() {
+
+		Violations violations = rootPackages.stream() //
+				.map(this::assertNoCyclesFor) //
+				.flatMap(it -> it.getDetails().stream()) //
+				.map(IllegalStateException::new) //
+				.collect(Violations.toViolations());
+
+		return modules.values().stream() //
+				.map(it -> it.detectDependencies(this)) //
+				.reduce(violations, Violations::and);
+	}
+
+	private FailureReport assertNoCyclesFor(JavaPackage rootPackage) {
+
+		EvaluationResult result = SlicesRuleDefinition.slices() //
+				.matching(rootPackage.getName().concat(".(*)..")) //
+				.should().beFreeOfCycles() //
+				.evaluate(allClasses.that(resideInAPackage(rootPackage.getName().concat(".."))));
+
+		return result.getFailureReport();
 	}
 
 	/**

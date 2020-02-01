@@ -443,7 +443,7 @@ public class Module {
 				String violationText = String.format("Module '%s' depends on non-exposed type %s within module '%s'!",
 						originModule.getName(), target.getName(), targetModule.getName());
 
-				violations = violations.and(new IllegalArgumentException(violationText + lineSeparator() + description));
+				violations = violations.and(new IllegalStateException(violationText + lineSeparator() + description));
 			}
 
 			return violations;
@@ -610,13 +610,13 @@ public class Module {
 		@Override
 		Violations isValidDependencyWithin(Modules modules) {
 
-			JavaClass owner = member.getOwner();
-			Module module = getExistingModuleOf(owner, modules);
 			Violations violations = super.isValidDependencyWithin(modules);
 
 			if (JavaField.class.isInstance(member) && !isConfigurationClass) {
 
-				violations = violations.and(new IllegalArgumentException(
+				Module module = getExistingModuleOf(member.getOwner(), modules);
+
+				violations = violations.and(new IllegalStateException(
 						String.format("Module %s uses field injection in %s. Prefer constructor injection instead!",
 								module.getDisplayName(), member.getFullName())));
 			}

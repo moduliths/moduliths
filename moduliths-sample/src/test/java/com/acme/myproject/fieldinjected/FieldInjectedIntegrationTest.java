@@ -43,9 +43,8 @@ class FieldInjectedIntegrationTest {
 
 		Modules modules = execution.getModules();
 
-		assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> execution.getModule().verifyDependencies(modules)) //
-				.withMessageContaining("field injection") //
-				.withMessageContaining("WithFieldInjection.a"); // offending field
+		assertThat(execution.getModule().detectDependencies(modules)) //
+				.hasMessageContaining("field injection") //
+				.hasMessageContaining("WithFieldInjection.a"); // offending field
 	}
 }
