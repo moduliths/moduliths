@@ -29,7 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  * @author Oliver Drotbohm
  */
-public class ModulithMetadataUnitTest {
+class ModulithMetadataUnitTest {
 
 	@Test // #72
 	public void inspectsModulithAnnotation() throws Exception {

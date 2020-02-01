@@ -25,10 +25,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -37,6 +39,7 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaModifier;
+import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.core.domain.properties.HasName;
 
 /**
@@ -77,10 +80,19 @@ class Classes implements DescribedIterable<JavaClass> {
 	 * Creates a new {@link Classes} for the given {@link JavaClass}es.
 	 *
 	 * @param classes must not be {@literal null}.
-	 * @return
+	 * @return will never be {@literal null}.
 	 */
 	static Classes of(List<JavaClass> classes) {
 		return new Classes(classes);
+	}
+
+	/**
+	 * Returns a {@link Collector} creating a {@link Classes} instance from a {@link Stream} of {@link JavaType}.
+	 *
+	 * @return will never be {@literal null}.
+	 */
+	static Collector<JavaClass, ?, Classes> toClasses() {
+		return Collectors.collectingAndThen(Collectors.toList(), Classes::of);
 	}
 
 	/**
@@ -147,6 +159,14 @@ class Classes implements DescribedIterable<JavaClass> {
 		return !that(HasName.Predicates.name(className)).isEmpty();
 	}
 
+	JavaClass getRequiredClass(Class<?> type) {
+
+		return classes.stream() //
+				.filter(it -> it.isEquivalentTo(type)) //
+				.findFirst() //
+				.orElseThrow(() -> new IllegalArgumentException(String.format("No JavaClass found for type %s!", type)));
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see com.tngtech.archunit.base.HasDescription#getDescription()
@@ -208,8 +228,8 @@ class Classes implements DescribedIterable<JavaClass> {
 		 * @see com.tngtech.archunit.base.DescribedPredicate#apply(java.lang.Object)
 		 */
 		@Override
-		public boolean apply(JavaClass input) {
-			return reference.getName().equals(input.getName());
+		public boolean apply(@Nullable JavaClass input) {
+			return input != null && reference.getName().equals(input.getName());
 		}
 	}
 }

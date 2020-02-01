@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.moduliths.docs.Documenter;
 import org.moduliths.docs.Documenter.Options;
 import org.moduliths.model.Module;
 import org.moduliths.model.Module.DependencyType;
+import org.moduliths.model.Modules;
 
 import com.acme.myproject.Application;
 
@@ -55,5 +55,13 @@ class DocumenterTest {
 						.anyMatch(it -> it.getTagsAsSet().contains(DependencyType.EVENT_LISTENER.toString())));
 
 		documenter.writeModulesAsPlantUml(options);
+	}
+
+	@Test
+	void testName() {
+
+		documenter.getModules().stream() //
+				.map(it -> documenter.toModuleCanvas(it)) //
+				.forEach(System.out::println);
 	}
 }

@@ -31,7 +31,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
  *
  * @author Oliver Drotbohm
  */
-public class ModuleDependencyUnitTest {
+class ModuleDependencyUnitTest {
 
 	ClassFileImporter importer = new ClassFileImporter();
 

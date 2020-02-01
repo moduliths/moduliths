@@ -103,7 +103,7 @@ class ModulesIntegrationTest {
 		Optional<Module> module = modules.getModuleByName("moduleA");
 
 		assertThat(module).hasValueSatisfying(it -> {
-			assertThat(it.getSpringBeans().contains(SomeAtBeanComponentA.class.getName())).isTrue();
+			assertThat(it.getSpringBeansInternal().contains(SomeAtBeanComponentA.class.getName())).isTrue();
 		});
 	}
 

@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
+import org.moduliths.model.Types.SpringTypes;
 import org.springframework.util.Assert;
 
 interface ModulithMetadata {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package org.moduliths.model;
 
+import static org.assertj.core.api.Assertions.*;
+
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 
+import com.acme.withatbean.DomainEvent;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 
@@ -27,18 +33,28 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
  *
  * @author Oliver Drotbohm
  */
-public class ModuleUnitTest {
+@TestInstance(Lifecycle.PER_CLASS)
+class ModuleUnitTest {
 
 	ClassFileImporter importer = new ClassFileImporter();
+	JavaClasses classes = importer.importPackages("com.acme.withatbean"); //
+	JavaPackage javaPackage = JavaPackage.of(Classes.of(classes), "");
+
+	Module module = new Module(javaPackage, false);
 
 	@Test // #59
 	public void considersExternalSpringBeans() {
 
-		JavaClasses classes = importer.importPackages("com.acme.withatbean"); //
-		JavaPackage javaPackage = JavaPackage.of(Classes.of(classes), "");
+		assertThat(module.getSpringBeans()) //
+				.flatExtracting(SpringBean::getFullyQualifiedTypeName) //
+				.contains(DataSource.class.getName());
+	}
 
-		Module module = new Module(javaPackage, false);
+	@Test // #101
+	void discoversPublishedEvents() {
 
-		module.getSpringBeans().contains(DataSource.class.getName());
+		JavaClass expected = classes.get(DomainEvent.class);
+
+		assertThat(module.getEventsPublished()).contains(expected);
 	}
 }

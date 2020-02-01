@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.moduliths.docs;
+
+import static org.moduliths.docs.Asciidoctor.*;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -46,6 +49,7 @@ import org.moduliths.model.Module;
 import org.moduliths.model.Module.DependencyDepth;
 import org.moduliths.model.Module.DependencyType;
 import org.moduliths.model.Modules;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 import com.structurizr.Workspace;
@@ -59,6 +63,7 @@ import com.structurizr.model.SoftwareSystem;
 import com.structurizr.view.ComponentView;
 import com.structurizr.view.RelationshipView;
 import com.structurizr.view.View;
+import com.tngtech.archunit.core.domain.JavaClass;
 
 /**
  * API to create documentation for {@link Modules}.
@@ -176,6 +181,50 @@ public class Documenter {
 		Assert.isTrue(fileNamePattern.contains("%s"), () -> String.format(INVALID_FILE_NAME_PATTERN, fileNamePattern));
 
 		writeViewAsPlantUml(view, String.format(fileNamePattern, module.getName()), options);
+	}
+
+	public void writeModuleCanvases(String javadocBase) {
+
+		Options options = Options.defaults();
+
+		modules.forEach(module -> {
+
+			String filename = String.format(options.getTargetFileName().orElse("module-%s.adoc"), module.getName());
+			Path file = recreateFile(filename);
+
+			try (FileWriter writer = new FileWriter(file.toFile())) {
+
+				writer.write(toModuleCanvas(module, javadocBase));
+
+			} catch (IOException o_O) {
+				throw new RuntimeException(o_O);
+			}
+		});
+	}
+
+	public String toModuleCanvas(Module module) {
+		return toModuleCanvas(module, "{javadocBase}");
+	}
+
+	public String toModuleCanvas(Module module, String apiBase) {
+
+		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(apiBase);
+		Function<List<JavaClass>, String> mapper = asciidoctor::typesToBulletPoints;
+
+		StringBuilder builder = new StringBuilder();
+		builder.append(startTable("%autowidth.strech, cols=\"h,a\""));
+		builder.append(writeTableRow("Base package", asciidoctor.toInlineCode(module.getBasePackage().getName())));
+		builder.append(addTableRow(module.getSpringBeans(), "Spring components", asciidoctor::beansToBulletPoints));
+		builder.append(addTableRow(module.getAggregateRoots(modules), "Aggregate roots", mapper));
+		builder.append(addTableRow(module.getEventsPublished(), "Published events", mapper));
+		builder.append(addTableRow(module.getEventsListenedTo(modules), "Events listened to", mapper));
+		builder.append(startOrEndTable());
+
+		return builder.toString();
+	}
+
+	private <T> String addTableRow(List<T> types, String header, Function<List<T>, String> mapper) {
+		return types.isEmpty() ? "" : writeTableRow(header, mapper.apply(types));
 	}
 
 	public String toPlantUml() throws IOException {
@@ -362,7 +411,7 @@ public class Documenter {
 		 * The target file name to be used for the diagram to be created. For individual module diagrams this needs to
 		 * include a {@code %s} placeholder for the module names.
 		 */
-		private final @With String targetFileName;
+		private final @With @Nullable String targetFileName;
 
 		/**
 		 * A callback to return a hex-encoded color per {@link Module}.
@@ -429,7 +478,7 @@ public class Documenter {
 		 * @see com.structurizr.io.plantuml.PlantUMLWriter#backgroundOf(com.structurizr.view.View, com.structurizr.model.Element)
 		 */
 		@Override
-		protected String backgroundOf(View view, Element element) {
+		protected String backgroundOf(@Nullable View view, @Nullable Element element) {
 
 			if (!Component.class.isInstance(element)) {
 				return super.backgroundOf(view, element);

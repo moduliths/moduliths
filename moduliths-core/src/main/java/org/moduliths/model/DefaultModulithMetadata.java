@@ -26,9 +26,9 @@ import java.util.stream.Stream;
 
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
+import org.moduliths.model.Types.SpringTypes;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 /**
  * Creates a new {@link ModulithMetadata} representing the defaults of {@link Modulithic} but without the annotation
@@ -36,22 +36,13 @@ import org.springframework.util.ClassUtils;
  *
  * @author Oliver Drotbohm
  */
-@SuppressWarnings("unchecked")
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 class DefaultModulithMetadata implements ModulithMetadata {
 
-	private static final Class<? extends Annotation> AT_SPRING_BOOT_APPLICATION;
+	private static final Class<? extends Annotation> AT_SPRING_BOOT_APPLICATION = Types
+			.loadIfPresent(SpringTypes.AT_SPRING_BOOT_APPLICATION);
 
 	private final Class<?> modulithType;
-
-	static {
-
-		ClassLoader classLoader = DefaultModulithMetadata.class.getClassLoader();
-
-		AT_SPRING_BOOT_APPLICATION = ClassUtils.isPresent(SpringTypes.AT_SPRING_BOOT_APPLICATION, classLoader) //
-				? (Class<? extends Annotation>) ClassUtils.resolveClassName(SpringTypes.AT_SPRING_BOOT_APPLICATION, classLoader) //
-				: null;
-	}
 
 	/**
 	 * Creates a new {@link ModulithMetadata} representing the defaults of a class annotated but not customized with

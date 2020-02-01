@@ -28,7 +28,7 @@ import org.moduliths.Modulithic;
  *
  * @author Oliver Drotbohm
  */
-public class AnnotationModulithMetadataUnitTest {
+class AnnotationModulithMetadataUnitTest {
 
 	@Test // #94
 	void findsCustomizationsOnClass() {

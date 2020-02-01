@@ -15,15 +15,19 @@
  */
 package org.moduliths.model;
 
+import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
-import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.*;
 import static java.lang.System.*;
+import static org.moduliths.model.Classes.*;
+import static org.moduliths.model.Types.*;
+import static org.moduliths.model.Types.JavaXTypes.*;
+import static org.moduliths.model.Types.SpringDataTypes.*;
+import static org.moduliths.model.Types.SpringTypes.*;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,8 +40,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Resource;
-
+import org.moduliths.Event;
+import org.moduliths.model.Types.SpringTypes;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -65,6 +69,7 @@ public class Module {
 	private final boolean useFullyQualifiedModuleNames;
 
 	private final Supplier<Classes> springBeans;
+	private final Supplier<Classes> entities;
 
 	Module(JavaPackage basePackage, boolean useFullyQualifiedModuleNames) {
 
@@ -74,27 +79,7 @@ public class Module {
 		this.useFullyQualifiedModuleNames = useFullyQualifiedModuleNames;
 
 		this.springBeans = Suppliers.memoize(() -> filterSpringBeans(basePackage));
-	}
-
-	private static Classes filterSpringBeans(JavaPackage source) {
-
-		Classes atBeanTypes = source.that(annotatedWith(SpringTypes.AT_CONFIGURATION)).stream() //
-				.flatMap(it -> it.getMethods().stream()) //
-				.filter(it -> it.isAnnotatedWith(SpringTypes.AT_BEAN) || it.isMetaAnnotatedWith(SpringTypes.AT_BEAN)) //
-				.map(JavaMethod::getRawReturnType) //
-				.collect(Collectors.collectingAndThen(Collectors.toList(), Classes::of));
-
-		// Keep module defined beans first
-		Map<Boolean, List<JavaClass>> collect = atBeanTypes.stream() //
-				.collect(Collectors.groupingBy(it -> source.contains(it)));
-
-		Classes coreComponents = source.that(assignableTo("org.springframework.data.repository.Repository") //
-				.or(annotatedWith(SpringTypes.AT_COMPONENT)) //
-				.or(metaAnnotatedWith(SpringTypes.AT_COMPONENT)));
-
-		return coreComponents //
-				.and(collect.getOrDefault(true, Collections.emptyList())) //
-				.and(collect.getOrDefault(false, Collections.emptyList()));
+		this.entities = Suppliers.memoize(() -> findEntities(basePackage));
 	}
 
 	public String getName() {
@@ -116,6 +101,63 @@ public class Module {
 				.distinct() //
 				.flatMap(it -> it.map(Stream::of).orElseGet(Stream::empty)) //
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns all event types the current module exposes an event listener for.
+	 *
+	 * @param modules must not be {@literal null}.
+	 * @return
+	 */
+	public List<JavaClass> getEventsListenedTo(Modules modules) {
+
+		Assert.notNull(modules, "Modules must not be null!");
+
+		return getAllModuleDependencies(modules) //
+				.filter(it -> it.type == DependencyType.EVENT_LISTENER) //
+				.map(ModuleDependency::getTarget) //
+				.collect(Collectors.toList());
+	}
+
+	public List<JavaClass> getEventsPublished() {
+
+		return basePackage.that(isAnnotatedWith(Event.class)).stream() //
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns all types that are considered aggregate roots.
+	 *
+	 * @param modules must not be {@literal null}.
+	 * @return
+	 */
+	public List<JavaClass> getAggregateRoots(Modules modules) {
+
+		Assert.notNull(modules, "Modules must not be null!");
+
+		return entities.get().stream() //
+				.map(it -> ArchitecturallyEvidentType.of(it, getSpringBeansInternal())) //
+				.filter(ArchitecturallyEvidentType::isRepository) //
+				.map(ArchitecturallyEvidentType::getType) //
+				.flatMap(this::resolveModuleSuperTypes) //
+				.distinct() //
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns a {@link Stream} of all super types of the given one that are declared in the same module as well as the
+	 * type itself.
+	 *
+	 * @param type must not be {@literal null}.
+	 * @return
+	 */
+	private Stream<JavaClass> resolveModuleSuperTypes(JavaClass type) {
+
+		Assert.notNull(type, "Type must not be null!");
+
+		return Stream.concat(//
+				type.getAllSuperClasses().stream().filter(this::contains), //
+				Stream.of(type));
 	}
 
 	/**
@@ -157,7 +199,13 @@ public class Module {
 				.map(Module::getBasePackage);
 	}
 
-	public Classes getSpringBeans() {
+	public List<SpringBean> getSpringBeans() {
+		return getSpringBeansInternal().stream() //
+				.map(it -> SpringBean.of(it, this)) //
+				.collect(Collectors.toList());
+	}
+
+	Classes getSpringBeansInternal() {
 		return springBeans.get();
 	}
 
@@ -180,9 +228,14 @@ public class Module {
 	}
 
 	public void verifyDependencies(Modules modules) {
+		detectDependencies(modules).throwIfPresent();
+	}
 
-		getAllModuleDependencies(modules) //
-				.forEach(it -> it.isValidDependencyWithin(modules));
+	public Violations detectDependencies(Modules modules) {
+
+		return getAllModuleDependencies(modules) //
+				.map(it -> it.isValidDependencyWithin(modules)) //
+				.reduce(Violations.NONE, Violations::and);
 	}
 
 	/*
@@ -219,7 +272,7 @@ public class Module {
 			builder.append('\n');
 		}
 
-		Classes beans = getSpringBeans();
+		Classes beans = getSpringBeansInternal();
 
 		if (beans.isEmpty()) {
 
@@ -287,7 +340,7 @@ public class Module {
 
 	private Stream<Module> getDirectModuleDependencies(Modules modules) {
 
-		return getSpringBeans().stream() //
+		return getSpringBeansInternal().stream() //
 				.flatMap(it -> ModuleDependency.fromType(it)) //
 				.filter(it -> isDependencyToOtherModule(it.target, modules)) //
 				.map(it -> modules.getModuleByType(it.target)) //
@@ -299,7 +352,7 @@ public class Module {
 
 		Stream<ModuleDependency> injections = ModuleDependency.fromType(type) //
 				.filter(it -> isDependencyToOtherModule(it.getTarget(), modules)); //
-		// Stream<ModuleDependency> parameters = getDependenciesFromCodeUnitParameters(type, modules);
+
 		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream() //
 				.filter(it -> isDependencyToOtherModule(it.getTargetClass(), modules)) //
 				.map(ModuleDependency::new);
@@ -311,6 +364,29 @@ public class Module {
 		return modules.contains(dependency) && !contains(dependency);
 	}
 
+	private static Classes findEntities(JavaPackage source) {
+
+		return source.that(isJpaEntity()).stream() //
+				.collect(toClasses());
+	}
+
+	private static Classes filterSpringBeans(JavaPackage source) {
+
+		Map<Boolean, List<JavaClass>> collect = source.that(isConfiguration()).stream() //
+				.flatMap(it -> it.getMethods().stream()) //
+				.filter(SpringTypes::isAtBeanMethod) //
+				.map(JavaMethod::getRawReturnType) //
+				.collect(Collectors.groupingBy(it -> source.contains(it)));
+
+		Classes repositories = source.that(isSpringDataRepository());
+		Classes coreComponents = source.that(not(INTERFACES).and(isComponent()));
+
+		return coreComponents //
+				.and(repositories) //
+				.and(collect.getOrDefault(true, Collections.emptyList())) //
+				.and(collect.getOrDefault(false, Collections.emptyList()));
+	}
+
 	public enum DependencyDepth {
 
 		NONE,
@@ -320,22 +396,21 @@ public class Module {
 		ALL;
 	}
 
-	@ToString
 	@EqualsAndHashCode
 	@RequiredArgsConstructor
 	static class ModuleDependency {
 
 		private static final List<String> INJECTION_TYPES = Arrays.asList(//
-				SpringTypes.AT_AUTOWIRED, //
-				Resource.class.getName(), //
-				"javax.inject.Inject");
+				AT_AUTOWIRED, AT_RESOURCE, AT_INJECT);
 
 		private final @NonNull @Getter JavaClass origin, target;
 		private final @NonNull String description;
 		private final @NonNull DependencyType type;
 
 		ModuleDependency(Dependency dependency) {
-			this(dependency.getOriginClass(), dependency.getTargetClass(), dependency.getDescription(),
+			this(dependency.getOriginClass(), //
+					dependency.getTargetClass(), //
+					dependency.getDescription(), //
 					DependencyType.forDependency(dependency));
 		}
 
@@ -343,30 +418,35 @@ public class Module {
 			return this.type.equals(type);
 		}
 
-		void isValidDependencyWithin(Modules modules) {
+		Violations isValidDependencyWithin(Modules modules) {
 
 			Module originModule = getExistingModuleOf(origin, modules);
 			Module targetModule = getExistingModuleOf(target, modules);
 
 			List<Module> allowedTargets = originModule.getAllowedDependencies(modules);
+			Violations violations = Violations.NONE;
 
-			Assert.state(allowedTargets.isEmpty() || allowedTargets.contains(targetModule), () -> {
+			if (!allowedTargets.isEmpty() && !allowedTargets.contains(targetModule)) {
 
 				String allowedTargetsString = allowedTargets.stream() //
 						.map(Module::getName) //
 						.collect(Collectors.joining(", "));
 
-				return String.format("Module '%s' depends on module '%s' via %s -> %s. Allowed target modules: %s.",
+				String message = String.format("Module '%s' depends on module '%s' via %s -> %s. Allowed target modules: %s.",
 						originModule.getName(), targetModule.getName(), origin.getName(), target.getName(), allowedTargetsString);
-			});
 
-			Assert.state(targetModule.isExposed(target), () -> {
+				violations = violations.and(new IllegalStateException(message));
+			}
+
+			if (!targetModule.isExposed(target)) {
 
 				String violationText = String.format("Module '%s' depends on non-exposed type %s within module '%s'!",
 						originModule.getName(), target.getName(), targetModule.getName());
 
-				return violationText + lineSeparator() + description;
-			});
+				violations = violations.and(new IllegalArgumentException(violationText + lineSeparator() + description));
+			}
+
+			return violations;
 		}
 
 		Module getExistingModuleOf(JavaClass javaClass, Modules modules) {
@@ -461,6 +541,15 @@ public class Module {
 			return Stream.concat(parameterDependencies, returnType);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return type.format(FormatableJavaClass.of(origin), FormatableJavaClass.of(target));
+		}
+
 		private static String createDescription(JavaMember codeUnit, JavaClass declaringElement,
 				String declarationDescription) {
 
@@ -511,25 +600,28 @@ public class Module {
 					DependencyType.USES_COMPONENT);
 
 			this.member = member;
-			this.isConfigurationClass = origin.isAnnotatedWith(SpringTypes.AT_CONFIGURATION) //
-					|| origin.isMetaAnnotatedWith(SpringTypes.AT_CONFIGURATION);
+			this.isConfigurationClass = isConfiguration().apply(origin);
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * @see de.olivergierke.moduliths.model.Module.ModuleDependency#isValidDependencyWithin(de.olivergierke.moduliths.model.Modules)
+		 * @see org.moduliths.model.Module.ModuleDependency#isValidDependencyWithin(org.moduliths.model.Modules)
 		 */
 		@Override
-		void isValidDependencyWithin(Modules modules) {
+		Violations isValidDependencyWithin(Modules modules) {
 
 			JavaClass owner = member.getOwner();
 			Module module = getExistingModuleOf(owner, modules);
+			Violations violations = super.isValidDependencyWithin(modules);
 
-			Assert.state(!JavaField.class.isInstance(member) || isConfigurationClass,
-					String.format("Class %s in module %s uses field injection in %s! Prefer constructor injection instead.",
-							owner.getSimpleName(), module, member));
+			if (JavaField.class.isInstance(member) && !isConfigurationClass) {
 
-			super.isValidDependencyWithin(modules);
+				violations = violations.and(new IllegalArgumentException(
+						String.format("Module %s uses field injection in %s. Prefer constructor injection instead!",
+								module.getDisplayName(), member.getFullName())));
+			}
+
+			return violations;
 		}
 
 		private static String getDescriptionFor(JavaMember member) {
@@ -552,28 +644,69 @@ public class Module {
 		 * Indicates that the module depends on the other one by a component dependency, i.e. that other module needs to be
 		 * bootstrapped to run the source module.
 		 */
-		USES_COMPONENT,
+		USES_COMPONENT {
+
+			/*
+			 * (non-Javadoc)
+			 * @see org.moduliths.model.Module.DependencyType#format(org.moduliths.model.FormatableJavaClass, org.moduliths.model.FormatableJavaClass)
+			 */
+			@Override
+			public String format(FormatableJavaClass source, FormatableJavaClass target) {
+				return String.format("Component %s using %s", source.getAbbreviatedFullName(), target.getAbbreviatedFullName());
+			}
+		},
 
 		/**
 		 * Indicates that the module refers to an entity of the other.
 		 */
-		ENTITY,
+		ENTITY {
+
+			/*
+			 * (non-Javadoc)
+			 * @see org.moduliths.model.Module.DependencyType#format(org.moduliths.model.FormatableJavaClass, org.moduliths.model.FormatableJavaClass)
+			 */
+			@Override
+			public String format(FormatableJavaClass source, FormatableJavaClass target) {
+				return String.format("Entity %s depending on %s", source.getAbbreviatedFullName(),
+						target.getAbbreviatedFullName());
+			}
+		},
 
 		/**
 		 * Indicates that the module depends on the other by declaring an event listener for an event exposed by the other
 		 * module. Thus, the target module does not have to be bootstrapped to run the source one.
 		 */
-		EVENT_LISTENER,
+		EVENT_LISTENER {
+
+			/*
+			 * (non-Javadoc)
+			 * @see org.moduliths.model.Module.DependencyType#format(org.moduliths.model.FormatableJavaClass, org.moduliths.model.FormatableJavaClass)
+			 */
+			@Override
+			public String format(FormatableJavaClass source, FormatableJavaClass target) {
+				return String.format("%s listening to events of type %s", source.getAbbreviatedFullName(),
+						target.getAbbreviatedFullName());
+			}
+		},
 
 		DEFAULT {
 
 			/*
 			 * (non-Javadoc)
-			 * @see de.olivergierke.moduliths.test.model.Module.ModuleDependency.DependencyType#or(com.tngtech.archunit.thirdparty.com.google.common.base.Supplier)
+			 * @see org.moduliths.model.Module.DependencyType#or(com.tngtech.archunit.thirdparty.com.google.common.base.Supplier)
 			 */
 			@Override
 			public DependencyType or(Supplier<DependencyType> supplier) {
 				return supplier.get();
+			}
+
+			/*
+			 * (non-Javadoc)
+			 * @see org.moduliths.model.Module.DependencyType#format(org.moduliths.model.FormatableJavaClass, org.moduliths.model.FormatableJavaClass)
+			 */
+			@Override
+			public String format(FormatableJavaClass source, FormatableJavaClass target) {
+				return String.format("%s depending on %s", source.getAbbreviatedFullName(), target.getAbbreviatedFullName());
 			}
 		};
 
@@ -589,6 +722,8 @@ public class Module {
 		public static DependencyType forDependency(Dependency dependency) {
 			return forParameter(dependency.getTargetClass());
 		}
+
+		public abstract String format(FormatableJavaClass source, FormatableJavaClass target);
 
 		public DependencyType or(Supplier<DependencyType> supplier) {
 			return this;
