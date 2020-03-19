@@ -21,11 +21,17 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jddd.core.annotation.AggregateRoot;
+import org.jddd.core.annotation.Entity;
+import org.jddd.core.annotation.Repository;
+import org.moduliths.model.Types.JDDDTypes;
 import org.moduliths.model.Types.SpringDataTypes;
 import org.moduliths.model.Types.SpringTypes;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
-import org.springframework.util.ClassUtils;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -39,14 +45,12 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
  *
  * @author Oliver Drotbohm
  */
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class ArchitecturallyEvidentType {
 
-	private final @Getter JavaClass type;
+public interface ArchitecturallyEvidentType {
 
 	/**
-	 * Creates a new {@link ArchitecturallyEvidentType} for the given {@link JavaType} and {@link Classes} of Spring
-	 * components.
+	 * Creates a new {@link AbstractArchitecturallyEvidentType} for the given {@link JavaType} and {@link Classes} of
+	 * Spring components.
 	 *
 	 * @param type must not be {@literal null}.
 	 * @param beanTypes must not be {@literal null}.
@@ -54,18 +58,30 @@ public abstract class ArchitecturallyEvidentType {
 	 */
 	public static ArchitecturallyEvidentType of(JavaClass type, Classes beanTypes) {
 
-		return ClassUtils.isPresent(SpringDataTypes.REPOSITORY, ArchitecturallyEvidentType.class.getClassLoader())
-				? new SpringDataAwareArchitecturallyEvidentType(type, beanTypes) //
-				: new SpringAwareArchitecturallyEvidentType(type);
+		List<ArchitecturallyEvidentType> delegates = new ArrayList<>();
+
+		if (JDDDTypes.isPresent()) {
+			delegates.add(new JDdddArchitecturallyEvidentType(type));
+		}
+
+		if (SpringDataTypes.isPresent()) {
+			delegates.add(new SpringDataAwareArchitecturallyEvidentType(type, beanTypes));
+		}
+
+		delegates.add(new SpringAwareArchitecturallyEvidentType(type));
+
+		return DelegatingType.of(type, delegates);
 	}
+
+	public abstract JavaClass getType();
 
 	/**
 	 * Returns the abbreviated (i.e. every package fragment reduced to its first character) full name.
 	 *
 	 * @return will never be {@literal null}.
 	 */
-	public String getAbbreviatedFullName() {
-		return FormatableJavaClass.of(type).getAbbreviatedFullName();
+	default String getAbbreviatedFullName() {
+		return FormatableJavaClass.of(getType()).getAbbreviatedFullName();
 	}
 
 	/**
@@ -73,7 +89,7 @@ public abstract class ArchitecturallyEvidentType {
 	 *
 	 * @return
 	 */
-	public boolean isEntity() {
+	default boolean isEntity() {
 		return isJpaEntity().apply(getType());
 	}
 
@@ -91,14 +107,10 @@ public abstract class ArchitecturallyEvidentType {
 	 */
 	public abstract boolean isRepository();
 
-	static class SpringAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
+	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+	static class SpringAwareArchitecturallyEvidentType implements ArchitecturallyEvidentType {
 
-		/**
-		 * Creates a new {@link SpringDataAwareArchitecturallyEvidentType} for the given {@link JavaClass}.
-		 */
-		SpringAwareArchitecturallyEvidentType(JavaClass type) {
-			super(type);
-		}
+		private final @Getter JavaClass type;
 
 		@Override
 		public boolean isAggregateRoot() {
@@ -126,20 +138,13 @@ public abstract class ArchitecturallyEvidentType {
 
 	static class SpringDataAwareArchitecturallyEvidentType extends SpringAwareArchitecturallyEvidentType {
 
-		private final Supplier<Boolean> isAggregate;
+		private final Classes beanTypes;
 
 		SpringDataAwareArchitecturallyEvidentType(JavaClass type, Classes beanTypes) {
 
 			super(type);
 
-			this.isAggregate = Suppliers.memoize(() -> {
-
-				return isEntity() && beanTypes.that(SpringDataTypes.isSpringDataRepository()).stream() //
-						.map(JavaClass::reflect) //
-						.map(AbstractRepositoryMetadata::getMetadata) //
-						.map(RepositoryMetadata::getDomainType) //
-						.anyMatch(type::isAssignableTo);
-			});
+			this.beanTypes = beanTypes;
 		}
 
 		/*
@@ -159,7 +164,11 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isAggregateRoot() {
-			return isAggregate.get();
+			return isEntity() && beanTypes.that(SpringDataTypes.isSpringDataRepository()).stream() //
+					.map(JavaClass::reflect) //
+					.map(AbstractRepositoryMetadata::getMetadata) //
+					.map(RepositoryMetadata::getDomainType) //
+					.anyMatch(it -> getType().isAssignableTo(it));
 		}
 
 		/*
@@ -169,6 +178,95 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		protected DescribedPredicate<? super JavaClass> isSpringRepository() {
 			return SpringDataTypes.isSpringDataRepository().or(super.isSpringRepository());
+		}
+	}
+
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	static class JDdddArchitecturallyEvidentType implements ArchitecturallyEvidentType {
+
+		private final @Getter JavaClass type;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isEntity()
+		 */
+		@Override
+		public boolean isEntity() {
+
+			return Types.isAnnotatedWith(Entity.class).apply(type) || //
+					type.isAssignableTo(org.jddd.core.types.Entity.class);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isAggregateRoot()
+		 */
+		@Override
+		public boolean isAggregateRoot() {
+
+			return Types.isAnnotatedWith(AggregateRoot.class).apply(type) || //
+					type.isAssignableTo(org.jddd.core.types.AggregateRoot.class);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isRepository()
+		 */
+		@Override
+		public boolean isRepository() {
+			return Types.isAnnotatedWith(Repository.class).apply(type);
+		}
+	}
+
+	@RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
+	static class DelegatingType implements ArchitecturallyEvidentType {
+
+		private final @Getter JavaClass type;
+		private final Supplier<Boolean> isAggregateRoot;
+		private final Supplier<Boolean> isRepository;
+		private final Supplier<Boolean> isEntity;
+
+		public static DelegatingType of(JavaClass type, List<ArchitecturallyEvidentType> types) {
+
+			Supplier<Boolean> isAggregateRoot = Suppliers
+					.memoize(() -> types.stream().anyMatch(ArchitecturallyEvidentType::isAggregateRoot));
+
+			Supplier<Boolean> isRepository = Suppliers
+					.memoize(() -> types.stream().anyMatch(ArchitecturallyEvidentType::isRepository));
+
+			Supplier<Boolean> isEntity = Suppliers
+					.memoize(() -> types.stream().anyMatch(ArchitecturallyEvidentType::isEntity));
+
+			return new DelegatingType(type, isAggregateRoot, isRepository, isEntity);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isAggregateRoot()
+		 */
+		// @Override
+		@Override
+		public boolean isAggregateRoot() {
+			return isAggregateRoot.get();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isRepository()
+		 */
+		// @Override
+		@Override
+		public boolean isRepository() {
+			return isRepository.get();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isEntity()
+		 */
+		@Override
+		public boolean isEntity() {
+			return isEntity.get();
 		}
 	}
 }

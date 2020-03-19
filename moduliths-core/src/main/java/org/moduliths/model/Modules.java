@@ -53,6 +53,7 @@ public class Modules implements Iterable<Module> {
 
 	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList(//
 			"javax.persistence", //
+			"org.jddd", //
 			"org.springframework.context.event", //
 			"org.springframework.data.repository", //
 			"org.springframework.stereotype", //

@@ -43,6 +43,20 @@ class Types {
 		return ClassUtils.isPresent(name, loader) ? (Class<T>) ClassUtils.resolveClassName(name, loader) : null;
 	}
 
+	static class JDDDTypes {
+
+		private static final String BASE_PACKAGE = "org.jddd";
+
+		private static final String ANNOTATION_PACKAGE = BASE_PACKAGE + ".core.annotation";
+
+		private static final String ENTITY_ANNOTATION = ANNOTATION_PACKAGE + ".Entity";
+
+		public static boolean isPresent() {
+			return ClassUtils.isPresent(ENTITY_ANNOTATION, JDDDTypes.class.getClassLoader());
+		}
+
+	}
+
 	@UtilityClass
 	static class JavaXTypes {
 
@@ -90,6 +104,10 @@ class Types {
 
 		static final String REPOSITORY = BASE_PACKAGE + ".repository.Repository";
 		static final String AT_REPOSITORY_DEFINITION = BASE_PACKAGE + ".repository.RepositoryDefinition";
+
+		static boolean isPresent() {
+			return ClassUtils.isPresent(REPOSITORY, SpringDataTypes.class.getClassLoader());
+		}
 
 		static DescribedPredicate<JavaClass> isSpringDataRepository() {
 			return assignableTo(SpringDataTypes.REPOSITORY) //

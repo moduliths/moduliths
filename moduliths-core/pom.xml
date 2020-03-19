@@ -11,6 +11,10 @@
 
 	<name>Moduliths - Core</name>
 	<artifactId>moduliths-core</artifactId>
+	
+	<properties>
+		<jddd.version>0.0.1-SNAPSHOT</jddd.version>
+	</properties>
 
 	<dependencies>
 
@@ -34,6 +38,13 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-commons</artifactId>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.jddd</groupId>
+			<artifactId>jddd-core</artifactId>
+			<version>${jddd.version}</version>
 			<optional>true</optional>
 		</dependency>
 		

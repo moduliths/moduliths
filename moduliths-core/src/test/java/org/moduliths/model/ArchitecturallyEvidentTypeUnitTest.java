@@ -18,12 +18,18 @@ package org.moduliths.model;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import javax.persistence.Entity;
 
+import org.jddd.core.types.AggregateRoot;
+import org.jddd.core.types.Identifier;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.moduliths.model.ArchitecturallyEvidentType.SpringAwareArchitecturallyEvidentType;
 import org.moduliths.model.ArchitecturallyEvidentType.SpringDataAwareArchitecturallyEvidentType;
 import org.springframework.data.repository.CrudRepository;
@@ -95,6 +101,50 @@ class ArchitecturallyEvidentTypeUnitTest {
 		});
 	}
 
+	@TestFactory // #104
+	Stream<DynamicTest> considersJDddEntity() {
+
+		return DynamicTest.stream(getTypesFor(JDddAnnotatedEntity.class, JDddImplementingEntity.class), //
+				it -> String.format("%s is considered an entity", it.getType().getSimpleName()), //
+				it -> {
+					assertThat(it.isEntity()).isTrue();
+					assertThat(it.isAggregateRoot()).isFalse();
+					assertThat(it.isRepository()).isFalse();
+				});
+	}
+
+	@TestFactory // #104
+	Stream<DynamicTest> considersJDddAggregateRoot() {
+
+		return DynamicTest.stream(getTypesFor(JDddAnnotatedAggregateRoot.class, JDddImplementingAggregateRoot.class), //
+				it -> String.format("%s is considered an aggregate root", it.getType().getSimpleName()), //
+				it -> {
+					assertThat(it.isEntity()).isTrue();
+					assertThat(it.isAggregateRoot()).isTrue();
+					assertThat(it.isRepository()).isFalse();
+				});
+	}
+
+	@TestFactory // #104
+	Stream<DynamicTest> considersJDddRepository() {
+
+		return DynamicTest.stream(getTypesFor(JDddAnnotatedRepository.class), //
+				it -> String.format("%s is considered a repository", it.getType().getSimpleName()), //
+				it -> {
+					assertThat(it.isEntity()).isFalse();
+					assertThat(it.isAggregateRoot()).isFalse();
+					assertThat(it.isRepository()).isTrue();
+				});
+	}
+
+	private Iterator<ArchitecturallyEvidentType> getTypesFor(Class<?>... types) {
+
+		return Stream.of(types) //
+				.map(classes::getRequiredClass) //
+				.map(it -> ArchitecturallyEvidentType.of(it, classes)) //
+				.iterator();
+	}
+
 	// Spring
 
 	@Repository
@@ -111,4 +161,23 @@ class ArchitecturallyEvidentTypeUnitTest {
 	class OtherEntity {}
 
 	class NoEntity {}
+
+	// jDDD
+
+	@org.jddd.core.annotation.Entity
+	class JDddAnnotatedEntity {}
+
+	@org.jddd.core.annotation.AggregateRoot
+	class JDddAnnotatedAggregateRoot {}
+
+	class JDddImplementingIdentifier implements Identifier {}
+
+	abstract class JDddImplementingEntity
+			implements org.jddd.core.types.Entity<JDddImplementingAggregateRoot, JDddImplementingIdentifier> {}
+
+	abstract class JDddImplementingAggregateRoot
+			implements AggregateRoot<JDddImplementingAggregateRoot, JDddImplementingIdentifier> {}
+
+	@org.jddd.core.annotation.Repository
+	class JDddAnnotatedRepository {}
 }

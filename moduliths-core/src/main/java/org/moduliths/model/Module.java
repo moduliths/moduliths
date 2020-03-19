@@ -137,7 +137,7 @@ public class Module {
 
 		return entities.get().stream() //
 				.map(it -> ArchitecturallyEvidentType.of(it, getSpringBeansInternal())) //
-				.filter(ArchitecturallyEvidentType::isRepository) //
+				.filter(ArchitecturallyEvidentType::isAggregateRoot) //
 				.map(ArchitecturallyEvidentType::getType) //
 				.flatMap(this::resolveModuleSuperTypes) //
 				.distinct() //
