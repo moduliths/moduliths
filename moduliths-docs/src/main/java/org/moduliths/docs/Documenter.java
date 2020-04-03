@@ -212,7 +212,7 @@ public class Documenter {
 		Function<List<JavaClass>, String> mapper = asciidoctor::typesToBulletPoints;
 
 		StringBuilder builder = new StringBuilder();
-		builder.append(startTable("%autowidth.strech, cols=\"h,a\""));
+		builder.append(startTable("%autowidth.stretch, cols=\"h,a\""));
 		builder.append(writeTableRow("Base package", asciidoctor.toInlineCode(module.getBasePackage().getName())));
 		builder.append(addTableRow(module.getSpringBeans(), "Spring components", asciidoctor::beansToBulletPoints));
 		builder.append(addTableRow(module.getAggregateRoots(modules), "Aggregate roots", mapper));
