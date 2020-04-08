@@ -106,4 +106,17 @@ public class Violations extends RuntimeException {
 
 		return new Violations(newExceptions);
 	}
+
+	Violations and(String violation) {
+		return and(new ArchitecturalViolation(violation));
+	}
+
+	private static class ArchitecturalViolation extends RuntimeException {
+
+		private static final long serialVersionUID = 3587887036508024142L;
+
+		public ArchitecturalViolation(String message) {
+			super(message);
+		}
+	}
 }

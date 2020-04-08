@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
@@ -58,7 +59,8 @@ public class FormatableJavaClass {
 					.map(it -> it.substring(0, 1)) //
 					.collect(Collectors.joining("."));
 
-			return abbreviatedPackage.concat(".").concat(type.getSimpleName());
+			return abbreviatedPackage.concat(".") //
+					.concat(ClassUtils.getShortName(type.getName()));
 		});
 	}
 

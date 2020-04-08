@@ -20,5 +20,14 @@ import org.moduliths.Event;
 /**
  * @author Oliver Drotbohm
  */
-@Event
-public class DomainEvent {}
+@SuppressWarnings("deprecation")
+public class TestEvents {
+
+	@Event
+	public static class DomainEvent {}
+
+	@org.jddd.event.annotation.DomainEvent
+	public static class JDddAnnotated {}
+
+	public static class JDddImplementing implements org.jddd.event.types.DomainEvent {}
+}

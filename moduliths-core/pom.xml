@@ -11,10 +11,6 @@
 
 	<name>Moduliths - Core</name>
 	<artifactId>moduliths-core</artifactId>
-	
-	<properties>
-		<jddd.version>0.0.1-SNAPSHOT</jddd.version>
-	</properties>
 
 	<dependencies>
 
@@ -40,14 +36,28 @@
 			<artifactId>spring-data-commons</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.jddd</groupId>
 			<artifactId>jddd-core</artifactId>
 			<version>${jddd.version}</version>
 			<optional>true</optional>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>org.jddd</groupId>
+			<artifactId>jddd-events</artifactId>
+			<version>${jddd.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jddd</groupId>
+			<artifactId>jddd-archunit</artifactId>
+			<version>${jddd.version}</version>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
 			<groupId>jakarta.persistence</groupId>
 			<artifactId>jakarta.persistence-api</artifactId>

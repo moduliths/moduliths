@@ -20,10 +20,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.jddd.event.annotation.DomainEvent;
+
 /**
  * Marker annotation for events being published.
  *
  * @author Oliver Drotbohm
+ * @deprecated in favor of {@link DomainEvent} or {@link org.jddd.event.types.DomainEvent}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

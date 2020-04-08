@@ -57,7 +57,7 @@ class ModulithMetadataUnitTest {
 	}
 
 	@Test // #72
-	public void rejectsTypeNotAnnotatedWithEiterModulithAnnotationOrSpringBootApplication() {
+	public void rejectsTypeNotAnnotatedWithEitherModulithAnnotationOrSpringBootApplication() {
 
 		assertThatExceptionOfType(IllegalArgumentException.class) //
 				.isThrownBy(() -> ModulithMetadata.of(Unannotated.class)) //

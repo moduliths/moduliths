@@ -46,15 +46,20 @@ class Types {
 	static class JDDDTypes {
 
 		private static final String BASE_PACKAGE = "org.jddd";
-
 		private static final String ANNOTATION_PACKAGE = BASE_PACKAGE + ".core.annotation";
-
 		private static final String ENTITY_ANNOTATION = ANNOTATION_PACKAGE + ".Entity";
+		private static final String ARCHUNIT_RULES = BASE_PACKAGE + ".archunit.JDddRules";
+
+		static final String EVENT_ANNOTATION = BASE_PACKAGE + ".event.annotation.DomainEvent";
+		static final String EVENT_TYPE = BASE_PACKAGE + ".event.types.DomainEvent";
 
 		public static boolean isPresent() {
 			return ClassUtils.isPresent(ENTITY_ANNOTATION, JDDDTypes.class.getClassLoader());
 		}
 
+		public static boolean areRulesPresent() {
+			return ClassUtils.isPresent(ARCHUNIT_RULES, JDDDTypes.class.getClassLoader());
+		}
 	}
 
 	@UtilityClass

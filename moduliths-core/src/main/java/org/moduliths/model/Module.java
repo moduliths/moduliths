@@ -41,11 +41,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.moduliths.Event;
+import org.moduliths.model.Types.JDDDTypes;
 import org.moduliths.model.Types.SpringTypes;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
@@ -121,7 +123,11 @@ public class Module {
 
 	public List<JavaClass> getEventsPublished() {
 
-		return basePackage.that(isAnnotatedWith(Event.class)).stream() //
+		DescribedPredicate<JavaClass> isEvent = implement(JDDDTypes.EVENT_TYPE) //
+				.or(isAnnotatedWith(Event.class)) //
+				.or(isAnnotatedWith(JDDDTypes.EVENT_ANNOTATION));
+
+		return basePackage.that(isEvent).stream() //
 				.collect(Collectors.toList());
 	}
 
@@ -364,10 +370,12 @@ public class Module {
 		return modules.contains(dependency) && !contains(dependency);
 	}
 
-	private static Classes findEntities(JavaPackage source) {
+	private Classes findEntities(JavaPackage source) {
 
-		return source.that(isJpaEntity()).stream() //
-				.collect(toClasses());
+		return source.stream() //
+				.map(it -> ArchitecturallyEvidentType.of(it, getSpringBeansInternal()))
+				.filter(ArchitecturallyEvidentType::isEntity) //
+				.map(ArchitecturallyEvidentType::getType).collect(toClasses());
 	}
 
 	private static Classes filterSpringBeans(JavaPackage source) {

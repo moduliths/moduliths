@@ -23,7 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
-import com.acme.withatbean.DomainEvent;
+import com.acme.withatbean.TestEvents.DomainEvent;
+import com.acme.withatbean.TestEvents.JDddAnnotated;
+import com.acme.withatbean.TestEvents.JDddImplementing;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -50,11 +52,14 @@ class ModuleUnitTest {
 				.contains(DataSource.class.getName());
 	}
 
-	@Test // #101
+	@Test // #101, #107
 	void discoversPublishedEvents() {
 
-		JavaClass expected = classes.get(DomainEvent.class);
+		JavaClass domainEvent = classes.get(DomainEvent.class);
+		JavaClass jdddAnnotated = classes.get(JDddAnnotated.class);
+		JavaClass jdddImplementing = classes.get(JDddImplementing.class);
 
-		assertThat(module.getEventsPublished()).contains(expected);
+		assertThat(module.getEventsPublished()) //
+				.containsExactlyInAnyOrder(domainEvent, jdddAnnotated, jdddImplementing);
 	}
 }

@@ -21,6 +21,7 @@ import org.jddd.core.annotation.Entity;
 import org.springframework.data.repository.Repository;
 import org.springframework.util.Assert;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -37,8 +38,10 @@ class TestUtils {
 	private static Supplier<JavaClasses> imported = Suppliers.memoize(() -> new ClassFileImporter() //
 			.importPackagesOf(Modules.class, Repository.class, Entity.class));
 
-	private static Supplier<Classes> classes = Suppliers.memoize(() -> Classes.of(imported.get()) //
-			.that(JavaClass.Predicates.resideInAPackage(Modules.class.getPackage().getName())));
+	private static DescribedPredicate<JavaClass> IS_MODULE_TYPE = JavaClass.Predicates
+			.resideInAPackage(Modules.class.getPackage().getName());
+
+	private static Supplier<Classes> classes = Suppliers.memoize(() -> Classes.of(imported.get()).that(IS_MODULE_TYPE));
 
 	/**
 	 * Returns all {@link Classes} of this module.
@@ -47,6 +50,10 @@ class TestUtils {
 	 */
 	public static Classes getClasses() {
 		return classes.get();
+	}
+
+	public static JavaClasses getJavaClasses() {
+		return imported.get().that(IS_MODULE_TYPE);
 	}
 
 	/**
