@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.moduliths.model.Module.DependencyDepth;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -28,6 +30,8 @@ import org.springframework.boot.test.autoconfigure.filter.TypeExcludeFilters;
 import org.springframework.boot.test.context.SpringBootTestContextBootstrapper;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.BootstrapWith;
+import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -40,7 +44,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * <li>
  * </ul>
  *
- * @author Oliver Gierke
+ * @author Oliver Drotbohm
  */
 @Retention(RetentionPolicy.RUNTIME)
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
@@ -48,6 +52,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ImportAutoConfiguration(ModuleTestAutoConfiguration.class)
 @ExtendWith(SpringExtension.class)
 @ExtendWith(PublishedEventsParameterResolver.class)
+@TestInstance(Lifecycle.PER_CLASS)
+@TestConstructor(autowireMode = AutowireMode.ALL)
 public @interface ModuleTest {
 
 	@AliasFor("mode")
