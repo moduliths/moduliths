@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -74,6 +75,25 @@ public class FormatableJavaClass {
 		return abbreviatedName.get();
 	}
 
+	public String getAbbreviatedFullName(@Nullable Module module) {
+
+		if (module == null) {
+			return getAbbreviatedFullName();
+		}
+
+		String basePackageName = module.getBasePackage().getName();
+		String typePackageName = type.getPackageName();
+
+		if (basePackageName.equals(typePackageName) || !typePackageName.startsWith(basePackageName)) {
+			return getAbbreviatedFullName();
+		}
+
+		return abbreviate(basePackageName) //
+				.concat(typePackageName.substring(basePackageName.length())) //
+				.concat(".") //
+				.concat(ClassUtils.getShortName(type.getName()));
+	}
+
 	/**
 	 * Returns the type's full name.
 	 *
@@ -81,5 +101,13 @@ public class FormatableJavaClass {
 	 */
 	public String getFullName() {
 		return type.getFullName();
+	}
+
+	private static String abbreviate(String source) {
+
+		return Stream //
+				.of(source.split("\\.")) //
+				.map(it -> it.substring(0, 1)) //
+				.collect(Collectors.joining("."));
 	}
 }

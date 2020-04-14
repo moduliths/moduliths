@@ -208,7 +208,7 @@ public class Documenter {
 
 	public String toModuleCanvas(Module module, String apiBase) {
 
-		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(apiBase);
+		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(apiBase, module);
 		Function<List<JavaClass>, String> mapper = asciidoctor::typesToBulletPoints;
 
 		StringBuilder builder = new StringBuilder();

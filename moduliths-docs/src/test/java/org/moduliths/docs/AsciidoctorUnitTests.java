@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
  */
 class AsciidoctorUnitTests {
 
-	Asciidoctor asciidoctor = Asciidoctor.withoutJavadocBase();
+	Asciidoctor asciidoctor = Asciidoctor.withoutJavadocBase(null);
 
 	@Test
 	void formatsInlineCode() {

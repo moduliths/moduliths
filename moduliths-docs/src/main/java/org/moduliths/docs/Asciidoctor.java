@@ -25,7 +25,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.moduliths.model.FormatableJavaClass;
+import org.moduliths.model.Module;
 import org.moduliths.model.SpringBean;
+import org.springframework.lang.Nullable;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -36,12 +38,11 @@ import com.tngtech.archunit.core.domain.JavaModifier;
 @RequiredArgsConstructor(staticName = "withJavadocBase")
 class Asciidoctor {
 
-	private static Asciidoctor WITHOUT_JAVADOC = new Asciidoctor("¯\\_(ツ)_/¯");
-
 	private final String javaDocBase;
+	private final @Nullable Module module;
 
-	public static Asciidoctor withoutJavadocBase() {
-		return WITHOUT_JAVADOC;
+	public static Asciidoctor withoutJavadocBase(@Nullable Module module) {
+		return new Asciidoctor("¯\\_(ツ)_/¯", module);
 	}
 
 	/**
@@ -96,7 +97,7 @@ class Asciidoctor {
 
 	private String toOptionalLink(JavaClass source) {
 
-		String type = toCode(FormatableJavaClass.of(source).getAbbreviatedFullName());
+		String type = toCode(FormatableJavaClass.of(source).getAbbreviatedFullName(module));
 
 		if (!source.getModifiers().contains(JavaModifier.PUBLIC)) {
 			return type;
