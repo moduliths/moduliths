@@ -102,7 +102,7 @@ public class ModuleTestExecution implements Iterable<Module> {
 			Class<?> modulithType = MODULITH_TYPES.computeIfAbsent(type,
 					it -> new AnnotatedClassFinder(SpringBootApplication.class).findFromPackage(packageName));
 			Modules modules = Modules.of(modulithType);
-			Module module = modules.getModuleByBasePackage(packageName) //
+			Module module = modules.getModuleForPackage(packageName) //
 					.orElseThrow(
 							() -> new IllegalStateException(String.format("Package %s is not part of any module!", packageName)));
 

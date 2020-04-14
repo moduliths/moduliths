@@ -130,4 +130,11 @@ class ModulesIntegrationTest {
 					.withMessageContaining(it.getName());
 		});
 	}
+
+	@Test // #108
+	void findsModuleBySubPackage() {
+
+		assertThat(modules.getModuleForPackage("com.acme.myproject.moduleA.sub.package")) //
+				.isEqualTo(modules.getModuleByName("moduleA"));
+	}
 }

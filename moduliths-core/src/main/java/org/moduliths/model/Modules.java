@@ -202,10 +202,10 @@ public class Modules implements Iterable<Module> {
 				.findFirst();
 	}
 
-	public Optional<Module> getModuleByBasePackage(String name) {
+	public Optional<Module> getModuleForPackage(String name) {
 
 		return modules.values().stream() //
-				.filter(it -> it.getBasePackage().getName().equals(name)) //
+				.filter(it -> name.startsWith(it.getBasePackage().getName())) //
 				.findFirst();
 	}
 
