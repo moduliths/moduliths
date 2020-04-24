@@ -72,7 +72,7 @@ import com.tngtech.archunit.core.domain.JavaClass;
  */
 public class Documenter {
 
-	private static final String DEFAULT_LOCATION = "target/generated-docs/moduliths";
+	private static final String DEFAULT_LOCATION = "target/moduliths-docs";
 	private static final Map<DependencyType, String> DEPENDENCY_DESCRIPTIONS = new LinkedHashMap<>();
 
 	private static final String INVALID_FILE_NAME_PATTERN = "Configured file name pattern does not include a '%s' placeholder for the module name!";
