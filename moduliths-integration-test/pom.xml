@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.moduliths</groupId>
 		<artifactId>moduliths</artifactId>
-		<version>1.0.0.RC4</version>
+		<version>1.1.0.BUILD-SNAPSHOT</version>
 	</parent>
 
 	<name>Moduliths - Integration Tests</name>
