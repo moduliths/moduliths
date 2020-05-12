@@ -31,7 +31,7 @@
 		<archunit.version>0.13.0</archunit.version>
 		<lombok.version>1.18.10</lombok.version>
 		<jddd.version>0.0.1-SNAPSHOT</jddd.version>
-		<junit-jupiter.version>5.5.2</junit-jupiter.version>
+		<junit-jupiter.version>5.6.2</junit-jupiter.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
