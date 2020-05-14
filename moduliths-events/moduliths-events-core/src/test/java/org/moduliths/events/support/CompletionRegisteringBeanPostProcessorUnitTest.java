@@ -23,7 +23,6 @@ import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.Test;
 import org.moduliths.events.EventPublicationRegistry;
-import org.moduliths.events.support.CompletionRegisteringBeanPostProcessor;
 import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.event.EventListener;

@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.RequiredArgsConstructor;
 
-import java.lang.reflect.Method;
-
 import org.junit.jupiter.api.Test;
 import org.moduliths.events.EventPublication;
 import org.moduliths.events.EventPublicationRegistry;
@@ -31,9 +29,10 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * @author Oliver Gierke
@@ -41,17 +40,17 @@ import org.springframework.util.ReflectionUtils;
 class PersistentDomainEventIntegrationTest {
 
 	@Test
-	void exposesEventPublicationForFailedListener() {
+	void exposesEventPublicationForFailedListener() throws Exception {
 
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.register(ApplicationConfiguration.class, InfrastructureConfiguration.class);
 		context.refresh();
 
-		Method method = ReflectionUtils.findMethod(SecondTxEventListener.class, "on", DomainEvent.class);
-
 		try {
 
 			context.getBean(Client.class).method();
+
+			Thread.sleep(200);
 
 		} catch (Throwable e) {
 
@@ -59,19 +58,23 @@ class PersistentDomainEventIntegrationTest {
 
 		} finally {
 
-			Iterable<EventPublication> eventsToBePublished = context.getBean(EventPublicationRegistry.class)
-					.findIncompletePublications();
-
-			assertThat(eventsToBePublished).hasSize(1);
-			assertThat(eventsToBePublished).allSatisfy(it -> {
-				assertThat(it.getTargetIdentifier()).isEqualTo(PublicationTargetIdentifier.forMethod(method));
-			});
+			assertThat(context.getBean(EventPublicationRegistry.class).findIncompletePublications()) //
+					.extracting(EventPublication::getTargetIdentifier) //
+					.extracting(PublicationTargetIdentifier::getValue) //
+					.hasSize(2) //
+					.allSatisfy(id -> {
+						assertThat(id)
+								.matches(it -> //
+						it.contains(SecondTxEventListener.class.getName()) //
+								|| it.contains(FourthTxEventListener.class.getName()));
+					});
 
 			context.close();
 		}
 	}
 
 	@Configuration
+	@EnableAsync
 	@EnablePersistentDomainEvents
 	static class ApplicationConfiguration {
 
@@ -88,6 +91,11 @@ class PersistentDomainEventIntegrationTest {
 		@Bean
 		ThirdTxEventListener third() {
 			return new ThirdTxEventListener();
+		}
+
+		@Bean
+		FourthTxEventListener fourth() {
+			return new FourthTxEventListener();
 		}
 
 		@Bean
@@ -144,6 +152,22 @@ class PersistentDomainEventIntegrationTest {
 		@TransactionalEventListener
 		public void on(DomainEvent event) {
 			invoked = true;
+		}
+	}
+
+	static class FourthTxEventListener {
+
+		boolean invoked = false;
+
+		@Async
+		@TransactionalEventListener
+		public void on(DomainEvent event) throws InterruptedException {
+
+			invoked = true;
+
+			Thread.sleep(100);
+
+			throw new RuntimeException("Error!");
 		}
 	}
 }

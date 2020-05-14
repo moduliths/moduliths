@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.moduliths.events;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.util.Assert;
@@ -34,7 +34,7 @@ public interface EventPublicationRegistry {
 	 * @param event must not be {@literal null}.
 	 * @param listeners must not be {@literal null}.
 	 */
-	void store(Object event, Collection<ApplicationListener<?>> listeners);
+	void store(Object event, Stream<PublicationTargetIdentifier> listeners);
 
 	/**
 	 * Marks the publication for the given event and {@link PublicationTargetIdentifier} as completed.

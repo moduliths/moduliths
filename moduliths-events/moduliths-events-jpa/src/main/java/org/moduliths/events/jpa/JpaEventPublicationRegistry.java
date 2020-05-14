@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.moduliths.events.CompletableEventPublication;
 import org.moduliths.events.EventPublication;
@@ -31,7 +31,6 @@ import org.moduliths.events.EventPublicationRegistry;
 import org.moduliths.events.EventSerializer;
 import org.moduliths.events.PublicationTargetIdentifier;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.context.ApplicationListener;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -53,11 +52,9 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 	 * @see org.springframework.events.EventPublicationRegistry#store(java.lang.Object, java.util.Collection)
 	 */
 	@Override
-	public void store(Object event, Collection<ApplicationListener<?>> listeners) {
+	public void store(Object event, Stream<PublicationTargetIdentifier> listeners) {
 
-		listeners.stream() //
-				.map(it -> PublicationTargetIdentifier.forListener(it)) //
-				.map(it -> CompletableEventPublication.of(event, it)) //
+		listeners.map(it -> CompletableEventPublication.of(event, it)) //
 				.map(this::map) //
 				.forEach(it -> events.save(it));
 	}

@@ -8,7 +8,7 @@
 	</appender>
 
 	<logger name="org.springframework" level="info" />
-	<logger name="org.moduliths.events" level="debug" />
+	<logger name="org.moduliths.events" level="info" />
 
 	<root level="warn">
 		<appender-ref ref="console" />
