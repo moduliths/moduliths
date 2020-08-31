@@ -89,7 +89,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		events.findBySerializedEventAndListenerId(serializer.serialize(event), listener.toString()) //
 				.map(JpaEventPublicationRegistry::logCompleted) //
-				.ifPresent(it -> events.save(it.markCompleted()));
+				.ifPresent(it -> events.saveAndFlush(it.markCompleted()));
 	}
 
 	/*
@@ -103,14 +103,14 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		if (outstandingPublications.isEmpty()) {
 
-			log.debug("No publications outstanding!");
+			log.info("No publications outstanding!");
 			return;
 		}
 
-		log.debug("Shutting down with the following publications left unfinished:");
+		log.info("Shutting down with the following publications left unfinished:");
 
 		outstandingPublications
-				.forEach(it -> log.debug("\t{} - {} - {}", it.getId(), it.getEventType(), it.getListenerId()));
+				.forEach(it -> log.info("\t{} - {} - {}", it.getId(), it.getEventType().getName(), it.getListenerId()));
 	}
 
 	private JpaEventPublication map(EventPublication publication) {

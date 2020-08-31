@@ -74,16 +74,13 @@ public class PublicationTargetIdentifier {
 	 */
 	public static PublicationTargetIdentifier forListener(Object listener) {
 
-		return IDENTIFIERS.computeIfAbsent(listener, it -> {
+		if (listener instanceof ApplicationListenerMethodAdapter) {
 
-			if (it instanceof ApplicationListenerMethodAdapter) {
+			Method method = (Method) ReflectionUtils.getField(LISTENER_METHOD_FIELD, listener);
+			return PublicationTargetIdentifier.forMethod(method);
+		}
 
-				Method method = (Method) ReflectionUtils.getField(LISTENER_METHOD_FIELD, it);
-				return PublicationTargetIdentifier.forMethod(method);
-			}
-
-			throw new IllegalStateException("Unsupported listener implementation!");
-		});
+		throw new IllegalStateException("Unsupported listener implementation!");
 	}
 
 	/*

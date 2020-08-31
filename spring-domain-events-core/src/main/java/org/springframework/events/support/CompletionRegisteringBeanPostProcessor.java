@@ -18,6 +18,7 @@ package org.springframework.events.support;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -146,6 +147,7 @@ public class CompletionRegisteringBeanPostProcessor implements BeanPostProcessor
 		 *
 		 * @author Oliver Drotbohm
 		 */
+		@Slf4j
 		@RequiredArgsConstructor
 		private static class CompletionRegisteringMethodInterceptor implements MethodInterceptor, Ordered {
 
@@ -160,7 +162,15 @@ public class CompletionRegisteringBeanPostProcessor implements BeanPostProcessor
 			@Override
 			public Object invoke(MethodInvocation invocation) throws Throwable {
 
-				Object result = invocation.proceed();
+				Object result = null;
+
+				try {
+					result = invocation.proceed();
+				} catch (Exception o_O) {
+					log.debug("Invocation of listener {} failed. Leaving event publication uncompleted.", invocation.getMethod());
+					throw o_O;
+				}
+
 				Method method = invocation.getMethod();
 
 				// Mark publication complete if the method is a transactional event listener.

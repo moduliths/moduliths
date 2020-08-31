@@ -26,6 +26,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.events.EventPublication;
 import org.springframework.events.EventPublicationRegistry;
 import org.springframework.events.PublicationTargetIdentifier;
@@ -108,6 +109,16 @@ class PersistentDomainEventIntegrationTest {
 
 	static class DomainEvent {}
 
+	static class NonTxEventListener {
+
+		boolean invoked = false;
+
+		@EventListener
+		void on(DomainEvent event) {
+			invoked = true;
+		}
+	}
+
 	static class FirstTxEventListener {
 
 		boolean invoked = false;
@@ -132,7 +143,6 @@ class PersistentDomainEventIntegrationTest {
 
 		@TransactionalEventListener
 		public void on(DomainEvent event) {
-
 			invoked = true;
 		}
 	}

@@ -37,7 +37,6 @@ import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.ApplicationListenerMethodAdapter;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.events.CompletableEventPublication;
 import org.springframework.events.EventPublication;
 import org.springframework.events.EventPublicationRegistry;
 import org.springframework.events.PublicationTargetIdentifier;
@@ -108,11 +107,7 @@ public class PersistentApplicationEventMulticaster extends AbstractApplicationEv
 		}
 
 		for (ApplicationListener listener : listeners) {
-
-			EventPublication publication = CompletableEventPublication.of(event,
-					PublicationTargetIdentifier.forListener(listener));
-
-			executeListenerWithCompletion(publication, listener);
+			listener.onApplicationEvent(event);
 		}
 	}
 
@@ -152,6 +147,8 @@ public class PersistentApplicationEventMulticaster extends AbstractApplicationEv
 			registry.get().markCompleted(publication);
 
 		} catch (Exception e) {
+
+			log.debug("Publication {} not completed due to exception {}.", publication.getTargetIdentifier(), e.getMessage());
 			// Log
 		}
 	}
