@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.moduliths</groupId>
 		<artifactId>moduliths</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.1-SNAPSHOT</version>
 	</parent>
 
 	<name>Moduliths - Docs</name>
