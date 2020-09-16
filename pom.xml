@@ -3,7 +3,7 @@
 
 	<groupId>org.moduliths</groupId>
 	<artifactId>moduliths</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0-SNAPSHOT</version>
 
 	<packaging>pom</packaging>
 
@@ -257,7 +257,7 @@ limitations under the License.
 		<url>https://github.com/odrotbohm/moduliths</url>
 		<connection>scm:git:https://github.com/odrotbohm/moduliths</connection>
 		<developerConnection>scm:git:ssh://git@github.com/odrotbohm/moduliths.git</developerConnection>
-		<tag>1.0.0</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<distributionManagement>
