@@ -1,6 +1,11 @@
+target/
+.idea/
+.flattened-pom.xml
+.settings/
+*.iml
 .project
 .classpath
-.settings/
+.springBeans
 target/
 .factorypath
 
