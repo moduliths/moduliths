@@ -27,7 +27,7 @@ public interface PublishedEvents {
 	/**
 	 * Returns all application events of the given type that were fired during the test execution.
 	 *
-	 * @param <T>
+	 * @param <T> the event type
 	 * @param type must not be {@literal null}.
 	 * @return
 	 */
@@ -37,6 +37,7 @@ public interface PublishedEvents {
 	 * All application events of a given type that were fired during a test execution.
 	 *
 	 * @author Oliver Drotbohm
+	 * @param <T> the event type
 	 */
 	interface TypedPublishedEvents<T> extends Iterable<T> {
 
