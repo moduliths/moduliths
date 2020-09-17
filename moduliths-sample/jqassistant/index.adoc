@@ -10,7 +10,7 @@ include::jQA:Summary[]
 
 [[modulith:ModulithApplication]]
 [source,cypher,role=concept]
-.Classes annotated by `de.olivergierke.moduliths.Modulith` are labeled with `Modulith` and `Application`.
+.Classes annotated by `org.moduliths.Modulith` are labeled with `Modulith` and `Application`.
 ----
 MATCH
   (:Artifact)-[:CONTAINS]->(modulith:Type)-[:ANNOTATED_BY]->()-[:OF_TYPE]->(:Type{fqn:"org.moduliths.Modulith"})
