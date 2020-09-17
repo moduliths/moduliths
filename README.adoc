@@ -22,7 +22,7 @@ Translates the actual module structure into a PlantUML component diagram via Str
 [[quickstart]]
 == Quickstart
 
-1. Create a simple Spring Boot application (e.g. via Spring Initializer.
+1. Create a simple Spring Boot application (e.g. via Spring Initializer).
 2. Add the Moduliths dependencies to your project:
 +
 [source,xml]
@@ -66,7 +66,7 @@ Architecture violations creep into the projects over time unnoticed. Evolvabilit
 Microservices on the other hand promise stronger means of separation but at the same time introduce a lot of complexity as even for small applications teams have to deal with the challenges of distributed systems.
 
 This repo acts as a playground to experiment with different approaches to allow defining modular monoliths, so that it's easy to maintain modularity over time and detect violations early.
-This will keep the ability to modify and advance the codebase over time and ease the effort to to split up the system in the attempt to extract parts of it into a dedicated project.
+This will keep the ability to modify and advance the codebase over time and ease the effort to split up the system in the attempt to extract parts of it into a dedicated project.
 
 [[the-architecture-code-gap]]
 === The architecture-code-gap
@@ -76,7 +76,7 @@ Traditionally the connection between the architectural decisions and the actual 
 We'd like to explore stronger means of connections between architecture and code and even look into advanced support of frameworks and libraries to e.g. allow testability of individual components within an overall system.
 
 There already exists a variety of technologies that attempts to bridge that gap from the architectural definition side, mostly by trying to capture the architectural definitions in executable form (see https://jqassistant.org/[jQAssistant] and <<existing-tools>>) and verify whether the code base adheres to the conventions defined.
-In this playground, we're going to explore the opposite way: providing conventions as well as library and framework means, to express architectural definitions directly inside the code base with to major goals:
+In this playground, we're going to explore the opposite way: providing conventions as well as library and framework means, to express architectural definitions directly inside the code base with two major goals:
 
 1. _**Getting the validation of the conventions closer to the code / developer**_ -- If architectural decisions are driven by the development team, it might feel more natural to define architectural concepts in the code base.
 The more seamless an architectural rule validation system integrates with the codebase, the more likely it is that the system is used.
@@ -191,7 +191,7 @@ public class ModuleATest { … }
 This will now inspect the module structure of the system, detect the dependency of Module A to Module B and include the latter into the component scan as well as auto-configuration and entity scan packages.
 If the direct dependency has dependencies in turn, you now need to mock those using `@MockBean` in the test setup.
 
-In case you want to run all modules up the dependency chain of the to be tested use `BootstrapMode.ALL_DEPENDENCIES`.
+In case you want to run all modules up the dependency chain of the module to be tested use `BootstrapMode.ALL_DEPENDENCIES`.
 This will cause all dependent modules to be bootstrapped but unrelated ones to be excluded.
 
 [[modules.general-recommendations]]
