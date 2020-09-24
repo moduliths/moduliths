@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.moduliths.test;
 import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -27,6 +29,7 @@ import java.util.stream.Stream;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.PayloadApplicationEvent;
+import org.springframework.util.Assert;
 
 /**
  * Default implementation of {@link PublishedEvents}.
@@ -35,7 +38,26 @@ import org.springframework.context.PayloadApplicationEvent;
  */
 class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<ApplicationEvent> {
 
-	private List<Object> events = new ArrayList<>();
+	private final List<Object> events;
+
+	/**
+	 * Creates a new, empty {@link DefaultPublishedEvents} instance.
+	 */
+	DefaultPublishedEvents() {
+		this(Collections.emptyList());
+	}
+
+	/**
+	 * Creates a new {@link DefaultPublishedEvents} instance with the given events.
+	 *
+	 * @param events must not be {@literal null}.
+	 */
+	DefaultPublishedEvents(Collection<? extends Object> events) {
+
+		Assert.notNull(events, "Events must not be null!");
+
+		this.events = new ArrayList<>(events);
+	}
 
 	/*
 	 * (non-Javadoc)

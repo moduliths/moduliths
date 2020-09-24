@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package org.moduliths.test;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.Predicate;
+
+import org.springframework.util.Assert;
 
 /**
  * All Spring application events fired during the test execution.
@@ -23,6 +27,29 @@ import java.util.function.Predicate;
  * @author Oliver Drotbohm
  */
 public interface PublishedEvents {
+
+	/**
+	 * Creates a new {@link PublishedEvents} instance for the given events.
+	 *
+	 * @param events must not be {@literal null}.
+	 * @return will never be {@literal null}.
+	 */
+	public static PublishedEvents of(Object... events) {
+		return of(Arrays.asList(events));
+	}
+
+	/**
+	 * Creates a new {@link PublishedEvents} instance for the given events.
+	 *
+	 * @param events must not be {@literal null}.
+	 * @return
+	 */
+	public static PublishedEvents of(Collection<? extends Object> events) {
+
+		Assert.notNull(events, "Events must not be null!");
+
+		return new DefaultPublishedEvents(events);
+	}
 
 	/**
 	 * Returns all application events of the given type that were fired during the test execution.
