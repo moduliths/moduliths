@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -117,6 +118,22 @@ class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<App
 			return SimpleTypedPublishedEvents.of(getFilteredEvents(predicate));
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.test.PublishedEvents.TypedPublishedEvents#matchingMapped(java.util.function.Function, java.util.function.Predicate)
+		 */
+		@Override
+		public <S> TypedPublishedEvents<T> matchingMapped(Function<T, S> mapper, Predicate<? super S> predicate) {
+
+			return SimpleTypedPublishedEvents.of(events.stream().flatMap(it -> {
+
+				S mapped = mapper.apply(it);
+
+				return predicate.test(mapped) ? Stream.of(it) : Stream.empty();
+
+			}));
+		}
+
 		/**
 		 * Returns a {@link Stream} of events filtered by the given {@link Predicate}.
 		 *
@@ -134,6 +151,15 @@ class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<App
 		@Override
 		public Iterator<T> iterator() {
 			return events.iterator();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return events.toString();
 		}
 	}
 }
