@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 
 import org.moduliths.Event;
 import org.moduliths.model.Types.JDDDTypes;
+import org.moduliths.model.Types.JMoleculesTypes;
 import org.moduliths.model.Types.SpringTypes;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -66,7 +67,7 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 public class Module {
 
 	private final @Getter JavaPackage basePackage;
-	private final Optional<org.moduliths.Module> moduleAnnotation;
+	private final ModuleInformation information;
 	private final @Getter NamedInterfaces namedInterfaces;
 	private final boolean useFullyQualifiedModuleNames;
 
@@ -76,7 +77,7 @@ public class Module {
 	Module(JavaPackage basePackage, boolean useFullyQualifiedModuleNames) {
 
 		this.basePackage = basePackage;
-		this.moduleAnnotation = basePackage.getAnnotation(org.moduliths.Module.class);
+		this.information = ModuleInformation.of(basePackage);
 		this.namedInterfaces = NamedInterfaces.discoverNamedInterfaces(basePackage);
 		this.useFullyQualifiedModuleNames = useFullyQualifiedModuleNames;
 
@@ -89,10 +90,7 @@ public class Module {
 	}
 
 	public String getDisplayName() {
-
-		return moduleAnnotation.map(org.moduliths.Module::displayName) //
-				.filter(StringUtils::hasText) //
-				.orElseGet(() -> basePackage.getLocalName());
+		return information.getDisplayName();
 	}
 
 	public List<Module> getDependencies(Modules modules, DependencyType... type) {
@@ -124,8 +122,10 @@ public class Module {
 	public List<JavaClass> getEventsPublished() {
 
 		DescribedPredicate<JavaClass> isEvent = implement(JDDDTypes.EVENT_TYPE) //
+				.or(implement(JMoleculesTypes.EVENT_TYPE)) //
 				.or(isAnnotatedWith(Event.class)) //
-				.or(isAnnotatedWith(JDDDTypes.EVENT_ANNOTATION));
+				.or(isAnnotatedWith(JDDDTypes.EVENT_ANNOTATION)) //
+				.or(isAnnotatedWith(JMoleculesTypes.EVENT_ANNOTATION));
 
 		return basePackage.that(isEvent).stream() //
 				.collect(Collectors.toList());
@@ -306,8 +306,7 @@ public class Module {
 
 		Assert.notNull(modules, "Modules must not be null!");
 
-		List<String> allowedDependencyNames = moduleAnnotation.map(it -> Arrays.stream(it.allowedDependencies())) //
-				.orElse(Stream.empty()).collect(Collectors.toList());
+		List<String> allowedDependencyNames = information.getAllowedDependencies();
 
 		if (allowedDependencyNames.isEmpty()) {
 			return Collections.emptyList();

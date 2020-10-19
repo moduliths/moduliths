@@ -31,8 +31,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jddd.archunit.JDddRules;
+import org.jmolecules.archunit.JMoleculesRules;
 import org.moduliths.Modulith;
 import org.moduliths.model.Types.JDDDTypes;
+import org.moduliths.model.Types.JMoleculesTypes;
 import org.springframework.util.Assert;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -56,6 +58,7 @@ public class Modules implements Iterable<Module> {
 	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList(//
 			"javax.persistence", //
 			"org.jddd", //
+			"org.jmolecules", //
 			"org.springframework.context.event", //
 			"org.springframework.data.repository", //
 			"org.springframework.stereotype", //
@@ -233,6 +236,15 @@ public class Modules implements Iterable<Module> {
 		if (JDDDTypes.areRulesPresent()) {
 
 			EvaluationResult result = JDddRules.all().evaluate(allClasses);
+
+			for (String message : result.getFailureReport().getDetails()) {
+				violations = violations.and(message);
+			}
+		}
+
+		if (JMoleculesTypes.areRulesPresent()) {
+
+			EvaluationResult result = JMoleculesRules.all().evaluate(allClasses);
 
 			for (String message : result.getFailureReport().getDetails()) {
 				violations = violations.and(message);

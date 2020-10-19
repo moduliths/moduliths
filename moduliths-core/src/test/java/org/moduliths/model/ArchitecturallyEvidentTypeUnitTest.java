@@ -117,7 +117,8 @@ class ArchitecturallyEvidentTypeUnitTest {
 	Stream<DynamicTest> considersJDddAggregateRoot() {
 
 		return DynamicTest.stream(getTypesFor(JDddAnnotatedAggregateRoot.class, JDddImplementingAggregateRoot.class), //
-				it -> String.format("%s is considered an aggregate root", it.getType().getSimpleName()), //
+				it -> String.format("%s is considered an entity, aggregate root but not a repository",
+						it.getType().getSimpleName()), //
 				it -> {
 					assertThat(it.isEntity()).isTrue();
 					assertThat(it.isAggregateRoot()).isTrue();
@@ -129,6 +130,44 @@ class ArchitecturallyEvidentTypeUnitTest {
 	Stream<DynamicTest> considersJDddRepository() {
 
 		return DynamicTest.stream(getTypesFor(JDddAnnotatedRepository.class), //
+				it -> String.format("%s is considered a repository", it.getType().getSimpleName()), //
+				it -> {
+					assertThat(it.isEntity()).isFalse();
+					assertThat(it.isAggregateRoot()).isFalse();
+					assertThat(it.isRepository()).isTrue();
+				});
+	}
+
+	@TestFactory // #127
+	Stream<DynamicTest> considersJMoleculesEntity() {
+
+		return DynamicTest.stream(getTypesFor(JMoleculesAnnotatedEntity.class, JMoleculesImplementingEntity.class), //
+				it -> String.format("%s is considered an entity", it.getType().getSimpleName()), //
+				it -> {
+					assertThat(it.isEntity()).isTrue();
+					assertThat(it.isAggregateRoot()).isFalse();
+					assertThat(it.isRepository()).isFalse();
+				});
+	}
+
+	@TestFactory // #127
+	Stream<DynamicTest> considersJMoleculesAggregateRoot() {
+
+		return DynamicTest.stream(
+				getTypesFor(JMoleculesAnnotatedAggregateRoot.class, JMoleculesImplementingAggregateRoot.class), //
+				it -> String.format("%s is considered an entity, aggregate root but not a repository",
+						it.getType().getSimpleName()), //
+				it -> {
+					assertThat(it.isEntity()).isTrue();
+					assertThat(it.isAggregateRoot()).isTrue();
+					assertThat(it.isRepository()).isFalse();
+				});
+	}
+
+	@TestFactory // #127
+	Stream<DynamicTest> considersJMoleculesRepository() {
+
+		return DynamicTest.stream(getTypesFor(JMoleculesAnnotatedRepository.class), //
 				it -> String.format("%s is considered a repository", it.getType().getSimpleName()), //
 				it -> {
 					assertThat(it.isEntity()).isFalse();
@@ -180,4 +219,25 @@ class ArchitecturallyEvidentTypeUnitTest {
 
 	@org.jddd.core.annotation.Repository
 	class JDddAnnotatedRepository {}
+
+	// jMolecules
+
+	@org.jmolecules.ddd.annotation.Entity
+	class JMoleculesAnnotatedEntity {}
+
+	@org.jmolecules.ddd.annotation.AggregateRoot
+	class JMoleculesAnnotatedAggregateRoot {}
+
+	class JMoleculesImplementingIdentifier implements org.jmolecules.ddd.types.Identifier {}
+
+	abstract class JMoleculesImplementingEntity
+			implements
+			org.jmolecules.ddd.types.Entity<JMoleculesImplementingAggregateRoot, JMoleculesImplementingIdentifier> {}
+
+	abstract class JMoleculesImplementingAggregateRoot
+			implements
+			org.jmolecules.ddd.types.AggregateRoot<JMoleculesImplementingAggregateRoot, JMoleculesImplementingIdentifier> {}
+
+	@org.jmolecules.ddd.annotation.Repository
+	class JMoleculesAnnotatedRepository {}
 }

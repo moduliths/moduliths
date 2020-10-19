@@ -20,6 +20,7 @@ import static org.moduliths.model.Types.JavaXTypes.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.jddd.core.annotation.AggregateRoot;
 import org.jddd.core.annotation.Entity;
 import org.jddd.core.annotation.Repository;
 import org.moduliths.model.Types.JDDDTypes;
+import org.moduliths.model.Types.JMoleculesTypes;
 import org.moduliths.model.Types.SpringDataTypes;
 import org.moduliths.model.Types.SpringTypes;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -45,8 +47,10 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
  *
  * @author Oliver Drotbohm
  */
+@Slf4j
+public abstract class ArchitecturallyEvidentType {
 
-public interface ArchitecturallyEvidentType {
+	private static boolean deprecationWarningLogged = false;
 
 	/**
 	 * Creates a new {@link AbstractArchitecturallyEvidentType} for the given {@link JavaType} and {@link Classes} of
@@ -61,7 +65,17 @@ public interface ArchitecturallyEvidentType {
 		List<ArchitecturallyEvidentType> delegates = new ArrayList<>();
 
 		if (JDDDTypes.isPresent()) {
+
+			if (!deprecationWarningLogged) {
+				LOG.warn("jDDD support in Moduliths is deprecated. Please move to jMolecules (http://jmolecules.org).");
+				deprecationWarningLogged = true;
+			}
+
 			delegates.add(new JDdddArchitecturallyEvidentType(type));
+		}
+
+		if (JMoleculesTypes.isPresent()) {
+			delegates.add(new JMoleculesArchitecturallyEvidentType(type));
 		}
 
 		if (SpringDataTypes.isPresent()) {
@@ -80,7 +94,7 @@ public interface ArchitecturallyEvidentType {
 	 *
 	 * @return will never be {@literal null}.
 	 */
-	default String getAbbreviatedFullName() {
+	String getAbbreviatedFullName() {
 		return FormatableJavaClass.of(getType()).getAbbreviatedFullName();
 	}
 
@@ -89,7 +103,7 @@ public interface ArchitecturallyEvidentType {
 	 *
 	 * @return
 	 */
-	default boolean isEntity() {
+	boolean isEntity() {
 		return isJpaEntity().apply(getType());
 	}
 
@@ -108,7 +122,7 @@ public interface ArchitecturallyEvidentType {
 	public abstract boolean isRepository();
 
 	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-	static class SpringAwareArchitecturallyEvidentType implements ArchitecturallyEvidentType {
+	static class SpringAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
 		private final @Getter JavaClass type;
 
@@ -182,7 +196,7 @@ public interface ArchitecturallyEvidentType {
 	}
 
 	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-	static class JDdddArchitecturallyEvidentType implements ArchitecturallyEvidentType {
+	static class JDdddArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
 		private final @Getter JavaClass type;
 
@@ -218,8 +232,45 @@ public interface ArchitecturallyEvidentType {
 		}
 	}
 
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	static class JMoleculesArchitecturallyEvidentType extends ArchitecturallyEvidentType {
+
+		private final @Getter JavaClass type;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isEntity()
+		 */
+		@Override
+		public boolean isEntity() {
+
+			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Entity.class).apply(type) || //
+					type.isAssignableTo(org.jmolecules.ddd.types.Entity.class);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isAggregateRoot()
+		 */
+		@Override
+		public boolean isAggregateRoot() {
+
+			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.AggregateRoot.class).apply(type) || //
+					type.isAssignableTo(org.jmolecules.ddd.types.AggregateRoot.class);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isRepository()
+		 */
+		@Override
+		public boolean isRepository() {
+			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Repository.class).apply(type);
+		}
+	}
+
 	@RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
-	static class DelegatingType implements ArchitecturallyEvidentType {
+	static class DelegatingType extends ArchitecturallyEvidentType {
 
 		private final @Getter JavaClass type;
 		private final Supplier<Boolean> isAggregateRoot;

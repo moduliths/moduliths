@@ -35,9 +35,18 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- jDDD -->
+
 		<dependency>
 			<groupId>org.jddd</groupId>
 			<artifactId>jddd-core</artifactId>
+			<version>${jddd.version}</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jddd</groupId>
+			<artifactId>jddd-archunit</artifactId>
 			<version>${jddd.version}</version>
 			<optional>true</optional>
 		</dependency>
@@ -49,11 +58,27 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- jMolecules (supersedes jDDD) -->
+
 		<dependency>
-			<groupId>org.jddd</groupId>
-			<artifactId>jddd-archunit</artifactId>
-			<version>${jddd.version}</version>
+			<groupId>org.jmolecules</groupId>
+			<artifactId>jmolecules-ddd</artifactId>
+			<version>${jmolecules.version}</version>
 			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.jmolecules</groupId>
+			<artifactId>jmolecules-archunit</artifactId>
+			<version>${jmolecules.version}</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jmolecules</groupId>
+			<artifactId>jmolecules-events</artifactId>
+			<version>${jmolecules.version}</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
