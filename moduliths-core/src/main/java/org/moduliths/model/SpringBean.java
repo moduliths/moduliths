@@ -16,6 +16,7 @@
 package org.moduliths.model;
 
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,7 @@ import com.tngtech.archunit.core.domain.JavaClass;
  *
  * @author Oliver Drotbohm
  */
+@EqualsAndHashCode
 @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PACKAGE)
 public class SpringBean {
 
@@ -54,6 +56,10 @@ public class SpringBean {
 		return type.getAllInterfaces().stream() //
 				.filter(module::contains) //
 				.collect(Collectors.toList());
+	}
+
+	public boolean isAnnotatedWith(Class<?> type) {
+		return Types.isAnnotatedWith(type).apply(this.type);
 	}
 
 	public ArchitecturallyEvidentType toArchitecturallyEvidentType() {

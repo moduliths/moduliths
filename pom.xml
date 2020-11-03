@@ -31,7 +31,6 @@
 		<jddd.version>0.1.0</jddd.version>
 		<jmolecules.version>1.0.0</jmolecules.version>
 		<junit-jupiter.version>5.6.2</junit-jupiter.version>
-
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -242,21 +241,21 @@ limitations under the License.
 
 	<distributionManagement>
 		<repository>
-			<id>spring-libs-milestone</id>
+			<id>spring-milestone</id>
 			<name>Spring Milestone Repository</name>
-			<url>https://repo.spring.io/libs-milestone-local</url>
+			<url>https://repo.spring.io/milestone</url>
 		</repository>
 		<snapshotRepository>
-			<id>spring-libs-snapshot</id>
+			<id>spring-snapshot</id>
 			<name>Spring Snapshot Repository</name>
-			<url>https://repo.spring.io/libs-snapshot-local</url>
+			<url>https://repo.spring.io/snapshot</url>
 		</snapshotRepository>
 	</distributionManagement>
 
 	<repositories>
 		<repository>
-			<id>spring-libs-snapshot</id>
-			<url>https://repo.spring.io/libs-snapshot</url>
+			<id>spring-snapshot</id>
+			<url>https://repo.spring.io/snapshot</url>
 		</repository>
 	</repositories>
 

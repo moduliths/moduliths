@@ -105,9 +105,12 @@ class Types {
 		static final String AT_BEAN = BASE_PACKAGE + ".context.annotation.Bean";
 		static final String AT_COMPONENT = BASE_PACKAGE + ".stereotype.Component";
 		static final String AT_CONFIGURATION = BASE_PACKAGE + ".context.annotation.Configuration";
+		static final String AT_CONTROLLER = BASE_PACKAGE + ".stereotype.Controller";
 		static final String AT_EVENT_LISTENER = BASE_PACKAGE + ".context.event.EventListener";
 		static final String AT_REPOSITORY = BASE_PACKAGE + ".stereotype.Repository";
+		static final String AT_SERVICE = BASE_PACKAGE + ".stereotype.Service";
 		static final String AT_SPRING_BOOT_APPLICATION = BASE_PACKAGE + ".boot.autoconfigure.SpringBootApplication";
+		static final String AT_TX_EVENT_LISTENER = BASE_PACKAGE + ".transaction.event.TransactionalEventListener";
 
 		static DescribedPredicate<? super JavaClass> isConfiguration() {
 			return isAnnotatedWith(AT_CONFIGURATION);

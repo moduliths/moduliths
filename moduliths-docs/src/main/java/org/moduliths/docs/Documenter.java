@@ -30,14 +30,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -49,8 +43,11 @@ import org.moduliths.model.Module;
 import org.moduliths.model.Module.DependencyDepth;
 import org.moduliths.model.Module.DependencyType;
 import org.moduliths.model.Modules;
+import org.moduliths.model.SpringBean;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.structurizr.Workspace;
 import com.structurizr.io.plantuml.PlantUMLWriter;
@@ -137,7 +134,7 @@ public class Documenter {
 	 * @param options must not be {@literal null}.
 	 * @throws IOException
 	 */
-	public void writeModulesAsPlantUml(Options options) throws IOException {
+	public Documenter writeModulesAsPlantUml(Options options) throws IOException {
 
 		Assert.notNull(options, "Options must not be null!");
 
@@ -146,6 +143,8 @@ public class Documenter {
 		try (Writer writer = new FileWriter(file.toFile())) {
 			createPlantUml(writer, options);
 		}
+
+		return this;
 	}
 
 	/**
@@ -153,11 +152,11 @@ public class Documenter {
 	 *
 	 * @param module must not be {@literal null}.
 	 */
-	public void writeModuleAsPlantUml(Module module) {
+	public Documenter writeModuleAsPlantUml(Module module) {
 
 		Assert.notNull(module, "Module must not be null!");
 
-		writeModuleAsPlantUml(module, Options.defaults());
+		return writeModuleAsPlantUml(module, Options.defaults());
 	}
 
 	/**
@@ -166,7 +165,7 @@ public class Documenter {
 	 * @param module must not be {@literal null}.
 	 * @param options must not be {@literal null}.
 	 */
-	public void writeModuleAsPlantUml(Module module, Options options) {
+	public Documenter writeModuleAsPlantUml(Module module, Options options) {
 
 		Assert.notNull(module, "Module must not be null!");
 		Assert.notNull(options, "Options must not be null!");
@@ -180,10 +179,14 @@ public class Documenter {
 
 		Assert.isTrue(fileNamePattern.contains("%s"), () -> String.format(INVALID_FILE_NAME_PATTERN, fileNamePattern));
 
-		writeViewAsPlantUml(view, String.format(fileNamePattern, module.getName()), options);
+		return writeViewAsPlantUml(view, String.format(fileNamePattern, module.getName()), options);
 	}
 
-	public void writeModuleCanvases(String javadocBase) {
+	public Documenter writeModuleCanvases() {
+		return writeModuleCanvases(CanvasOptions.defaults());
+	}
+
+	public Documenter writeModuleCanvases(CanvasOptions canvasOptions) {
 
 		Options options = Options.defaults();
 
@@ -194,27 +197,42 @@ public class Documenter {
 
 			try (FileWriter writer = new FileWriter(file.toFile())) {
 
-				writer.write(toModuleCanvas(module, javadocBase));
+				writer.write(toModuleCanvas(module, canvasOptions));
 
 			} catch (IOException o_O) {
 				throw new RuntimeException(o_O);
 			}
 		});
+
+		return this;
+	}
+
+	/**
+	 * @param javadocBase
+	 * @deprecated since 1.1, use {@link #writeModuleCanvases(CanvasOptions)} instead.
+	 */
+	@Deprecated
+	public Documenter writeModuleCanvases(String javadocBase) {
+		return writeModuleCanvases(CanvasOptions.defaults().withApiBase(javadocBase));
 	}
 
 	public String toModuleCanvas(Module module) {
-		return toModuleCanvas(module, "{javadocBase}");
+		return toModuleCanvas(module, CanvasOptions.defaults());
 	}
 
 	public String toModuleCanvas(Module module, String apiBase) {
+		return toModuleCanvas(module, CanvasOptions.defaults().withApiBase(apiBase));
+	}
 
-		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(apiBase, module);
+	public String toModuleCanvas(Module module, CanvasOptions options) {
+
+		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(options.getApiBase(), module);
 		Function<List<JavaClass>, String> mapper = asciidoctor::typesToBulletPoints;
 
 		StringBuilder builder = new StringBuilder();
 		builder.append(startTable("%autowidth.stretch, cols=\"h,a\""));
 		builder.append(writeTableRow("Base package", asciidoctor.toInlineCode(module.getBasePackage().getName())));
-		builder.append(addTableRow(module.getSpringBeans(), "Spring components", asciidoctor::beansToBulletPoints));
+		builder.append(writeTableRow("Spring components", asciidoctor.renderSpringBeans(options)));
 		builder.append(addTableRow(module.getAggregateRoots(modules), "Aggregate roots", mapper));
 		builder.append(addTableRow(module.getEventsPublished(), "Published events", mapper));
 		builder.append(addTableRow(module.getEventsListenedTo(modules), "Events listened to", mapper));
@@ -323,7 +341,7 @@ public class Documenter {
 		}
 	}
 
-	private void writeViewAsPlantUml(View view, String filename, Options options) {
+	private Documenter writeViewAsPlantUml(View view, String filename, Options options) {
 
 		try {
 
@@ -332,6 +350,8 @@ public class Documenter {
 			try (Writer writer = new FileWriter(file.toFile())) {
 				getPlantUMLWriter(options).write(view, writer);
 			}
+
+			return this;
 
 		} catch (IOException o_O) {
 			throw new RuntimeException(o_O);
@@ -424,6 +444,8 @@ public class Documenter {
 		 */
 		private final @With Function<Module, String> defaultDisplayName;
 
+		private final @With CanvasOptions canvasOptions;
+
 		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
@@ -433,7 +455,7 @@ public class Documenter {
 		 */
 		public static Options defaults() {
 			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null,
-					__ -> Optional.empty(), it -> it.getDisplayName());
+					__ -> Optional.empty(), it -> it.getDisplayName(), CanvasOptions.defaults());
 		}
 
 		/**
@@ -449,7 +471,7 @@ public class Documenter {
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
 
 			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName,
-					colorSelector, defaultDisplayName);
+					colorSelector, defaultDisplayName, canvasOptions);
 		}
 
 		private Optional<String> getTargetFileName() {
@@ -458,6 +480,84 @@ public class Documenter {
 
 		private Stream<DependencyType> getDependencyTypes() {
 			return dependencyTypes.stream();
+		}
+	}
+
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	public static class CanvasOptions {
+
+		static final String FALLBACK_GROUP = "Others";
+
+		private final Map<String, Predicate<SpringBean>> groupers;
+		private final @With @Getter @Nullable String apiBase;
+
+		public static CanvasOptions defaults() {
+
+			return withoutDefaultGroupings()
+					.grouping("Controllers", bean -> bean.toArchitecturallyEvidentType().isController()) //
+					.grouping("Services", bean -> bean.toArchitecturallyEvidentType().isService()) //
+					.grouping("Repositories", bean -> bean.toArchitecturallyEvidentType().isRepository()) //
+					.grouping("Event listeners", bean -> bean.toArchitecturallyEvidentType().isEventListener());
+		}
+
+		public static CanvasOptions withoutDefaultGroupings() {
+			return new CanvasOptions(new HashMap<>(), null);
+		}
+
+		public static Predicate<SpringBean> nameMatching(String pattern) {
+			return bean -> bean.getFullyQualifiedTypeName().matches(pattern);
+		}
+
+		public static Predicate<SpringBean> implementing(Class<?> type) {
+			return bean -> bean.getType().isAssignableTo(type);
+		}
+
+		public static Predicate<SpringBean> subtypeOf(Class<?> type) {
+			return implementing(type) //
+					.and(bean -> !bean.getType().isEquivalentTo(type));
+		}
+
+		public CanvasOptions grouping(String name, Predicate<SpringBean> filter) {
+
+			Map<String, Predicate<SpringBean>> result = new HashMap<>(groupers);
+			result.put(name, filter);
+
+			return new CanvasOptions(result, apiBase);
+		}
+
+		MultiValueMap<String, SpringBean> groupBeans(Module module) {
+
+			LinkedHashMap<String, Predicate<SpringBean>> sources = new LinkedHashMap<>(groupers);
+			sources.put(FALLBACK_GROUP, it -> true);
+
+			MultiValueMap<String, SpringBean> result = new LinkedMultiValueMap<>();
+			List<SpringBean> alreadyMapped = new ArrayList<>();
+
+			sources.forEach((key, filter) -> {
+
+				List<SpringBean> matchingBeans = getMatchingBeans(module, filter, alreadyMapped);
+
+				result.addAll(key, matchingBeans);
+				alreadyMapped.addAll(matchingBeans);
+			});
+
+			// Wipe entries without any beans
+			new HashSet<>(result.keySet()).forEach(key -> {
+				if (result.get(key).isEmpty()) {
+					result.remove(key);
+				}
+			});
+
+			return result;
+		}
+
+		private static List<SpringBean> getMatchingBeans(Module module, Predicate<SpringBean> filter,
+				List<SpringBean> alreadyMapped) {
+
+			return module.getSpringBeans().stream()
+					.filter(it -> !alreadyMapped.contains(it))
+					.filter(filter::test)
+					.collect(Collectors.toList());
 		}
 	}
 

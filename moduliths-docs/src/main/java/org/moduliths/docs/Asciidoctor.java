@@ -24,10 +24,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.moduliths.docs.Documenter.CanvasOptions;
 import org.moduliths.model.FormatableJavaClass;
 import org.moduliths.model.Module;
 import org.moduliths.model.SpringBean;
-import org.springframework.lang.Nullable;
+import org.springframework.util.MultiValueMap;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -38,11 +39,13 @@ import com.tngtech.archunit.core.domain.JavaModifier;
 @RequiredArgsConstructor(staticName = "withJavadocBase")
 class Asciidoctor {
 
-	private final String javaDocBase;
-	private final @Nullable Module module;
+	private static String PLACEHOLDER = "¯\\_(ツ)_/¯";
 
-	public static Asciidoctor withoutJavadocBase(@Nullable Module module) {
-		return new Asciidoctor("¯\\_(ツ)_/¯", module);
+	private final String javaDocBase;
+	private final Module module;
+
+	public static Asciidoctor withoutJavadocBase(Module module) {
+		return new Asciidoctor(PLACEHOLDER, module);
 	}
 
 	/**
@@ -76,7 +79,35 @@ class Asciidoctor {
 		return String.format("%s implementing %s", base, interfacesAsString);
 	}
 
-	public String beansToBulletPoints(List<SpringBean> beans) {
+	public String renderSpringBeans(CanvasOptions options) {
+
+		StringBuilder builder = new StringBuilder();
+
+		MultiValueMap<String, SpringBean> groups = options.groupBeans(module);
+
+		if (groups.size() == 1 && groups.containsKey(CanvasOptions.FALLBACK_GROUP)) {
+			return toBulletPoints(groups.get(CanvasOptions.FALLBACK_GROUP));
+		}
+
+		options.groupBeans(module).forEach((key, beans) -> {
+
+			if (beans.isEmpty()) {
+				return;
+			}
+
+			if (builder.length() != 0) {
+				builder.append("\n\n");
+			}
+
+			builder.append("_").append(key).append("_").append("\n\n");
+			builder.append(toBulletPoints(beans));
+
+		});
+
+		return builder.length() == 0 ? "None" : builder.toString();
+	}
+
+	private String toBulletPoints(List<SpringBean> beans) {
 		return toBulletPoints(beans.stream().map(this::toInlineCode));
 	}
 
@@ -106,7 +137,7 @@ class Asciidoctor {
 		String classPath = convertClassNameToResourcePath(source.getFullName()) //
 				.replace('$', '.');
 
-		return Optional.ofNullable(javaDocBase == "¯\\_(ツ)_/¯" ? null : javaDocBase) //
+		return Optional.ofNullable(javaDocBase == PLACEHOLDER ? null : javaDocBase) //
 				.map(it -> it.concat("/").concat(classPath).concat(".html")) //
 				.map(it -> toLink(type, it)) //
 				.orElse(type);
