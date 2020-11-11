@@ -15,21 +15,21 @@
  */
 package org.moduliths.test;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.PayloadApplicationEvent;
+import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.util.Assert;
 
 /**
@@ -37,16 +37,10 @@ import org.springframework.util.Assert;
  *
  * @author Oliver Drotbohm
  */
-class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<ApplicationEvent> {
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+class DefaultPublishedEvents implements PublishedEvents {
 
-	private final List<Object> events;
-
-	/**
-	 * Creates a new, empty {@link DefaultPublishedEvents} instance.
-	 */
-	DefaultPublishedEvents() {
-		this(Collections.emptyList());
-	}
+	private final Supplier<ApplicationEvents> delegate;
 
 	/**
 	 * Creates a new {@link DefaultPublishedEvents} instance with the given events.
@@ -57,16 +51,7 @@ class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<App
 
 		Assert.notNull(events, "Events must not be null!");
 
-		this.events = new ArrayList<>(events);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
-	 */
-	@Override
-	public void onApplicationEvent(ApplicationEvent event) {
-		this.events.add(unwrapPayloadEvent(event));
+		this.delegate = () -> CollectionApplicationEvents.of(events);
 	}
 
 	/*
@@ -75,17 +60,62 @@ class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<App
 	 */
 	@Override
 	public <T> TypedPublishedEvents<T> ofType(Class<T> type) {
-
-		return SimpleTypedPublishedEvents.of(events.stream()//
-				.filter(type::isInstance) //
-				.map(type::cast));
+		return SimpleTypedPublishedEvents.of(getEvents(type));
 	}
 
-	private static Object unwrapPayloadEvent(Object source) {
+	private <T> Stream<T> getEvents(Class<T> type) {
 
-		return PayloadApplicationEvent.class.isInstance(source) //
-				? ((PayloadApplicationEvent<?>) source).getPayload() //
-				: source;
+		ApplicationEvents events = delegate.get();
+
+		return events == null ? Stream.empty() : events.stream(type);
+	}
+
+	@RequiredArgsConstructor(staticName = "of")
+	private static class CollectionApplicationEvents implements ApplicationEvents {
+
+		private final Collection<? extends Object> events;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.test.context.junit.jupiter.ApplicationEvents#stream()
+		 */
+		@Override
+		public Stream<ApplicationEvent> stream() {
+
+			return events.stream()
+					.map(it -> ApplicationEvent.class.isInstance(it) //
+							? ApplicationEvent.class.cast(it) //
+							: new PayloadApplicationEvent<>(this, it));
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.test.context.junit.jupiter.ApplicationEvents#stream(java.lang.Class)
+		 */
+		@Override
+		public <T> Stream<T> stream(Class<T> type) {
+
+			return events.stream() //
+					.map(it -> unwrapPayloadEvent(it)) //
+					.filter(type::isInstance) //
+					.map(type::cast);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.test.context.event.ApplicationEvents#clear()
+		 */
+		@Override
+		public void clear() {
+			this.events.clear();
+		}
+
+		private static Object unwrapPayloadEvent(Object source) {
+
+			return PayloadApplicationEvent.class.isInstance(source) //
+					? ((PayloadApplicationEvent<?>) source).getPayload() //
+					: source;
+		}
 	}
 
 	@RequiredArgsConstructor(staticName = "of")
@@ -162,4 +192,5 @@ class DefaultPublishedEvents implements PublishedEvents, ApplicationListener<App
 			return events.toString();
 		}
 	}
+
 }

@@ -32,6 +32,7 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.BootstrapWith;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
@@ -46,6 +47,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  * @author Oliver Drotbohm
  */
+@RecordApplicationEvents
 @Retention(RetentionPolicy.RUNTIME)
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
 @TypeExcludeFilters(ModuleTypeExcludeFilter.class)

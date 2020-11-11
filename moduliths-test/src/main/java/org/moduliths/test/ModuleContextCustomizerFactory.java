@@ -34,6 +34,7 @@ import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
 import org.springframework.test.context.MergedContextConfiguration;
+import org.springframework.test.context.event.ApplicationEventsHolder;
 
 /**
  * @author Oliver Gierke
@@ -79,9 +80,10 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 			ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 			beanFactory.registerSingleton(BEAN_NAME, testExecution);
 
-			DefaultPublishedEvents events = new DefaultPublishedEvents();
-			beanFactory.registerSingleton(events.getClass().getName(), events);
-			context.addApplicationListener(events);
+			PublishedEvents events = new DefaultPublishedEvents(
+					() -> ApplicationEventsHolder.getApplicationEvents());
+
+			beanFactory.registerSingleton(PublishedEvents.class.getName(), events);
 		}
 
 		private static void logModules(ModuleTestExecution execution) {
@@ -92,7 +94,7 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 			String bootstrapMode = execution.getBootstrapMode().name();
 
 			String message = String.format("Bootstrapping @ModuleTest for %s in mode %s (%s)…", moduleName, bootstrapMode,
-					modules.getModulithType());
+					modules.getModulithSource());
 
 			LOG.info(message);
 			LOG.info(getSeparator("=", message));
