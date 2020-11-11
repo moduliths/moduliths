@@ -186,9 +186,7 @@ public class Documenter {
 		return writeModuleCanvases(CanvasOptions.defaults());
 	}
 
-	public Documenter writeModuleCanvases(CanvasOptions canvasOptions) {
-
-		Options options = Options.defaults();
+	public Documenter writeModuleCanvases(CanvasOptions options) {
 
 		modules.forEach(module -> {
 
@@ -197,7 +195,7 @@ public class Documenter {
 
 			try (FileWriter writer = new FileWriter(file.toFile())) {
 
-				writer.write(toModuleCanvas(module, canvasOptions));
+				writer.write(toModuleCanvas(module, options));
 
 			} catch (IOException o_O) {
 				throw new RuntimeException(o_O);
@@ -444,8 +442,6 @@ public class Documenter {
 		 */
 		private final @With Function<Module, String> defaultDisplayName;
 
-		private final @With CanvasOptions canvasOptions;
-
 		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
@@ -455,7 +451,7 @@ public class Documenter {
 		 */
 		public static Options defaults() {
 			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null,
-					__ -> Optional.empty(), it -> it.getDisplayName(), CanvasOptions.defaults());
+					__ -> Optional.empty(), it -> it.getDisplayName());
 		}
 
 		/**
@@ -471,7 +467,7 @@ public class Documenter {
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
 
 			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName,
-					colorSelector, defaultDisplayName, canvasOptions);
+					colorSelector, defaultDisplayName);
 		}
 
 		private Optional<String> getTargetFileName() {
@@ -490,6 +486,7 @@ public class Documenter {
 
 		private final Map<String, Predicate<SpringBean>> groupers;
 		private final @With @Getter @Nullable String apiBase;
+		private final @With @Nullable String targetFileName;
 
 		public static CanvasOptions defaults() {
 
@@ -501,7 +498,7 @@ public class Documenter {
 		}
 
 		public static CanvasOptions withoutDefaultGroupings() {
-			return new CanvasOptions(new HashMap<>(), null);
+			return new CanvasOptions(new HashMap<>(), null, null);
 		}
 
 		public static Predicate<SpringBean> nameMatching(String pattern) {
@@ -522,7 +519,7 @@ public class Documenter {
 			Map<String, Predicate<SpringBean>> result = new HashMap<>(groupers);
 			result.put(name, filter);
 
-			return new CanvasOptions(result, apiBase);
+			return new CanvasOptions(result, apiBase, targetFileName);
 		}
 
 		MultiValueMap<String, SpringBean> groupBeans(Module module) {
@@ -549,6 +546,10 @@ public class Documenter {
 			});
 
 			return result;
+		}
+
+		private Optional<String> getTargetFileName() {
+			return Optional.ofNullable(targetFileName);
 		}
 
 		private static List<SpringBean> getMatchingBeans(Module module, Predicate<SpringBean> filter,
