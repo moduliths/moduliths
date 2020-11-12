@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.moduliths.model;
 
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.annotation.Annotation;
@@ -42,7 +43,7 @@ class DefaultModulithMetadata implements ModulithMetadata {
 	private static final Class<? extends Annotation> AT_SPRING_BOOT_APPLICATION = Types
 			.loadIfPresent(SpringTypes.AT_SPRING_BOOT_APPLICATION);
 
-	private final Class<?> modulithType;
+	private final @NonNull Object modulithSource;
 
 	/**
 	 * Creates a new {@link ModulithMetadata} representing the defaults of a class annotated but not customized with
@@ -60,13 +61,27 @@ class DefaultModulithMetadata implements ModulithMetadata {
 				.map(__ -> new DefaultModulithMetadata(annotated));
 	}
 
+	/**
+	 * Creates a new {@link ModulithMetadata} from the given package name.
+	 *
+	 * @param javaPackage must not be {@literal null} or empty.
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public static ModulithMetadata of(String javaPackage) {
+
+		Assert.hasText(javaPackage, "Package name must not be null or empty!");
+
+		return new DefaultModulithMetadata(javaPackage);
+	}
+
 	/*
 	 * (non-Javadoc)
-	 * @see org.moduliths.model.ModulithMetadata#getModulithType()
+	 * @see org.moduliths.model.ModulithMetadata#getModulithSource()
 	 */
 	@Override
-	public Class<?> getModulithType() {
-		return modulithType;
+	public Object getModulithSource() {
+		return modulithSource;
 	}
 
 	/*

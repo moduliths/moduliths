@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,24 @@ interface ModulithMetadata {
 		return AnnotationModulithMetadata.of(annotated).orElseGet(withDefaults);
 	}
 
-	Class<?> getModulithType();
+	/**
+	 * Creates a new {@link ModulithMetadata} instance for the given package.
+	 *
+	 * @param javaPackage must not be {@literal null} or empty.
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public static ModulithMetadata of(String javaPackage) {
+		return DefaultModulithMetadata.of(javaPackage);
+	}
+
+	/**
+	 * Returns the source of the Moduliths setup. Either a type or a package.
+	 *
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	Object getModulithSource();
 
 	/**
 	 * Returns the names of the packages that are supposed to be considered modulith base packages, i.e. for which to

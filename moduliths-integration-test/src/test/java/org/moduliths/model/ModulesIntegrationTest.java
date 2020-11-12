@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.moduliths.model;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -136,5 +137,14 @@ class ModulesIntegrationTest {
 
 		assertThat(modules.getModuleForPackage("com.acme.myproject.moduleA.sub.package")) //
 				.isEqualTo(modules.getModuleByName("moduleA"));
+	}
+
+	@Test // #131
+	void createsModulesFromJavaPackage() {
+
+		Modules fromPackage = Modules.of(Application.class.getPackage().getName());
+
+		assertThat(fromPackage.stream().map(Module::getName)) //
+				.containsExactlyInAnyOrderElementsOf(modules.stream().map(Module::getName).collect(Collectors.toList()));
 	}
 }

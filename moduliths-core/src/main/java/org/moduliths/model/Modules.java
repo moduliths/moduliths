@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Modules implements Iterable<Module> {
 
-	private static final Map<Key, Modules> CACHE = new HashMap<>();
+	private static final Map<CacheKey, Modules> CACHE = new HashMap<>();
 
 	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList(//
 			"javax.persistence", //
@@ -122,31 +122,93 @@ public class Modules implements Iterable<Module> {
 	 */
 	public static Modules of(Class<?> modulithType, DescribedPredicate<JavaClass> ignored) {
 
-		Key key = Key.of(modulithType, ignored);
+		CacheKey key = TypeKey.of(modulithType, ignored);
 
 		return CACHE.computeIfAbsent(key, it -> {
 
 			Assert.notNull(modulithType, "Modulith root type must not be null!");
 			Assert.notNull(ignored, "Predicate to describe ignored types must not be null!");
 
-			ModulithMetadata metadata = ModulithMetadata.of(modulithType);
-
-			Set<String> basePackages = new HashSet<>();
-			basePackages.add(modulithType.getPackage().getName());
-			basePackages.addAll(metadata.getAdditionalPackages());
-
-			Modules modules = new Modules(metadata, basePackages, ignored, metadata.useFullyQualifiedModuleNames());
-
-			Set<Module> sharedModules = metadata.getSharedModuleNames() //
-					.map(modules::getRequiredModule) //
-					.collect(Collectors.toSet());
-
-			return modules.withSharedModules(sharedModules);
+			return of(key);
 		});
 	}
 
+	/**
+	 * Creates a new {@link Modules} instance for the given package name.
+	 *
+	 * @param javaPackage must not be {@literal null} or empty.
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public static Modules of(String javaPackage) {
+		return of(javaPackage, alwaysFalse());
+	}
+
+	/**
+	 * Creates a new {@link Modules} instance for the given package name and ignored classes.
+	 *
+	 * @param javaPackage must not be {@literal null} or empty.
+	 * @param ignored must not be {@literal null}.
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public static Modules of(String javaPackage, DescribedPredicate<JavaClass> ignored) {
+
+		CacheKey key = PackageKey.of(javaPackage, ignored);
+
+		return CACHE.computeIfAbsent(key, it -> {
+
+			Assert.hasText(javaPackage, "Base package must not be null or empty!");
+			Assert.notNull(ignored, "Predicate to describe ignored types must not be null!");
+
+			return of(key);
+		});
+	}
+
+	/**
+	 * Creates a new {@link Modules} instance for the given {@link CacheKey}.
+	 *
+	 * @param key must not be {@literal null}.
+	 * @return will never be {@literal null}.
+	 */
+	private static Modules of(CacheKey key) {
+
+		Assert.notNull(key, "Cache key must not be null!");
+
+		ModulithMetadata metadata = key.getMetadata();
+
+		Set<String> basePackages = new HashSet<>();
+		basePackages.add(key.getBasePackage());
+		basePackages.addAll(metadata.getAdditionalPackages());
+
+		Modules modules = new Modules(metadata, basePackages, key.getIgnored(), metadata.useFullyQualifiedModuleNames());
+
+		Set<Module> sharedModules = metadata.getSharedModuleNames() //
+				.map(modules::getRequiredModule) //
+				.collect(Collectors.toSet());
+
+		return modules.withSharedModules(sharedModules);
+	}
+
+	public Object getModulithSource() {
+		return metadata.getModulithSource();
+	}
+
+	/**
+	 * @return
+	 * @deprecated since 1.1, as a {@link Modules} instance doesn't have to be created from a class in the first place.
+	 *             For generic use, use {@link #getModulithSource()} instead.
+	 */
+	@Deprecated
 	public Class<?> getModulithType() {
-		return metadata.getModulithType();
+
+		Object source = getModulithSource();
+
+		if (!Class.class.isInstance(source)) {
+			throw new IllegalStateException(String.format("Moduliths not created from a type but %s!", source));
+		}
+
+		return (Class<?>) source;
 	}
 
 	/**
@@ -324,11 +386,54 @@ public class Modules implements Iterable<Module> {
 		}
 	}
 
+	private static interface CacheKey {
+
+		String getBasePackage();
+
+		DescribedPredicate<JavaClass> getIgnored();
+
+		ModulithMetadata getMetadata();
+	}
+
 	@Value(staticConstructor = "of")
-	private static final class Key {
+	private static final class TypeKey implements CacheKey {
 
 		Class<?> type;
-		DescribedPredicate<?> predicate;
+		DescribedPredicate<JavaClass> ignored;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.Modules.CacheKey#getBasePackage()
+		 */
+		@Override
+		public String getBasePackage() {
+			return type.getPackage().getName();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.Modules.CacheKey#getMetadata()
+		 */
+		@Override
+		public ModulithMetadata getMetadata() {
+			return ModulithMetadata.of(type);
+		}
+	}
+
+	@Value(staticConstructor = "of")
+	private static final class PackageKey implements CacheKey {
+
+		String basePackage;
+		DescribedPredicate<JavaClass> ignored;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.Modules.CacheKey#getMetadata()
+		 */
+		@Override
+		public ModulithMetadata getMetadata() {
+			return ModulithMetadata.of(basePackage);
+		}
 	}
 
 	private static Stream<JavaPackage> getSubpackages(Classes types, String rootPackage) {
