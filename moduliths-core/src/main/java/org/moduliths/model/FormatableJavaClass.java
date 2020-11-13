@@ -84,8 +84,12 @@ public class FormatableJavaClass {
 		String basePackageName = module.getBasePackage().getName();
 		String typePackageName = type.getPackageName();
 
-		if (basePackageName.equals(typePackageName) || !typePackageName.startsWith(basePackageName)) {
+		if (basePackageName.equals(typePackageName)) {
 			return getAbbreviatedFullName();
+		}
+
+		if (!typePackageName.startsWith(basePackageName)) {
+			return getFullName();
 		}
 
 		return abbreviate(basePackageName) //

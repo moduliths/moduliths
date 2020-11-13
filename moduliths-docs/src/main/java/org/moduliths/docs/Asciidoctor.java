@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.moduliths.docs.Documenter.CanvasOptions;
+import org.moduliths.model.ArchitecturallyEvidentType;
 import org.moduliths.model.FormatableJavaClass;
 import org.moduliths.model.Module;
 import org.moduliths.model.SpringBean;
@@ -64,7 +65,7 @@ class Asciidoctor {
 
 	public String toInlineCode(SpringBean bean) {
 
-		String base = toInlineCode(bean.getType());
+		String base = toInlineCode(bean.toArchitecturallyEvidentType());
 
 		List<JavaClass> interfaces = bean.getInterfacesWithinModule();
 
@@ -130,7 +131,8 @@ class Asciidoctor {
 
 		String type = toCode(FormatableJavaClass.of(source).getAbbreviatedFullName(module));
 
-		if (!source.getModifiers().contains(JavaModifier.PUBLIC)) {
+		if (!source.getModifiers().contains(JavaModifier.PUBLIC) ||
+				!module.contains(source)) {
 			return type;
 		}
 
@@ -141,6 +143,24 @@ class Asciidoctor {
 				.map(it -> it.concat("/").concat(classPath).concat(".html")) //
 				.map(it -> toLink(type, it)) //
 				.orElse(type);
+	}
+
+	private String toInlineCode(ArchitecturallyEvidentType type) {
+
+		if (type.isEventListener()) {
+
+			return String.format("%s listening to %s", //
+					toInlineCode(type.getType()), //
+					toInlineCode(type.getReferenceTypes()));
+		}
+
+		return toInlineCode(type.getType());
+	}
+
+	private String toInlineCode(Stream<JavaClass> types) {
+
+		return types.map(this::toInlineCode) //
+				.collect(Collectors.joining(", "));
 	}
 
 	private static String toLink(String source, String href) {

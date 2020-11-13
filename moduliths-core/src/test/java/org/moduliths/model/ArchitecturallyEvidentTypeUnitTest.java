@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.moduliths.model.ArchitecturallyEvidentType.SpringAwareArchitecturallyEvidentType;
 import org.moduliths.model.ArchitecturallyEvidentType.SpringDataAwareArchitecturallyEvidentType;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -176,6 +177,16 @@ class ArchitecturallyEvidentTypeUnitTest {
 				});
 	}
 
+	@Test // #132
+	void discoversEventsListenedToForEventListener() {
+
+		JavaClass listenerType = classes.getRequiredClass(SomeEventListener.class);
+
+		assertThat(ArchitecturallyEvidentType.of(listenerType, classes).getReferenceTypes()) //
+				.extracting(JavaClass::getFullName) //
+				.containsExactly(Object.class.getName(), String.class.getName());
+	}
+
 	private Iterator<ArchitecturallyEvidentType> getTypesFor(Class<?>... types) {
 
 		return Stream.of(types) //
@@ -240,4 +251,16 @@ class ArchitecturallyEvidentTypeUnitTest {
 
 	@org.jmolecules.ddd.annotation.Repository
 	class JMoleculesAnnotatedRepository {}
+
+	class SomeEventListener {
+
+		@EventListener
+		void on(Object event) {}
+
+		@EventListener
+		void on(String event) {}
+
+		@EventListener
+		void onOther(Object event) {}
+	}
 }

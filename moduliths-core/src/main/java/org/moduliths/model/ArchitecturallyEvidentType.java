@@ -24,9 +24,16 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jddd.core.annotation.AggregateRoot;
 import org.jddd.core.annotation.Entity;
@@ -39,10 +46,9 @@ import org.moduliths.model.Types.SpringTypes;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 
-import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaType;
-import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 
@@ -52,11 +58,13 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
  * @author Oliver Drotbohm
  */
 @Slf4j
+@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class ArchitecturallyEvidentType {
 
 	private static boolean deprecationWarningLogged = false;
-
 	private static Map<Key, ArchitecturallyEvidentType> CACHE = new HashMap<>();
+
+	private final @Getter JavaClass type;
 
 	/**
 	 * Creates a new {@link AbstractArchitecturallyEvidentType} for the given {@link JavaType} and {@link Classes} of
@@ -96,8 +104,6 @@ public abstract class ArchitecturallyEvidentType {
 		});
 	}
 
-	public abstract JavaClass getType();
-
 	/**
 	 * Returns the abbreviated (i.e. every package fragment reduced to its first character) full name.
 	 *
@@ -130,7 +136,9 @@ public abstract class ArchitecturallyEvidentType {
 	 */
 	public abstract boolean isRepository();
 
-	public abstract boolean isService();
+	public boolean isService() {
+		return false;
+	}
 
 	public boolean isController() {
 		return false;
@@ -140,11 +148,30 @@ public abstract class ArchitecturallyEvidentType {
 		return false;
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+	/**
+	 * Returns other types that are interesting in the context of the current {@link ArchitecturallyEvidentType}. For
+	 * example, for an event listener this might be the event types the particular listener is interested in.
+	 *
+	 * @return
+	 */
+	public Stream<JavaClass> getReferenceTypes() {
+		return Stream.empty();
+	}
+
 	static class SpringAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
-		private final @Getter JavaClass type;
+		private static final Predicate<JavaMethod> IS_EVENT_LISTENER = it -> it
+				.tryGetAnnotationOfType(SpringTypes.AT_EVENT_LISTENER).isPresent()
+				|| it.tryGetAnnotationOfType(SpringTypes.AT_TX_EVENT_LISTENER).isPresent();
 
+		public SpringAwareArchitecturallyEvidentType(JavaClass type) {
+			super(type);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isAggregateRoot()
+		 */
 		@Override
 		public boolean isAggregateRoot() {
 			return false;
@@ -156,7 +183,7 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isRepository() {
-			return isSpringRepository().apply(getType());
+			return Types.isAnnotatedWith(SpringTypes.AT_REPOSITORY).apply(getType());
 		}
 
 		/*
@@ -165,7 +192,7 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isService() {
-			return Types.isAnnotatedWith(SpringTypes.AT_SERVICE).apply(type);
+			return Types.isAnnotatedWith(SpringTypes.AT_SERVICE).apply(getType());
 		}
 
 		/*
@@ -174,7 +201,7 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isController() {
-			return Types.isAnnotatedWith(SpringTypes.AT_CONTROLLER).apply(type);
+			return Types.isAnnotatedWith(SpringTypes.AT_CONTROLLER).apply(getType());
 		}
 
 		/*
@@ -183,30 +210,51 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isEventListener() {
-
-			return type.getMethods().stream()
-					.anyMatch(it -> it.tryGetAnnotationOfType(SpringTypes.AT_EVENT_LISTENER).isPresent()
-							|| it.tryGetAnnotationOfType(SpringTypes.AT_TX_EVENT_LISTENER).isPresent());
+			return getType().getMethods().stream().anyMatch(IS_EVENT_LISTENER);
 		}
 
-		/**
-		 * Returns a {@link DescribedPredicate}
-		 *
-		 * @return
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#getOtherTypeReferences()
 		 */
-		protected DescribedPredicate<? super JavaClass> isSpringRepository() {
-			return CanBeAnnotated.Predicates.annotatedWith(SpringTypes.AT_REPOSITORY);
+		@Override
+		public Stream<JavaClass> getReferenceTypes() {
+
+			if (isEventListener()) {
+
+				return distinctByName(getType().getMethods().stream() //
+						.filter(IS_EVENT_LISTENER) //
+						.flatMap(it -> it.getRawParameterTypes().stream()))
+								.sorted(Comparator.comparing(JavaClass::getSimpleName));
+			}
+
+			return super.getReferenceTypes();
 		}
 	}
 
-	static class SpringDataAwareArchitecturallyEvidentType extends SpringAwareArchitecturallyEvidentType {
+	private static Stream<JavaClass> distinctByName(Stream<JavaClass> types) {
+
+		Set<String> names = new HashSet<>();
+
+		return types.flatMap(it -> {
+
+			if (names.contains(it.getFullName())) {
+				return Stream.empty();
+			} else {
+
+				names.add(it.getFullName());
+
+				return Stream.of(it);
+			}
+		});
+	}
+
+	static class SpringDataAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
 		private final Classes beanTypes;
 
 		SpringDataAwareArchitecturallyEvidentType(JavaClass type, Classes beanTypes) {
-
 			super(type);
-
 			this.beanTypes = beanTypes;
 		}
 
@@ -236,18 +284,19 @@ public abstract class ArchitecturallyEvidentType {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.moduliths.model.DefaultArchitectuallyEvidentType#isSpringRepository()
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isRepository()
 		 */
 		@Override
-		protected DescribedPredicate<? super JavaClass> isSpringRepository() {
-			return SpringDataTypes.isSpringDataRepository().or(super.isSpringRepository());
+		public boolean isRepository() {
+			return SpringDataTypes.isSpringDataRepository().apply(getType());
 		}
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 	static class JDdddArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
-		private final @Getter JavaClass type;
+		private JDdddArchitecturallyEvidentType(JavaClass type) {
+			super(type);
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -256,8 +305,8 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isEntity() {
 
-			return Types.isAnnotatedWith(Entity.class).apply(type) || //
-					type.isAssignableTo(org.jddd.core.types.Entity.class);
+			return Types.isAnnotatedWith(Entity.class).apply(getType()) || //
+					getType().isAssignableTo(org.jddd.core.types.Entity.class);
 		}
 
 		/*
@@ -267,8 +316,8 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isAggregateRoot() {
 
-			return Types.isAnnotatedWith(AggregateRoot.class).apply(type) || //
-					type.isAssignableTo(org.jddd.core.types.AggregateRoot.class);
+			return Types.isAnnotatedWith(AggregateRoot.class).apply(getType()) || //
+					getType().isAssignableTo(org.jddd.core.types.AggregateRoot.class);
 		}
 
 		/*
@@ -277,7 +326,7 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isRepository() {
-			return Types.isAnnotatedWith(Repository.class).apply(type);
+			return Types.isAnnotatedWith(Repository.class).apply(getType());
 		}
 
 		/*
@@ -286,14 +335,15 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isService() {
-			return Types.isAnnotatedWith(Service.class).apply(type);
+			return Types.isAnnotatedWith(Service.class).apply(getType());
 		}
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 	static class JMoleculesArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
-		private final @Getter JavaClass type;
+		JMoleculesArchitecturallyEvidentType(JavaClass type) {
+			super(type);
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -301,6 +351,8 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isEntity() {
+
+			JavaClass type = getType();
 
 			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Entity.class).apply(type) || //
 					type.isAssignableTo(org.jmolecules.ddd.types.Entity.class);
@@ -313,6 +365,8 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isAggregateRoot() {
 
+			JavaClass type = getType();
+
 			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.AggregateRoot.class).apply(type) || //
 					type.isAssignableTo(org.jmolecules.ddd.types.AggregateRoot.class);
 		}
@@ -323,6 +377,9 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isRepository() {
+
+			JavaClass type = getType();
+
 			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Repository.class).apply(type);
 		}
 
@@ -332,15 +389,33 @@ public abstract class ArchitecturallyEvidentType {
 		 */
 		@Override
 		public boolean isService() {
+
+			JavaClass type = getType();
+
 			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Service.class).apply(type);
 		}
 	}
 
-	@RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
 	static class DelegatingType extends ArchitecturallyEvidentType {
 
-		private final @Getter JavaClass type;
 		private final Supplier<Boolean> isAggregateRoot, isRepository, isEntity, isService, isController, isEventListener;
+		private final Supplier<Collection<JavaClass>> referenceTypes;
+
+		DelegatingType(JavaClass type, Supplier<Boolean> isAggregateRoot,
+				Supplier<Boolean> isRepository, Supplier<Boolean> isEntity, Supplier<Boolean> isService,
+				Supplier<Boolean> isController, Supplier<Boolean> isEventListener,
+				Supplier<Collection<JavaClass>> referenceTypes) {
+
+			super(type);
+
+			this.isAggregateRoot = isAggregateRoot;
+			this.isRepository = isRepository;
+			this.isEntity = isEntity;
+			this.isService = isService;
+			this.isController = isController;
+			this.isEventListener = isEventListener;
+			this.referenceTypes = referenceTypes;
+		}
 
 		public static DelegatingType of(JavaClass type, List<ArchitecturallyEvidentType> types) {
 
@@ -362,8 +437,12 @@ public abstract class ArchitecturallyEvidentType {
 			Supplier<Boolean> isEventListener = Suppliers
 					.memoize(() -> types.stream().anyMatch(ArchitecturallyEvidentType::isEventListener));
 
+			Supplier<Collection<JavaClass>> referenceTypes = Suppliers.memoize(() -> types.stream() //
+					.flatMap(ArchitecturallyEvidentType::getReferenceTypes) //
+					.collect(Collectors.toList()));
+
 			return new DelegatingType(type, isAggregateRoot, isRepository, isEntity, isService, isController,
-					isEventListener);
+					isEventListener, referenceTypes);
 		}
 
 		/*
@@ -420,6 +499,15 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isEventListener() {
 			return isEventListener.get();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#getOtherTypeReferences()
+		 */
+		@Override
+		public Stream<JavaClass> getReferenceTypes() {
+			return distinctByName(referenceTypes.get().stream());
 		}
 	}
 
