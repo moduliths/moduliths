@@ -25,11 +25,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.moduliths.docs.Documenter.CanvasOptions;
+import org.moduliths.docs.Documenter.CanvasOptions.Groupings;
 import org.moduliths.model.ArchitecturallyEvidentType;
 import org.moduliths.model.FormatableJavaClass;
 import org.moduliths.model.Module;
 import org.moduliths.model.SpringBean;
-import org.springframework.util.MultiValueMap;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -83,14 +83,13 @@ class Asciidoctor {
 	public String renderSpringBeans(CanvasOptions options) {
 
 		StringBuilder builder = new StringBuilder();
+		Groupings groupings = options.groupBeans(module);
 
-		MultiValueMap<String, SpringBean> groups = options.groupBeans(module);
-
-		if (groups.size() == 1 && groups.containsKey(CanvasOptions.FALLBACK_GROUP)) {
-			return toBulletPoints(groups.get(CanvasOptions.FALLBACK_GROUP));
+		if (groupings.hasOnlyFallbackGroup()) {
+			return toBulletPoints(groupings.byGrouping(CanvasOptions.FALLBACK_GROUP));
 		}
 
-		options.groupBeans(module).forEach((key, beans) -> {
+		groupings.forEach((grouping, beans) -> {
 
 			if (beans.isEmpty()) {
 				return;
@@ -100,7 +99,13 @@ class Asciidoctor {
 				builder.append("\n\n");
 			}
 
-			builder.append("_").append(key).append("_").append("\n\n");
+			builder.append("_").append(grouping.getName()).append("_");
+
+			if (grouping.getDescription() != null) {
+				builder.append(" -- ").append(grouping.getDescription());
+			}
+
+			builder.append("\n\n");
 			builder.append(toBulletPoints(beans));
 
 		});

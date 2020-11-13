@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -479,62 +480,54 @@ public class Documenter {
 		}
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	// Prefix required for javac 🤔
+	@lombok.RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 	public static class CanvasOptions {
 
-		static final String FALLBACK_GROUP = "Others";
+		static final Grouping FALLBACK_GROUP = Grouping.of("Others", null, __ -> true);
 
-		private final Map<String, Predicate<SpringBean>> groupers;
+		private final List<Grouping> groupers;
 		private final @With @Getter @Nullable String apiBase;
 		private final @With @Nullable String targetFileName;
 
 		public static CanvasOptions defaults() {
 
 			return withoutDefaultGroupings()
-					.grouping("Controllers", bean -> bean.toArchitecturallyEvidentType().isController()) //
-					.grouping("Services", bean -> bean.toArchitecturallyEvidentType().isService()) //
-					.grouping("Repositories", bean -> bean.toArchitecturallyEvidentType().isRepository()) //
-					.grouping("Event listeners", bean -> bean.toArchitecturallyEvidentType().isEventListener());
+					.groupingBy("Controllers", bean -> bean.toArchitecturallyEvidentType().isController()) //
+					.groupingBy("Services", bean -> bean.toArchitecturallyEvidentType().isService()) //
+					.groupingBy("Repositories", bean -> bean.toArchitecturallyEvidentType().isRepository()) //
+					.groupingBy("Event listeners", bean -> bean.toArchitecturallyEvidentType().isEventListener());
 		}
 
 		public static CanvasOptions withoutDefaultGroupings() {
-			return new CanvasOptions(new HashMap<>(), null, null);
+			return new CanvasOptions(new ArrayList<>(), null, null);
 		}
 
-		public static Predicate<SpringBean> nameMatching(String pattern) {
-			return bean -> bean.getFullyQualifiedTypeName().matches(pattern);
-		}
+		public CanvasOptions groupingBy(Grouping... groupings) {
 
-		public static Predicate<SpringBean> implementing(Class<?> type) {
-			return bean -> bean.getType().isAssignableTo(type);
-		}
-
-		public static Predicate<SpringBean> subtypeOf(Class<?> type) {
-			return implementing(type) //
-					.and(bean -> !bean.getType().isEquivalentTo(type));
-		}
-
-		public CanvasOptions grouping(String name, Predicate<SpringBean> filter) {
-
-			Map<String, Predicate<SpringBean>> result = new HashMap<>(groupers);
-			result.put(name, filter);
+			List<Grouping> result = new ArrayList<>(groupers);
+			result.addAll(Arrays.asList(groupings));
 
 			return new CanvasOptions(result, apiBase, targetFileName);
 		}
 
-		MultiValueMap<String, SpringBean> groupBeans(Module module) {
+		public CanvasOptions groupingBy(String name, Predicate<SpringBean> filter) {
+			return groupingBy(Grouping.of(name, null, filter));
+		}
 
-			LinkedHashMap<String, Predicate<SpringBean>> sources = new LinkedHashMap<>(groupers);
-			sources.put(FALLBACK_GROUP, it -> true);
+		Groupings groupBeans(Module module) {
 
-			MultiValueMap<String, SpringBean> result = new LinkedMultiValueMap<>();
+			List<Grouping> sources = new ArrayList<>(groupers);
+			sources.add(FALLBACK_GROUP);
+
+			MultiValueMap<Grouping, SpringBean> result = new LinkedMultiValueMap<>();
 			List<SpringBean> alreadyMapped = new ArrayList<>();
 
-			sources.forEach((key, filter) -> {
+			sources.forEach(it -> {
 
-				List<SpringBean> matchingBeans = getMatchingBeans(module, filter, alreadyMapped);
+				List<SpringBean> matchingBeans = getMatchingBeans(module, it, alreadyMapped);
 
-				result.addAll(key, matchingBeans);
+				result.addAll(it, matchingBeans);
 				alreadyMapped.addAll(matchingBeans);
 			});
 
@@ -545,20 +538,88 @@ public class Documenter {
 				}
 			});
 
-			return result;
+			return Groupings.of(result);
 		}
 
 		private Optional<String> getTargetFileName() {
 			return Optional.ofNullable(targetFileName);
 		}
 
-		private static List<SpringBean> getMatchingBeans(Module module, Predicate<SpringBean> filter,
-				List<SpringBean> alreadyMapped) {
+		private static List<SpringBean> getMatchingBeans(Module module, Grouping filter, List<SpringBean> alreadyMapped) {
 
 			return module.getSpringBeans().stream()
 					.filter(it -> !alreadyMapped.contains(it))
-					.filter(filter::test)
+					.filter(filter::matches)
 					.collect(Collectors.toList());
+		}
+
+		@Value(staticConstructor = "of")
+		@Getter(AccessLevel.PACKAGE)
+		public static class Grouping {
+
+			String name;
+			@Nullable String description;
+			Predicate<SpringBean> predicate;
+
+			public static Grouping of(String name) {
+				return new Grouping(name, null, __ -> false);
+			}
+
+			public static Grouping of(String name, Predicate<SpringBean> predicate) {
+				return new Grouping(name, null, predicate);
+			}
+
+			public boolean matches(SpringBean candidate) {
+				return predicate.test(candidate);
+			}
+
+			public static Predicate<SpringBean> nameMatching(String pattern) {
+				return bean -> bean.getFullyQualifiedTypeName().matches(pattern);
+			}
+
+			public static Predicate<SpringBean> implementing(Class<?> type) {
+				return bean -> bean.getType().isAssignableTo(type);
+			}
+
+			public static Predicate<SpringBean> subtypeOf(Class<?> type) {
+				return implementing(type) //
+						.and(bean -> !bean.getType().isEquivalentTo(type));
+			}
+		}
+
+		@RequiredArgsConstructor(access = AccessLevel.PACKAGE, staticName = "of")
+		static class Groupings {
+
+			private final MultiValueMap<Grouping, SpringBean> groupings;
+
+			Set<Grouping> keySet() {
+				return groupings.keySet();
+			}
+
+			List<SpringBean> byGrouping(Grouping grouping) {
+				return byFilter(grouping::equals);
+			}
+
+			List<SpringBean> byGroupName(String name) {
+				return byFilter(it -> it.getName().equals(name));
+			}
+
+			void forEach(BiConsumer<Grouping, List<SpringBean>> consumer) {
+				groupings.forEach(consumer);
+			}
+
+			private List<SpringBean> byFilter(Predicate<Grouping> filter) {
+
+				return groupings.entrySet().stream()
+						.filter(it -> filter.test(it.getKey()))
+						.findFirst()
+						.map(Entry::getValue)
+						.orElseGet(Collections::emptyList);
+			}
+
+			boolean hasOnlyFallbackGroup() {
+				return groupings.size() == 1 && groupings.get(FALLBACK_GROUP) != null;
+			}
 		}
 	}
 

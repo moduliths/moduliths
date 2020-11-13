@@ -16,14 +16,16 @@
 package org.moduliths.docs;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.moduliths.docs.Documenter.CanvasOptions.Grouping.*;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.moduliths.docs.Documenter.CanvasOptions;
+import org.moduliths.docs.Documenter.CanvasOptions.Grouping;
+import org.moduliths.docs.Documenter.CanvasOptions.Groupings;
 import org.moduliths.model.Modules;
 import org.moduliths.model.SpringBean;
-import org.springframework.util.MultiValueMap;
 
 import com.acme.myproject.Application;
 import com.acme.myproject.stereotypes.Stereotypes;
@@ -39,22 +41,24 @@ class DocumenterUnitTests {
 	@Test
 	void groupsSpringBeansByArchitecturallyEvidentType() {
 
-		MultiValueMap<String, SpringBean> result = CanvasOptions.defaults()
-				.grouping("Representations", CanvasOptions.nameMatching(".*Representations"))
-				.grouping("Interface implementations", CanvasOptions.subtypeOf(Stereotypes.SomeAppInterface.class))
+		Groupings result = CanvasOptions.defaults()
+				.groupingBy(of("Representations", nameMatching(".*Representations")))
+				.groupingBy(of("Interface implementations", subtypeOf(Stereotypes.SomeAppInterface.class)))
 				.groupBeans(modules.getModuleByName("stereotypes").orElseThrow(RuntimeException::new));
 
-		assertThat(result).containsOnlyKeys("Controllers", "Services", "Repositories", "Event listeners", "Representations",
-				"Interface implementations", "Others");
+		assertThat(result.keySet())
+				.extracting(Grouping::getName)
+				.containsExactlyInAnyOrder("Controllers", "Services", "Repositories", "Event listeners", "Representations",
+						"Interface implementations", "Others");
 
-		List<SpringBean> impls = result.get("Interface implementations");
+		List<SpringBean> impls = result.byGroupName("Interface implementations");
 
 		assertThat(impls).hasSize(1) //
 				.extracting(it -> it.getType()) //
 				.extracting(JavaClass::getSimpleName) //
 				.containsExactly("SomeAppInterfaceImplementation");
 
-		List<SpringBean> listeners = result.get("Event listeners");
+		List<SpringBean> listeners = result.byGroupName("Event listeners");
 
 		assertThat(listeners).hasSize(2) //
 				.extracting(it -> it.getType()) //
@@ -68,7 +72,7 @@ class DocumenterUnitTests {
 		Documenter documenter = new Documenter(modules);
 
 		CanvasOptions foos = CanvasOptions.defaults() //
-				.grouping("Representations", CanvasOptions.nameMatching(".*Representations"));
+				.groupingBy(of("Representations", nameMatching(".*Representations")));
 
 		modules.forEach(it -> System.out.println(documenter.toModuleCanvas(it, foos)));
 	}
