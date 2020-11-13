@@ -27,10 +27,8 @@
 	<properties>
 
 		<archunit.version>0.14.1</archunit.version>
-		<lombok.version>1.18.12</lombok.version>
 		<jddd.version>0.1.0</jddd.version>
 		<jmolecules.version>1.0.0</jmolecules.version>
-		<junit-jupiter.version>5.6.2</junit-jupiter.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
