@@ -38,6 +38,11 @@ class ModulesIntegrationTest {
 	Modules modules = Modules.of(Application.class);
 
 	@Test
+	void moduleDetectionUsesStrategyDefinedInSpringFactories() {
+		assertThat(TestModuleDetectionStrategy.used).isTrue();
+	}
+
+	@Test
 	void exposesModulesForPrimaryPackages() {
 
 		Optional<Module> module = modules.getModuleByName("moduleB");

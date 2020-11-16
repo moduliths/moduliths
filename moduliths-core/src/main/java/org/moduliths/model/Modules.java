@@ -33,8 +33,10 @@ import java.util.stream.Stream;
 import org.jddd.archunit.JDddRules;
 import org.jmolecules.archunit.JMoleculesRules;
 import org.moduliths.Modulith;
+import org.moduliths.Modulithic;
 import org.moduliths.model.Types.JDDDTypes;
 import org.moduliths.model.Types.JMoleculesTypes;
+import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.Assert;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -55,7 +57,7 @@ public class Modules implements Iterable<Module> {
 
 	private static final Map<CacheKey, Modules> CACHE = new HashMap<>();
 
-	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList(//
+	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList( //
 			"javax.persistence", //
 			"org.jddd", //
 			"org.jmolecules", //
@@ -64,6 +66,23 @@ public class Modules implements Iterable<Module> {
 			"org.springframework.stereotype", //
 			"org.springframework.web.bind.annotation" //
 	);
+
+	private static final ModuleDetectionStrategy DETECTION_STRATEGY;
+
+	static {
+
+		List<ModuleDetectionStrategy> loadFactories = SpringFactoriesLoader.loadFactories(ModuleDetectionStrategy.class,
+				Modules.class.getClassLoader());
+
+		if (loadFactories.size() > 1) {
+
+			throw new IllegalStateException(
+					String.format("Multiple module detection strategies configured. Only one supported! %s",
+							loadFactories));
+		}
+
+		DETECTION_STRATEGY = loadFactories.isEmpty() ? ModuleDetectionStrategies.DIRECT_SUB_PACKAGES : loadFactories.get(0);
+	}
 
 	private final ModulithMetadata metadata;
 	private final Map<String, Module> modules;
@@ -89,7 +108,8 @@ public class Modules implements Iterable<Module> {
 		Classes classes = Classes.of(allClasses);
 
 		this.modules = packages.stream() //
-				.flatMap(it -> getSubpackages(classes, it)) //
+				.map(it -> JavaPackage.of(classes, it))
+				.flatMap(DETECTION_STRATEGY::getModuleBasePackages) //
 				.map(it -> new Module(it, useFullyQualifiedModuleNames)) //
 				.collect(toMap(Module::getName, Function.identity()));
 
@@ -112,11 +132,12 @@ public class Modules implements Iterable<Module> {
 	}
 
 	/**
-	 * Creates a new {@link Modules} relative to the given modulith type and a {@link DescribedPredicate} which types and
-	 * packages to ignore. Will inspect the {@link Modulith} annotation on the class given for advanced customizations of
-	 * the module setup.
+	 * Creates a new {@link Modules} relative to the given modulith type, a {@link ModuleDetectionStrategy} and a
+	 * {@link DescribedPredicate} which types and packages to ignore. Will inspect the {@link Modulith} and
+	 * {@link Modulithic} annotations on the class given for advanced customizations of the module setup.
 	 *
 	 * @param modulithType must not be {@literal null}.
+	 * @param detection must not be {@literal null}.
 	 * @param ignored must not be {@literal null}.
 	 * @return
 	 */
@@ -181,7 +202,8 @@ public class Modules implements Iterable<Module> {
 		basePackages.add(key.getBasePackage());
 		basePackages.addAll(metadata.getAdditionalPackages());
 
-		Modules modules = new Modules(metadata, basePackages, key.getIgnored(), metadata.useFullyQualifiedModuleNames());
+		Modules modules = new Modules(metadata, basePackages, key.getIgnored(),
+				metadata.useFullyQualifiedModuleNames());
 
 		Set<Module> sharedModules = metadata.getSharedModuleNames() //
 				.map(modules::getRequiredModule) //
@@ -434,9 +456,5 @@ public class Modules implements Iterable<Module> {
 		public ModulithMetadata getMetadata() {
 			return ModulithMetadata.of(basePackage);
 		}
-	}
-
-	private static Stream<JavaPackage> getSubpackages(Classes types, String rootPackage) {
-		return JavaPackage.of(types, rootPackage).getDirectSubPackages().stream();
 	}
 }
