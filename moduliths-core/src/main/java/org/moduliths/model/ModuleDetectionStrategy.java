@@ -52,6 +52,6 @@ public interface ModuleDetectionStrategy {
 	 * @return will never be {@literal null}.
 	 */
 	static ModuleDetectionStrategy explictlyAnnotated() {
-		return ModuleDetectionStrategy.explictlyAnnotated();
+		return ModuleDetectionStrategies.EXPLICITLY_ANNOTATED;
 	}
 }
