@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.events.starter;
+package org.moduliths.events.starter;
 
 import org.moduliths.events.EventPublication;
 import org.moduliths.events.config.EnablePersistentDomainEvents;
