@@ -32,13 +32,15 @@ import com.acme.myproject.stereotypes.Stereotypes;
 import com.tngtech.archunit.core.domain.JavaClass;
 
 /**
+ * Unit tests for {@link Documenter}.
+ *
  * @author Oliver Drotbohm
  */
 class DocumenterUnitTests {
 
 	Modules modules = Modules.of(Application.class);
 
-	@Test
+	@Test // #130
 	void groupsSpringBeansByArchitecturallyEvidentType() {
 
 		Groupings result = CanvasOptions.defaults()
@@ -66,14 +68,14 @@ class DocumenterUnitTests {
 				.containsOnly("SomeEventListener", "SomeTxEventListener");
 	}
 
-	@Test
+	@Test // #130
 	void playWithOutput() {
 
 		Documenter documenter = new Documenter(modules);
 
-		CanvasOptions foos = CanvasOptions.defaults() //
+		CanvasOptions options = CanvasOptions.defaults() //
 				.groupingBy(of("Representations", nameMatching(".*Representations")));
 
-		modules.forEach(it -> System.out.println(documenter.toModuleCanvas(it, foos)));
+		modules.forEach(it -> documenter.toModuleCanvas(it, options));
 	}
 }
