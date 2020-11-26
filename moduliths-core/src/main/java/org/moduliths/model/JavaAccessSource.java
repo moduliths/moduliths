@@ -15,6 +15,9 @@
  */
 package org.moduliths.model;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.tngtech.archunit.core.domain.JavaAccess;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 
@@ -26,8 +29,11 @@ import com.tngtech.archunit.core.domain.JavaCodeUnit;
  */
 class JavaAccessSource implements Source {
 
+	private final static Pattern LAMBDA_EXTRACTOR = Pattern.compile("lambda\\$(.*)\\$.*");
+
 	private final FormatableJavaClass type;
 	private final JavaCodeUnit method;
+	private final String name;
 
 	/**
 	 * Creates a new {@link JavaAccessSource} for the given {@link JavaAccess}.
@@ -38,6 +44,11 @@ class JavaAccessSource implements Source {
 
 		this.type = FormatableJavaClass.of(access.getOriginOwner());
 		this.method = access.getOrigin();
+
+		String name = method.getName();
+		Matcher matcher = LAMBDA_EXTRACTOR.matcher(name);
+
+		this.name = matcher.matches() ? matcher.group(1) : name;
 	}
 
 	/*
@@ -49,6 +60,6 @@ class JavaAccessSource implements Source {
 
 		boolean noParameters = method.getRawParameterTypes().isEmpty();
 
-		return String.format("%s.%s(%s)", type.getAbbreviatedFullName(module), method.getName(), noParameters ? "" : "…");
+		return String.format("%s.%s(%s)", type.getAbbreviatedFullName(module), name, noParameters ? "" : "…");
 	}
 }
