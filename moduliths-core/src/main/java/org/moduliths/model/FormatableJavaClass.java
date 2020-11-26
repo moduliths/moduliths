@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.thirdparty.com.google.common.base.Supplier;
@@ -82,6 +83,11 @@ public class FormatableJavaClass {
 		}
 
 		String basePackageName = module.getBasePackage().getName();
+
+		if (!StringUtils.hasText(basePackageName)) {
+			return getAbbreviatedFullName();
+		}
+
 		String typePackageName = type.getPackageName();
 
 		if (basePackageName.equals(typePackageName)) {

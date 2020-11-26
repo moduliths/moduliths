@@ -17,6 +17,8 @@ package org.moduliths.model;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
+
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
@@ -59,7 +61,14 @@ class ModuleUnitTest {
 		JavaClass jdddAnnotated = classes.get(JDddAnnotated.class);
 		JavaClass jdddImplementing = classes.get(JDddImplementing.class);
 
-		assertThat(module.getEventsPublished()) //
+		List<EventType> events = module.getPublishedEvents();
+
+		assertThat(events.stream().map(EventType::getType)) //
 				.containsExactlyInAnyOrder(domainEvent, jdddAnnotated, jdddImplementing);
+		assertThat(events.stream().filter(it -> it.getType().equals(domainEvent))) //
+				.element(0) //
+				.satisfies(it -> {
+					assertThat(it.getSources()).isNotEmpty();
+				});
 	}
 }

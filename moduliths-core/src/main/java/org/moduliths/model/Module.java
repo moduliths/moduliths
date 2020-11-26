@@ -73,6 +73,7 @@ public class Module {
 
 	private final Supplier<Classes> springBeans;
 	private final Supplier<Classes> entities;
+	private final Supplier<List<EventType>> publishedEvents;
 
 	Module(JavaPackage basePackage, boolean useFullyQualifiedModuleNames) {
 
@@ -83,6 +84,7 @@ public class Module {
 
 		this.springBeans = Suppliers.memoize(() -> filterSpringBeans(basePackage));
 		this.entities = Suppliers.memoize(() -> findEntities(basePackage));
+		this.publishedEvents = Suppliers.memoize(() -> findPublishedEvents());
 	}
 
 	public String getName() {
@@ -119,16 +121,13 @@ public class Module {
 				.collect(Collectors.toList());
 	}
 
-	public List<JavaClass> getEventsPublished() {
-
-		DescribedPredicate<JavaClass> isEvent = implement(JDDDTypes.EVENT_TYPE) //
-				.or(implement(JMoleculesTypes.EVENT_TYPE)) //
-				.or(isAnnotatedWith(Event.class)) //
-				.or(isAnnotatedWith(JDDDTypes.EVENT_ANNOTATION)) //
-				.or(isAnnotatedWith(JMoleculesTypes.EVENT_ANNOTATION));
-
-		return basePackage.that(isEvent).stream() //
-				.collect(Collectors.toList());
+	/**
+	 * Returns all {@link EventType}s published by the module.
+	 *
+	 * @return will never be {@literal null}.
+	 */
+	public List<EventType> getPublishedEvents() {
+		return publishedEvents.get();
 	}
 
 	/**
@@ -148,22 +147,6 @@ public class Module {
 				.flatMap(this::resolveModuleSuperTypes) //
 				.distinct() //
 				.collect(Collectors.toList());
-	}
-
-	/**
-	 * Returns a {@link Stream} of all super types of the given one that are declared in the same module as well as the
-	 * type itself.
-	 *
-	 * @param type must not be {@literal null}.
-	 * @return
-	 */
-	private Stream<JavaClass> resolveModuleSuperTypes(JavaClass type) {
-
-		Assert.notNull(type, "Type must not be null!");
-
-		return Stream.concat(//
-				type.getAllSuperClasses().stream().filter(this::contains), //
-				Stream.of(type));
 	}
 
 	/**
@@ -319,6 +302,35 @@ public class Module {
 		return Stream.concat(explicitlyDeclaredModules, modules.getSharedModules().stream()) //
 				.distinct() //
 				.collect(Collectors.toList());
+	}
+
+	private List<EventType> findPublishedEvents() {
+
+		DescribedPredicate<JavaClass> isEvent = implement(JDDDTypes.EVENT_TYPE) //
+				.or(implement(JMoleculesTypes.EVENT_TYPE)) //
+				.or(isAnnotatedWith(Event.class)) //
+				.or(isAnnotatedWith(JDDDTypes.EVENT_ANNOTATION)) //
+				.or(isAnnotatedWith(JMoleculesTypes.EVENT_ANNOTATION));
+
+		return basePackage.that(isEvent).stream() //
+				.map(EventType::new)
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns a {@link Stream} of all super types of the given one that are declared in the same module as well as the
+	 * type itself.
+	 *
+	 * @param type must not be {@literal null}.
+	 * @return
+	 */
+	private Stream<JavaClass> resolveModuleSuperTypes(JavaClass type) {
+
+		Assert.notNull(type, "Type must not be null!");
+
+		return Stream.concat(//
+				type.getAllSuperClasses().stream().filter(this::contains), //
+				Stream.of(type));
 	}
 
 	private Stream<ModuleDependency> getAllModuleDependencies(Modules modules) {

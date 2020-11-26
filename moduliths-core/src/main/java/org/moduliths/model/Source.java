@@ -13,39 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.acme.withatbean;
-
-import org.moduliths.Event;
+package org.moduliths.model;
 
 /**
+ * A {@link Source} of some type, bean definition etc. Essentially describes the origin of that bean, event etc.
+ *
  * @author Oliver Drotbohm
+ * @since 1.1
  */
-@SuppressWarnings("deprecation")
-public class TestEvents {
+public interface Source {
 
 	/**
-	 * Method calling a factory method.
+	 * Renders the source in human readable way.
+	 *
+	 * @param module must not be {@literal null}.
+	 * @return
 	 */
-	public void method() {
-		DomainEvent.of();
-	}
-
-	/**
-	 * Method calling a constructor.
-	 */
-	public void constructorCall() {
-		new DomainEvent();
-	}
-
-	@Event
-	public static class DomainEvent {
-		public static DomainEvent of() {
-			return null;
-		}
-	}
-
-	@org.jddd.event.annotation.DomainEvent
-	public static class JDddAnnotated {}
-
-	public static class JDddImplementing implements org.jddd.event.types.DomainEvent {}
+	String toString(Module module);
 }

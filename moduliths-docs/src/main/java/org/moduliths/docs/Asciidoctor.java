@@ -27,8 +27,10 @@ import java.util.stream.Stream;
 import org.moduliths.docs.Documenter.CanvasOptions;
 import org.moduliths.docs.Documenter.CanvasOptions.Groupings;
 import org.moduliths.model.ArchitecturallyEvidentType;
+import org.moduliths.model.EventType;
 import org.moduliths.model.FormatableJavaClass;
 import org.moduliths.model.Module;
+import org.moduliths.model.Source;
 import org.moduliths.model.SpringBean;
 
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -111,6 +113,36 @@ class Asciidoctor {
 		});
 
 		return builder.length() == 0 ? "None" : builder.toString();
+	}
+
+	public String renderEvents(List<EventType> events) {
+
+		if (events.isEmpty()) {
+			return "none";
+		}
+
+		StringBuilder builder = new StringBuilder();
+
+		for (EventType eventType : events) {
+
+			builder.append("* ")
+					.append(toInlineCode(eventType.getType()));
+
+			if (!eventType.hasSources()) {
+				builder.append("\n");
+			} else {
+				builder.append(" created by:\n");
+			}
+
+			for (Source source : eventType.getSources()) {
+
+				builder.append("** ")
+						.append(toInlineCode(source.toString(module)))
+						.append("\n");
+			}
+		}
+
+		return builder.toString();
 	}
 
 	private String toBulletPoints(List<SpringBean> beans) {

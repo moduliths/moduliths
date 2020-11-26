@@ -233,7 +233,7 @@ public class Documenter {
 		builder.append(writeTableRow("Base package", asciidoctor.toInlineCode(module.getBasePackage().getName())));
 		builder.append(writeTableRow("Spring components", asciidoctor.renderSpringBeans(options)));
 		builder.append(addTableRow(module.getAggregateRoots(modules), "Aggregate roots", mapper));
-		builder.append(addTableRow(module.getEventsPublished(), "Published events", mapper));
+		builder.append(writeTableRow("Published events", asciidoctor.renderEvents(module.getPublishedEvents())));
 		builder.append(addTableRow(module.getEventsListenedTo(modules), "Events listened to", mapper));
 		builder.append(startOrEndTable());
 
