@@ -62,7 +62,7 @@ public class FormatableJavaClass {
 					.collect(Collectors.joining("."));
 
 			return abbreviatedPackage.concat(".") //
-					.concat(ClassUtils.getShortName(type.getName()));
+					.concat(ClassUtils.getShortName(getFullName()));
 		});
 	}
 
@@ -101,7 +101,7 @@ public class FormatableJavaClass {
 		return abbreviate(basePackageName) //
 				.concat(typePackageName.substring(basePackageName.length())) //
 				.concat(".") //
-				.concat(ClassUtils.getShortName(type.getName()));
+				.concat(ClassUtils.getShortName(getFullName()));
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class FormatableJavaClass {
 	 * @return will never be {@literal null}.
 	 */
 	public String getFullName() {
-		return type.getFullName();
+		return type.getName().replace("$", ".");
 	}
 
 	private static String abbreviate(String source) {
