@@ -109,6 +109,9 @@ limitations under the License.
 
 		<profile>
 			<id>sonatype</id>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
