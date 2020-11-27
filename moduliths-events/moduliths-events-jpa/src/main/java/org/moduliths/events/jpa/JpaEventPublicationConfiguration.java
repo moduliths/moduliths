@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.moduliths.events.EventSerializer;
 import org.moduliths.events.config.EventPublicationConfigurationExtension;
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -36,12 +35,10 @@ import org.springframework.util.ClassUtils;
 @RequiredArgsConstructor
 class JpaEventPublicationConfiguration implements EventPublicationConfigurationExtension {
 
-	private final JpaEventPublicationRepository repository;
-	private final ObjectFactory<EventSerializer> serializer;
-
 	@Bean
-	public JpaEventPublicationRegistry jpaEventPublicationRegistry() {
-		return new JpaEventPublicationRegistry(repository, serializer.getObject());
+	public JpaEventPublicationRegistry jpaEventPublicationRegistry(JpaEventPublicationRepository repository,
+			EventSerializer serializer) {
+		return new JpaEventPublicationRegistry(repository, serializer);
 	}
 
 	static class RepositoriesEnablingImportSelector implements ImportSelector {
