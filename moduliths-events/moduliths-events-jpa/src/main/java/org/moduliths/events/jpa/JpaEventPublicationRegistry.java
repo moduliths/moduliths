@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.moduliths.events.CompletableEventPublication;
 import org.moduliths.events.EventPublication;
 import org.moduliths.events.EventPublicationRegistry;
@@ -46,6 +49,10 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 	private final @NonNull JpaEventPublicationRepository events;
 	private final @NonNull EventSerializer serializer;
+
+	// Needed to prevent EntityManager shutdown *before* this class
+	// TODO: Investigate why this is needed
+	private @PersistenceContext EntityManager em;
 
 	/*
 	 * (non-Javadoc)
