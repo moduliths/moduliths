@@ -139,6 +139,7 @@ limitations under the License.
 							<additionalOptions>
 								<additionalOption>-Xdoclint:none</additionalOption>
 							</additionalOptions>
+							<show>package</show>
 						</configuration>
 					</plugin>
 				</plugins>
