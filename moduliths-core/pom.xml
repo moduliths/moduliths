@@ -66,7 +66,7 @@
 			<version>${jmolecules.version}</version>
 			<optional>true</optional>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.jmolecules</groupId>
 			<artifactId>jmolecules-archunit</artifactId>

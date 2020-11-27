@@ -77,16 +77,36 @@ limitations under the License.
 	</licenses>
 
 	<profiles>
+
 		<profile>
+
 			<id>default</id>
+
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
+
 			<modules>
 				<module>moduliths-sample</module>
 				<module>moduliths-integration-test</module>
 			</modules>
+
+			<distributionManagement>
+				<snapshotRepository>
+					<id>spring-snapshot</id>
+					<name>Spring Snapshot Repository</name>
+					<url>https://repo.spring.io/snapshot</url>
+				</snapshotRepository>
+			</distributionManagement>
+
+			<repositories>
+				<repository>
+					<id>spring-snapshot</id>
+					<url>https://repo.spring.io/snapshot</url>
+				</repository>
+			</repositories>
 		</profile>
+
 		<profile>
 			<id>sonatype</id>
 			<build>
@@ -236,25 +256,5 @@ limitations under the License.
 		<developerConnection>scm:git:ssh://git@github.com/odrotbohm/moduliths.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
-
-	<distributionManagement>
-		<repository>
-			<id>spring-milestone</id>
-			<name>Spring Milestone Repository</name>
-			<url>https://repo.spring.io/milestone</url>
-		</repository>
-		<snapshotRepository>
-			<id>spring-snapshot</id>
-			<name>Spring Snapshot Repository</name>
-			<url>https://repo.spring.io/snapshot</url>
-		</snapshotRepository>
-	</distributionManagement>
-
-	<repositories>
-		<repository>
-			<id>spring-snapshot</id>
-			<url>https://repo.spring.io/snapshot</url>
-		</repository>
-	</repositories>
 
 </project>
