@@ -102,6 +102,7 @@ class Types {
 		private static final String BASE_PACKAGE = "org.springframework";
 
 		static final String AT_AUTOWIRED = BASE_PACKAGE + ".beans.factory.annotation.Autowired";
+		static final String AT_ASYNC = BASE_PACKAGE + ".scheduling.annotation.Async";
 		static final String AT_BEAN = BASE_PACKAGE + ".context.annotation.Bean";
 		static final String AT_COMPONENT = BASE_PACKAGE + ".stereotype.Component";
 		static final String AT_CONFIGURATION = BASE_PACKAGE + ".context.annotation.Configuration";
@@ -151,5 +152,4 @@ class Types {
 		return Predicates.annotatedWith(type) //
 				.or(Predicates.metaAnnotatedWith(type));
 	}
-
 }

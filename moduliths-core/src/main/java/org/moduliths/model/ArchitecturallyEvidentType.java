@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -158,11 +159,32 @@ public abstract class ArchitecturallyEvidentType {
 		return Stream.empty();
 	}
 
+	public Stream<ReferenceMethod> getReferenceMethods() {
+		return Stream.empty();
+	}
+
+	private static Stream<JavaClass> distinctByName(Stream<JavaClass> types) {
+
+		Set<String> names = new HashSet<>();
+
+		return types.flatMap(it -> {
+
+			if (names.contains(it.getFullName())) {
+				return Stream.empty();
+			} else {
+
+				names.add(it.getFullName());
+
+				return Stream.of(it);
+			}
+		});
+	}
+
 	static class SpringAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
-		private static final Predicate<JavaMethod> IS_EVENT_LISTENER = it -> it
-				.tryGetAnnotationOfType(SpringTypes.AT_EVENT_LISTENER).isPresent()
-				|| it.tryGetAnnotationOfType(SpringTypes.AT_TX_EVENT_LISTENER).isPresent();
+		private static final Predicate<JavaMethod> IS_EVENT_LISTENER = it -> Types
+				.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER).apply(it)
+				|| Types.isAnnotatedWith(SpringTypes.AT_TX_EVENT_LISTENER).apply(it);
 
 		public SpringAwareArchitecturallyEvidentType(JavaClass type) {
 			super(type);
@@ -230,23 +252,24 @@ public abstract class ArchitecturallyEvidentType {
 
 			return super.getReferenceTypes();
 		}
-	}
 
-	private static Stream<JavaClass> distinctByName(Stream<JavaClass> types) {
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#getReferenceMethods()
+		 */
+		@Override
+		public Stream<ReferenceMethod> getReferenceMethods() {
 
-		Set<String> names = new HashSet<>();
-
-		return types.flatMap(it -> {
-
-			if (names.contains(it.getFullName())) {
-				return Stream.empty();
-			} else {
-
-				names.add(it.getFullName());
-
-				return Stream.of(it);
+			if (!isEventListener()) {
+				return super.getReferenceMethods();
 			}
-		});
+
+			return getType().getMethods().stream() //
+					.filter(IS_EVENT_LISTENER)
+					.sorted(Comparator.comparing(JavaMethod::getName)
+							.thenComparing(it -> it.getRawParameterTypes().size()))
+					.map(ReferenceMethod::new);
+		}
 	}
 
 	static class SpringDataAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
@@ -400,11 +423,12 @@ public abstract class ArchitecturallyEvidentType {
 
 		private final Supplier<Boolean> isAggregateRoot, isRepository, isEntity, isService, isController, isEventListener;
 		private final Supplier<Collection<JavaClass>> referenceTypes;
+		private final Supplier<Collection<ReferenceMethod>> referenceMethods;
 
 		DelegatingType(JavaClass type, Supplier<Boolean> isAggregateRoot,
 				Supplier<Boolean> isRepository, Supplier<Boolean> isEntity, Supplier<Boolean> isService,
 				Supplier<Boolean> isController, Supplier<Boolean> isEventListener,
-				Supplier<Collection<JavaClass>> referenceTypes) {
+				Supplier<Collection<JavaClass>> referenceTypes, Supplier<Collection<ReferenceMethod>> referenceMethods) {
 
 			super(type);
 
@@ -415,6 +439,7 @@ public abstract class ArchitecturallyEvidentType {
 			this.isController = isController;
 			this.isEventListener = isEventListener;
 			this.referenceTypes = referenceTypes;
+			this.referenceMethods = referenceMethods;
 		}
 
 		public static DelegatingType of(JavaClass type, List<ArchitecturallyEvidentType> types) {
@@ -441,8 +466,12 @@ public abstract class ArchitecturallyEvidentType {
 					.flatMap(ArchitecturallyEvidentType::getReferenceTypes) //
 					.collect(Collectors.toList()));
 
+			Supplier<Collection<ReferenceMethod>> referenceMethods = Suppliers.memoize(() -> types.stream() //
+					.flatMap(ArchitecturallyEvidentType::getReferenceMethods) //
+					.collect(Collectors.toList()));
+
 			return new DelegatingType(type, isAggregateRoot, isRepository, isEntity, isService, isController,
-					isEventListener, referenceTypes);
+					isEventListener, referenceTypes, referenceMethods);
 		}
 
 		/*
@@ -509,6 +538,15 @@ public abstract class ArchitecturallyEvidentType {
 		public Stream<JavaClass> getReferenceTypes() {
 			return distinctByName(referenceTypes.get().stream());
 		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#getReferenceMethods()
+		 */
+		@Override
+		public Stream<ReferenceMethod> getReferenceMethods() {
+			return referenceMethods.get().stream();
+		}
 	}
 
 	@Value(staticConstructor = "of")
@@ -516,5 +554,24 @@ public abstract class ArchitecturallyEvidentType {
 
 		JavaClass type;
 		Classes beanTypes;
+	}
+
+	@Value
+	public final class ReferenceMethod {
+
+		private final JavaMethod method;
+
+		public boolean isAsync() {
+			return method.isAnnotatedWith(SpringTypes.AT_ASYNC) || method.isMetaAnnotatedWith(SpringTypes.AT_ASYNC);
+		}
+
+		public Optional<String> getTransactionPhase() {
+
+			return Optional.ofNullable(
+					com.tngtech.archunit.base.Optional.fromNullable(method.getAnnotationOfType(SpringTypes.AT_TX_EVENT_LISTENER))
+							.transform(it -> it.get("phase"))
+							.transform(Object::toString)
+							.orNull());
+		}
 	}
 }

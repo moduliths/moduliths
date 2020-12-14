@@ -32,6 +32,7 @@ import org.moduliths.model.FormatableJavaClass;
 import org.moduliths.model.Module;
 import org.moduliths.model.Source;
 import org.moduliths.model.SpringBean;
+import org.springframework.util.ClassUtils;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -43,9 +44,18 @@ import com.tngtech.archunit.core.domain.JavaModifier;
 class Asciidoctor {
 
 	private static String PLACEHOLDER = "¯\\_(ツ)_/¯";
+	private static final DocumentationSource JAVADOC_SOURCE;
 
 	private final String javaDocBase;
 	private final Module module;
+
+	static {
+
+		JAVADOC_SOURCE = ClassUtils.isPresent("capital.scalable.restdocs.javadoc.JavadocReaderImpl",
+				Asciidoctor.class.getClassLoader())
+						? new SpringAutoRestDocsDocumentationSource()
+						: null;
+	}
 
 	public static Asciidoctor withoutJavadocBase(Module module) {
 		return new Asciidoctor(PLACEHOLDER, module);
@@ -186,9 +196,25 @@ class Asciidoctor {
 
 		if (type.isEventListener()) {
 
-			return String.format("%s listening to %s", //
-					toInlineCode(type.getType()), //
-					toInlineCode(type.getReferenceTypes()));
+			if (JAVADOC_SOURCE == null) {
+
+				return String.format("%s listening to %s", //
+						toInlineCode(type.getType()), //
+						toInlineCode(type.getReferenceTypes()));
+			}
+
+			String header = String.format("%s listening to:\n", toInlineCode(type.getType()));
+
+			return header + type.getReferenceMethods().map(it -> {
+
+				JavaClass parameterType = it.getMethod().getRawParameterTypes().get(0);
+				String isAsync = it.isAsync() ? "(async) " : "";
+
+				return JAVADOC_SOURCE.getDocumentation(it.getMethod())
+						.map(doc -> String.format("** %s %s-- %s", toInlineCode(parameterType), isAsync, doc))
+						.orElseGet(() -> String.format("** %s %s", toInlineCode(parameterType), isAsync));
+
+			}).collect(Collectors.joining("\n"));
 		}
 
 		return toInlineCode(type.getType());
