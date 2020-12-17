@@ -15,21 +15,19 @@
  */
 package org.moduliths.docs;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import org.junit.jupiter.api.Test;
-import org.moduliths.model.Modules;
-
 /**
+ * Abstraction for a component that will provide inline code rendering of types.
+ *
  * @author Oliver Drotbohm
+ * @since 1.1
  */
-class AsciidoctorUnitTests {
+interface InlineCodeSource {
 
-	Asciidoctor asciidoctor = Asciidoctor.withoutJavadocBase(mock(Modules.class));
-
-	@Test
-	void formatsInlineCode() {
-		assertThat(asciidoctor.toInlineCode("Foo")).isEqualTo("`Foo`");
-	}
+	/**
+	 * Turns the given simple or fully-qualified type name into inline code.
+	 *
+	 * @param type must not be {@literal null} or empty.
+	 * @return will never be {@literal null}.
+	 */
+	String toInlineCode(String type);
 }

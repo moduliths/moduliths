@@ -289,6 +289,22 @@ public class Modules implements Iterable<Module> {
 				.findFirst();
 	}
 
+	/**
+	 * Returns the {@link Module} containing the type with the given simple or fully-qualified name.
+	 *
+	 * @param candidate must not be {@literal null} or empty.
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public Optional<Module> getModuleByType(String candidate) {
+
+		Assert.hasText(candidate, "Candidate must not be null or empty!");
+
+		return modules.values().stream() //
+				.filter(it -> it.contains(candidate)) //
+				.findFirst();
+	}
+
 	public Optional<Module> getModuleForPackage(String name) {
 
 		return modules.values().stream() //

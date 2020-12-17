@@ -17,8 +17,6 @@ package org.moduliths.docs;
 
 import static org.springframework.util.ClassUtils.*;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,8 +28,11 @@ import org.moduliths.model.ArchitecturallyEvidentType;
 import org.moduliths.model.EventType;
 import org.moduliths.model.FormatableJavaClass;
 import org.moduliths.model.Module;
+import org.moduliths.model.Modules;
 import org.moduliths.model.Source;
 import org.moduliths.model.SpringBean;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -40,25 +41,46 @@ import com.tngtech.archunit.core.domain.JavaModifier;
 /**
  * @author Oliver Drotbohm
  */
-@RequiredArgsConstructor(staticName = "withJavadocBase")
-class Asciidoctor {
+class Asciidoctor implements InlineCodeSource {
 
 	private static String PLACEHOLDER = "¯\\_(ツ)_/¯";
-	private static final DocumentationSource JAVADOC_SOURCE;
 
+	private final Modules modules;
 	private final String javaDocBase;
-	private final Module module;
+	private final Optional<DocumentationSource> docSource;
 
-	static {
+	private Asciidoctor(Modules modules, String javaDocBase) {
 
-		JAVADOC_SOURCE = ClassUtils.isPresent("capital.scalable.restdocs.javadoc.JavadocReaderImpl",
-				Asciidoctor.class.getClassLoader())
-						? new SpringAutoRestDocsDocumentationSource()
-						: null;
+		Assert.notNull(modules, "Modules must not be null!");
+		Assert.hasText(javaDocBase, "Javadoc base must not be null or empty!");
+
+		this.javaDocBase = javaDocBase;
+		this.modules = modules;
+		this.docSource = Optional.of("capital.scalable.restdocs.javadoc.JavadocReaderImpl")
+				.filter(it -> ClassUtils.isPresent(it, Asciidoctor.class.getClassLoader()))
+				.map(__ -> new SpringAutoRestDocsDocumentationSource())
+				.map(it -> new CodeReplacingDocumentationSource(it, this));
 	}
 
-	public static Asciidoctor withoutJavadocBase(Module module) {
-		return new Asciidoctor(PLACEHOLDER, module);
+	/**
+	 * Creates a new {@link Asciidoctor} instance for the given {@link Modules} and Javadoc base URI.
+	 *
+	 * @param modules must not be {@literal null}.
+	 * @param javadocBase can be {@literal null}.
+	 * @return will never be {@literal null}.
+	 */
+	public static Asciidoctor withJavadocBase(Modules modules, @Nullable String javadocBase) {
+		return new Asciidoctor(modules, javadocBase == null ? PLACEHOLDER : javadocBase);
+	}
+
+	/**
+	 * Creates a new {@link Asciidoctor} instance for the given {@link Modules}.
+	 *
+	 * @param modules must not be {@literal null}.
+	 * @return will never be {@literal null}.
+	 */
+	public static Asciidoctor withoutJavadocBase(Modules modules) {
+		return new Asciidoctor(modules, PLACEHOLDER);
 	}
 
 	/**
@@ -68,7 +90,11 @@ class Asciidoctor {
 	 * @return
 	 */
 	public String toInlineCode(String source) {
-		return String.format("`%s`", source);
+
+		return modules.getModuleByType(source)
+				.flatMap(it -> it.getType(source))
+				.map(this::toInlineCode)
+				.orElseGet(() -> String.format("`%s`", source));
 	}
 
 	public String toInlineCode(JavaClass type) {
@@ -92,7 +118,7 @@ class Asciidoctor {
 		return String.format("%s implementing %s", base, interfacesAsString);
 	}
 
-	public String renderSpringBeans(CanvasOptions options) {
+	public String renderSpringBeans(CanvasOptions options, Module module) {
 
 		StringBuilder builder = new StringBuilder();
 		Groupings groupings = options.groupBeans(module);
@@ -125,7 +151,9 @@ class Asciidoctor {
 		return builder.length() == 0 ? "None" : builder.toString();
 	}
 
-	public String renderEvents(List<EventType> events) {
+	public String renderEvents(Module module) {
+
+		List<EventType> events = module.getPublishedEvents();
 
 		if (events.isEmpty()) {
 			return "none";
@@ -176,6 +204,7 @@ class Asciidoctor {
 
 	private String toOptionalLink(JavaClass source) {
 
+		Module module = modules.getModuleByType(source).orElse(null);
 		String type = toCode(FormatableJavaClass.of(source).getAbbreviatedFullName(module));
 
 		if (!source.getModifiers().contains(JavaModifier.PUBLIC) ||
@@ -196,7 +225,7 @@ class Asciidoctor {
 
 		if (type.isEventListener()) {
 
-			if (JAVADOC_SOURCE == null) {
+			if (!docSource.isPresent()) {
 
 				return String.format("%s listening to %s", //
 						toInlineCode(type.getType()), //
@@ -210,7 +239,7 @@ class Asciidoctor {
 				JavaClass parameterType = it.getMethod().getRawParameterTypes().get(0);
 				String isAsync = it.isAsync() ? "(async) " : "";
 
-				return JAVADOC_SOURCE.getDocumentation(it.getMethod())
+				return docSource.flatMap(source -> source.getDocumentation(it.getMethod()))
 						.map(doc -> String.format("** %s %s-- %s", toInlineCode(parameterType), isAsync, doc))
 						.orElseGet(() -> String.format("** %s %s", toInlineCode(parameterType), isAsync));
 

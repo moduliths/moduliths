@@ -203,6 +203,22 @@ public class Module {
 	}
 
 	/**
+	 * Returns the {@link JavaClass} for the given candidate simple of fully-qualified type name.
+	 *
+	 * @param candidate must not be {@literal null} or empty.
+	 * @return will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public Optional<JavaClass> getType(String candidate) {
+
+		Assert.hasText(candidate, "Candidate must not be null or emtpy!");
+
+		return basePackage.stream()
+				.filter(hasSimpleOrFullyQualifiedName(candidate))
+				.findFirst();
+	}
+
+	/**
 	 * Returns whether the given {@link JavaClass} is exposed by the current module, i.e. whether it's part of any of the
 	 * module's named interfaces.
 	 *
@@ -302,6 +318,20 @@ public class Module {
 		return Stream.concat(explicitlyDeclaredModules, modules.getSharedModules().stream()) //
 				.distinct() //
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns whether the given module contains a type with the given simple or fully qualified name.
+	 *
+	 * @param candidate must not be {@literal null} or empty.
+	 * @return
+	 * @since 1.1
+	 */
+	boolean contains(String candidate) {
+
+		Assert.hasText(candidate, "Candidate must not be null or empty!");
+
+		return getType(candidate).isPresent();
 	}
 
 	private List<EventType> findPublishedEvents() {
@@ -404,6 +434,10 @@ public class Module {
 				.and(repositories) //
 				.and(collect.getOrDefault(true, Collections.emptyList())) //
 				.and(collect.getOrDefault(false, Collections.emptyList()));
+	}
+
+	private static Predicate<JavaClass> hasSimpleOrFullyQualifiedName(String candidate) {
+		return it -> it.getSimpleName().equals(candidate) || it.getFullName().equals(candidate);
 	}
 
 	public enum DependencyDepth {

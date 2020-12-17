@@ -130,6 +130,27 @@ public class Documenter {
 	}
 
 	/**
+	 * Writes all available documentation:
+	 * <ul>
+	 * <li>The entire set of modules as overview component diagram.</li>
+	 * <li>Individual component diagrams per module to include all upstream modules.</li>
+	 * <li>The Module Canvas for each module.</li>
+	 * </ul>
+	 *
+	 * @param options must not be {@literal null}, use {@link Options#defaults()} for default.
+	 * @param canvasOptions must not be {@literal null}, use {@link CanvasOptions#defaults()} for default.
+	 * @return the current instance, will never be {@literal null}.
+	 * @throws IOException
+	 * @since 1.1
+	 */
+	public Documenter writeDocumentation(Options options, CanvasOptions canvasOptions) throws IOException {
+
+		return writeModulesAsPlantUml(options)
+				.writeIndividualModulesAsPlantUml(options) //
+				.writeModuleCanvases(canvasOptions);
+	}
+
+	/**
 	 * Writes the PlantUML component diagram for all {@link Modules}.
 	 *
 	 * @param options must not be {@literal null}.
@@ -149,9 +170,24 @@ public class Documenter {
 	}
 
 	/**
+	 * Writes the component diagrams for all individual modules.
+	 *
+	 * @param options must not be {@literal null}.
+	 * @return the current instance, will never be {@literal null}.
+	 * @since 1.1
+	 */
+	public Documenter writeIndividualModulesAsPlantUml(Options options) {
+
+		modules.forEach(it -> writeModuleAsPlantUml(it, options));
+
+		return this;
+	}
+
+	/**
 	 * Writes the PlantUML component diagram for the given {@link Module}.
 	 *
 	 * @param module must not be {@literal null}.
+	 * @return the current instance, will never be {@literal null}.
 	 */
 	public Documenter writeModuleAsPlantUml(Module module) {
 
@@ -165,6 +201,7 @@ public class Documenter {
 	 *
 	 * @param module must not be {@literal null}.
 	 * @param options must not be {@literal null}.
+	 * @return the current instance, will never be {@literal null}.
 	 */
 	public Documenter writeModuleAsPlantUml(Module module, Options options) {
 
@@ -183,6 +220,11 @@ public class Documenter {
 		return writeViewAsPlantUml(view, String.format(fileNamePattern, module.getName()), options);
 	}
 
+	/**
+	 * Writes all module canvases using {@link Options#defaults()}.
+	 *
+	 * @return the current instance, will never be {@literal null}.
+	 */
 	public Documenter writeModuleCanvases() {
 		return writeModuleCanvases(CanvasOptions.defaults());
 	}
@@ -225,15 +267,15 @@ public class Documenter {
 
 	public String toModuleCanvas(Module module, CanvasOptions options) {
 
-		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(options.getApiBase(), module);
+		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(modules, options.getApiBase());
 		Function<List<JavaClass>, String> mapper = asciidoctor::typesToBulletPoints;
 
 		StringBuilder builder = new StringBuilder();
 		builder.append(startTable("%autowidth.stretch, cols=\"h,a\""));
 		builder.append(writeTableRow("Base package", asciidoctor.toInlineCode(module.getBasePackage().getName())));
-		builder.append(writeTableRow("Spring components", asciidoctor.renderSpringBeans(options)));
+		builder.append(writeTableRow("Spring components", asciidoctor.renderSpringBeans(options, module)));
 		builder.append(addTableRow(module.getAggregateRoots(modules), "Aggregate roots", mapper));
-		builder.append(writeTableRow("Published events", asciidoctor.renderEvents(module.getPublishedEvents())));
+		builder.append(writeTableRow("Published events", asciidoctor.renderEvents(module)));
 		builder.append(addTableRow(module.getEventsListenedTo(modules), "Events listened to", mapper));
 		builder.append(startOrEndTable());
 
