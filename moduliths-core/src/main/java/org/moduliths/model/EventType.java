@@ -64,9 +64,7 @@ public class EventType {
 				.flatMap(constructor -> constructor.getCallsOfSelf().stream());
 
 		this.sources = Stream.concat(constructorCalls, factoryMethodCalls)
-				.filter(call -> {
-					return !call.getOriginOwner().equals(type);
-				})
+				.filter(call -> !call.getOriginOwner().equals(type))
 				.map(JavaAccessSource::new)
 				.collect(Collectors.toList());
 	}
