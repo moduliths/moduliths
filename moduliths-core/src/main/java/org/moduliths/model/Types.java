@@ -101,6 +101,7 @@ class Types {
 
 		private static final String BASE_PACKAGE = "org.springframework";
 
+		static final String APPLICATION_LISTENER = BASE_PACKAGE + ".context.ApplicationListener";
 		static final String AT_AUTOWIRED = BASE_PACKAGE + ".beans.factory.annotation.Autowired";
 		static final String AT_ASYNC = BASE_PACKAGE + ".scheduling.annotation.Async";
 		static final String AT_BEAN = BASE_PACKAGE + ".context.annotation.Bean";

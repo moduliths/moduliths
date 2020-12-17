@@ -182,9 +182,23 @@ public abstract class ArchitecturallyEvidentType {
 
 	static class SpringAwareArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
-		private static final Predicate<JavaMethod> IS_EVENT_LISTENER = it -> Types
+		/**
+		 * Methods (meta-)annotated with @EventListener.
+		 */
+		private static final Predicate<JavaMethod> IS_ANNOTATED_EVENT_LISTENER = it -> Types
 				.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER).apply(it)
 				|| Types.isAnnotatedWith(SpringTypes.AT_TX_EVENT_LISTENER).apply(it);
+
+		/**
+		 * {@code ApplicationListener.onApplicationEvent(…)}
+		 */
+		private static final Predicate<JavaMethod> IS_IMPLEMENTING_EVENT_LISTENER = it -> //
+		it.getOwner().isAssignableTo(SpringTypes.APPLICATION_LISTENER) //
+				&& it.getName().equals("onApplicationEvent") //
+				&& !it.reflect().isSynthetic();
+
+		private static final Predicate<JavaMethod> IS_EVENT_LISTENER = IS_ANNOTATED_EVENT_LISTENER
+				.or(IS_IMPLEMENTING_EVENT_LISTENER);
 
 		public SpringAwareArchitecturallyEvidentType(JavaClass type) {
 			super(type);

@@ -32,6 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.moduliths.model.ArchitecturallyEvidentType.SpringAwareArchitecturallyEvidentType;
 import org.moduliths.model.ArchitecturallyEvidentType.SpringDataAwareArchitecturallyEvidentType;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -187,6 +189,16 @@ class ArchitecturallyEvidentTypeUnitTest {
 				.containsExactly(Object.class.getName(), String.class.getName());
 	}
 
+	@Test // #145
+	void discoversImplementingEventListener() {
+
+		JavaClass listenerType = classes.getRequiredClass(ImplementingEventListener.class);
+
+		assertThat(ArchitecturallyEvidentType.of(listenerType, classes).getReferenceTypes()) //
+				.extracting(JavaClass::getFullName) //
+				.containsExactly(ApplicationReadyEvent.class.getName());
+	}
+
 	private Iterator<ArchitecturallyEvidentType> getTypesFor(Class<?>... types) {
 
 		return Stream.of(types) //
@@ -262,5 +274,15 @@ class ArchitecturallyEvidentTypeUnitTest {
 
 		@EventListener
 		void onOther(Object event) {}
+	}
+
+	class ImplementingEventListener implements ApplicationListener<ApplicationReadyEvent> {
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
+		 */
+		@Override
+		public void onApplicationEvent(ApplicationReadyEvent event) {}
 	}
 }
