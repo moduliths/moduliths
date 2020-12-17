@@ -16,7 +16,6 @@
 package org.moduliths.docs;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.Test;
 import org.moduliths.model.Modules;
@@ -26,10 +25,25 @@ import org.moduliths.model.Modules;
  */
 class AsciidoctorUnitTests {
 
-	Asciidoctor asciidoctor = Asciidoctor.withoutJavadocBase(mock(Modules.class));
+	Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(Modules.of("org.moduliths"), "{javadoc}");
 
 	@Test
 	void formatsInlineCode() {
 		assertThat(asciidoctor.toInlineCode("Foo")).isEqualTo("`Foo`");
+	}
+
+	@Test // #143
+	void rendersLinkToMethodReference() {
+
+		assertThat(asciidoctor.toInlineCode("Documenter#toModuleCanvas(Module, CanvasOptions)"))
+				.isEqualTo("link:{javadoc}/org/moduliths/docs/Documenter.html"
+						+ "[`o.m.d.Documenter#toModuleCanvas(Module, CanvasOptions)`]");
+	}
+
+	@Test // #143
+	void doesNotRenderLinkToMethodReferenceForNonPublicType() {
+
+		assertThat(asciidoctor.toInlineCode("DocumentationSource#getDocumentation(JavaMethod)"))
+				.isEqualTo("`o.m.d.DocumentationSource#getDocumentation(JavaMethod)`");
 	}
 }

@@ -91,10 +91,15 @@ class Asciidoctor implements InlineCodeSource {
 	 */
 	public String toInlineCode(String source) {
 
-		return modules.getModuleByType(source)
-				.flatMap(it -> it.getType(source))
-				.map(this::toInlineCode)
-				.orElseGet(() -> String.format("`%s`", source));
+		String[] parts = source.split("#");
+
+		String type = parts[0];
+		Optional<String> methodSignature = parts.length == 2 ? Optional.of(parts[1]) : Optional.empty();
+
+		return modules.getModuleByType(type)
+				.flatMap(it -> it.getType(type))
+				.map(it -> toOptionalLink(it, methodSignature))
+				.orElseGet(() -> String.format("`%s`", type));
 	}
 
 	public String toInlineCode(JavaClass type) {
@@ -203,13 +208,18 @@ class Asciidoctor implements InlineCodeSource {
 	}
 
 	private String toOptionalLink(JavaClass source) {
+		return toOptionalLink(source, Optional.empty());
+	}
+
+	private String toOptionalLink(JavaClass source, Optional<String> methodSignature) {
 
 		Module module = modules.getModuleByType(source).orElse(null);
-		String type = toCode(FormatableJavaClass.of(source).getAbbreviatedFullName(module));
+		String typeAndMethod = toCode(
+				toTypeAndMethod(FormatableJavaClass.of(source).getAbbreviatedFullName(module), methodSignature));
 
 		if (!source.getModifiers().contains(JavaModifier.PUBLIC) ||
 				!module.contains(source)) {
-			return type;
+			return typeAndMethod;
 		}
 
 		String classPath = convertClassNameToResourcePath(source.getFullName()) //
@@ -217,7 +227,13 @@ class Asciidoctor implements InlineCodeSource {
 
 		return Optional.ofNullable(javaDocBase == PLACEHOLDER ? null : javaDocBase) //
 				.map(it -> it.concat("/").concat(classPath).concat(".html")) //
-				.map(it -> toLink(type, it)) //
+				.map(it -> toLink(typeAndMethod, it)) //
+				.orElseGet(() -> typeAndMethod);
+	}
+
+	private static String toTypeAndMethod(String type, Optional<String> methodSignature) {
+		return methodSignature
+				.map(it -> type.concat("#").concat(it))
 				.orElse(type);
 	}
 
