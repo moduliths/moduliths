@@ -172,6 +172,9 @@ limitations under the License.
 	</dependencies>
 
 	<build>
+
+		<defaultGoal>verify</defaultGoal>
+
 		<plugins>
 
 			<plugin>
