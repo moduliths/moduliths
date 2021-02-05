@@ -37,7 +37,7 @@ import com.acme.myproject.moduleB.internal.InternalComponentB;
 class ModuleBTest {
 
 	@Nested
-	static class TestWithoutMocks {
+	static class WithoutMocksTest {
 
 		@Autowired ServiceComponentB serviceComponentB;
 
@@ -46,13 +46,13 @@ class ModuleBTest {
 
 		@Test
 		void failsToStartBecauseServiceComponentAIsMissing() throws Exception {
-			TestUtils.assertDependencyMissing(TestWithoutMocks.Config.class, ServiceComponentA.class);
+			TestUtils.assertDependencyMissing(WithoutMocksTest.Config.class, ServiceComponentA.class);
 		}
 	}
 
 	@Nested
 	@NonVerifyingModuleTest
-	static class TestWithMocks {
+	static class WithMocksTest {
 
 		@Autowired ApplicationContext context;
 		@MockBean ServiceComponentA serviceComponentA;
@@ -80,7 +80,7 @@ class ModuleBTest {
 
 	@Nested
 	@NonVerifyingModuleTest(BootstrapMode.DIRECT_DEPENDENCIES)
-	static class TestWithUpstreamModule {
+	static class WithUpstreamModuleTest {
 
 		@Autowired ServiceComponentA componentA;
 		@Autowired ServiceComponentB componentB;
