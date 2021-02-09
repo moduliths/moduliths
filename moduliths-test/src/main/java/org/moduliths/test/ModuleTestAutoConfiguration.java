@@ -19,13 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.annotation.Configuration;
@@ -69,6 +70,7 @@ class ModuleTestAutoConfiguration {
 			setBasePackagesOn(registry, ENTITY_SCAN_PACKAGE, "packageNames", basePackages);
 		}
 
+		@SuppressWarnings("unchecked")
 		private void setBasePackagesOn(BeanDefinitionRegistry registry, String beanName, String fieldName,
 				List<String> packages) {
 
@@ -86,16 +88,26 @@ class ModuleTestAutoConfiguration {
 					.orElse(null);
 
 			if (field != null) {
+
+				// Keep all auto-configuration packages from Moduliths
+
 				ReflectionUtils.makeAccessible(field);
+				((Set<String>) ReflectionUtils.getField(field, definition)).stream()
+						.filter(it -> it.startsWith("org.moduliths"))
+						.forEach(packages::add);
+
 				ReflectionUtils.setField(field, definition, new HashSet<>(packages));
+
 			} else {
+
+				ValueHolder holder = definition.getConstructorArgumentValues().getArgumentValue(0, String[].class);
+				Arrays.stream((String[]) holder.getValue())
+						.filter(it -> it.startsWith("org.moduliths"))
+						.forEach(packages::add);
+
 				// Fall back to customize the bean definition in a Boot 2.3 arrangement
 				definition.getConstructorArgumentValues().addIndexedArgumentValue(0, packages);
 			}
-		}
-
-		private void customizeBasePackagesBeanDefinition(BeanDefinition definition, Collection<String> packages) {
-
 		}
 	}
 }
