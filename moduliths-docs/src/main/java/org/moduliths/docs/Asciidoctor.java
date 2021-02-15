@@ -217,8 +217,9 @@ class Asciidoctor implements InlineCodeSource {
 		String typeAndMethod = toCode(
 				toTypeAndMethod(FormatableJavaClass.of(source).getAbbreviatedFullName(module), methodSignature));
 
-		if (!source.getModifiers().contains(JavaModifier.PUBLIC) ||
-				!module.contains(source)) {
+		if (module == null
+				|| !source.getModifiers().contains(JavaModifier.PUBLIC)
+				|| !module.contains(source)) {
 			return typeAndMethod;
 		}
 

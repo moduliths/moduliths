@@ -19,6 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.moduliths.model.Modules;
+import org.springframework.context.ApplicationContext;
+
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 
 /**
  * @author Oliver Drotbohm
@@ -45,5 +49,13 @@ class AsciidoctorUnitTests {
 
 		assertThat(asciidoctor.toInlineCode("DocumentationSource#getDocumentation(JavaMethod)"))
 				.isEqualTo("`o.m.d.DocumentationSource#getDocumentation(JavaMethod)`");
+	}
+
+	@Test // #154
+	void rendersInlineCodeForNonModuleTypeCorrectly() {
+
+		JavaClass type = new ClassFileImporter().importClass(ApplicationContext.class);
+
+		assertThatCode(() -> asciidoctor.toInlineCode(type)).doesNotThrowAnyException();
 	}
 }
