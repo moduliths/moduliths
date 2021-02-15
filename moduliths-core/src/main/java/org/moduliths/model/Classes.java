@@ -46,7 +46,7 @@ import com.tngtech.archunit.core.domain.properties.HasName;
  * @author Oliver Gierke
  */
 @ToString
-class Classes implements DescribedIterable<JavaClass> {
+public class Classes implements DescribedIterable<JavaClass> {
 
 	private final List<JavaClass> classes;
 
@@ -139,7 +139,7 @@ class Classes implements DescribedIterable<JavaClass> {
 		return new Classes(result);
 	}
 
-	Stream<JavaClass> stream() {
+	public Stream<JavaClass> stream() {
 		return classes.stream();
 	}
 
