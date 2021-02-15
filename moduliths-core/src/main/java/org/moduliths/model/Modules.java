@@ -64,7 +64,8 @@ public class Modules implements Iterable<Module> {
 			"org.springframework.context.event", //
 			"org.springframework.data.repository", //
 			"org.springframework.stereotype", //
-			"org.springframework.web.bind.annotation" //
+			"org.springframework.web.bind.annotation", //
+			"org.springframework.web.reactive" //
 	);
 
 	private static final ModuleDetectionStrategy DETECTION_STRATEGY;
