@@ -185,8 +185,8 @@ public abstract class ArchitecturallyEvidentType {
 		/**
 		 * Methods (meta-)annotated with @EventListener.
 		 */
-		private static final Predicate<JavaMethod> IS_ANNOTATED_EVENT_LISTENER = it -> Types
-				.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER).apply(it)
+		private static final Predicate<JavaMethod> IS_ANNOTATED_EVENT_LISTENER = it -> //
+		Types.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER).apply(it) //
 				|| Types.isAnnotatedWith(SpringTypes.AT_TX_EVENT_LISTENER).apply(it);
 
 		/**
@@ -378,6 +378,9 @@ public abstract class ArchitecturallyEvidentType {
 
 	static class JMoleculesArchitecturallyEvidentType extends ArchitecturallyEvidentType {
 
+		private static final Predicate<JavaMethod> IS_ANNOTATED_EVENT_LISTENER = Types
+				.isAnnotatedWith(JMoleculesTypes.AT_DOMAIN_EVENT_HANDLER)::apply;
+
 		JMoleculesArchitecturallyEvidentType(JavaClass type) {
 			super(type);
 		}
@@ -430,6 +433,15 @@ public abstract class ArchitecturallyEvidentType {
 			JavaClass type = getType();
 
 			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Service.class).apply(type);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isEventListener()
+		 */
+		@Override
+		public boolean isEventListener() {
+			return getType().getMethods().stream().anyMatch(IS_ANNOTATED_EVENT_LISTENER);
 		}
 	}
 

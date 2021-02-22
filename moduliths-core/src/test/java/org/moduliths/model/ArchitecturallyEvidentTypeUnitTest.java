@@ -27,6 +27,7 @@ import javax.persistence.Entity;
 
 import org.jddd.core.types.AggregateRoot;
 import org.jddd.core.types.Identifier;
+import org.jmolecules.event.annotation.DomainEventHandler;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -199,6 +200,14 @@ class ArchitecturallyEvidentTypeUnitTest {
 				.containsExactly(ApplicationReadyEvent.class.getName());
 	}
 
+	@Test // #159
+	void discoversJMoleculesEventHandler() {
+
+		JavaClass type = classes.getRequiredClass(JMoleculesEventListener.class);
+
+		assertThat(ArchitecturallyEvidentType.of(type, classes).isEventListener()).isTrue();
+	}
+
 	private Iterator<ArchitecturallyEvidentType> getTypesFor(Class<?>... types) {
 
 		return Stream.of(types) //
@@ -263,6 +272,14 @@ class ArchitecturallyEvidentTypeUnitTest {
 
 	@org.jmolecules.ddd.annotation.Repository
 	class JMoleculesAnnotatedRepository {}
+
+	interface JMoleculesEventListener {
+
+		@DomainEventHandler
+		void on(Object event);
+	}
+
+	// Spring
 
 	class SomeEventListener {
 

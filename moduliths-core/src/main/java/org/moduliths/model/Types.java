@@ -67,14 +67,15 @@ class Types {
 
 		private static final String BASE_PACKAGE = "org.jmolecules";
 		private static final String ANNOTATION_PACKAGE = BASE_PACKAGE + ".ddd.annotation";
-		private static final String ENTITY_ANNOTATION = ANNOTATION_PACKAGE + ".Entity";
+		private static final String AT_ENTITY = ANNOTATION_PACKAGE + ".Entity";
 		private static final String ARCHUNIT_RULES = BASE_PACKAGE + ".archunit.JDddRules";
 
-		static final String EVENT_ANNOTATION = BASE_PACKAGE + ".event.annotation.DomainEvent";
-		static final String EVENT_TYPE = BASE_PACKAGE + ".event.types.DomainEvent";
+		static final String AT_DOMAIN_EVENT_HANDLER = BASE_PACKAGE + ".event.annotation.DomainEventHandler";
+		static final String AT_DOMAIN_EVENT = BASE_PACKAGE + ".event.annotation.DomainEvent";
+		static final String DOMAIN_EVENT = BASE_PACKAGE + ".event.types.DomainEvent";
 
 		public static boolean isPresent() {
-			return ClassUtils.isPresent(ENTITY_ANNOTATION, JMoleculesTypes.class.getClassLoader());
+			return ClassUtils.isPresent(AT_ENTITY, JMoleculesTypes.class.getClassLoader());
 		}
 
 		public static boolean areRulesPresent() {

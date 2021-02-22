@@ -337,10 +337,10 @@ public class Module {
 	private List<EventType> findPublishedEvents() {
 
 		DescribedPredicate<JavaClass> isEvent = implement(JDDDTypes.EVENT_TYPE) //
-				.or(implement(JMoleculesTypes.EVENT_TYPE)) //
+				.or(implement(JMoleculesTypes.DOMAIN_EVENT)) //
 				.or(isAnnotatedWith(Event.class)) //
 				.or(isAnnotatedWith(JDDDTypes.EVENT_ANNOTATION)) //
-				.or(isAnnotatedWith(JMoleculesTypes.EVENT_ANNOTATION));
+				.or(isAnnotatedWith(JMoleculesTypes.AT_DOMAIN_EVENT));
 
 		return basePackage.that(isEvent).stream() //
 				.map(EventType::new)
@@ -768,8 +768,10 @@ public class Module {
 		}
 
 		public static DependencyType forCodeUnit(JavaCodeUnit codeUnit) {
-			return codeUnit.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER) //
-					|| codeUnit.isMetaAnnotatedWith(SpringTypes.AT_EVENT_LISTENER) ? EVENT_LISTENER : DEFAULT;
+			return Types.isAnnotatedWith(SpringTypes.AT_EVENT_LISTENER).apply(codeUnit) //
+					|| Types.isAnnotatedWith(JMoleculesTypes.AT_DOMAIN_EVENT_HANDLER).apply(codeUnit) //
+							? EVENT_LISTENER
+							: DEFAULT;
 		}
 
 		public static DependencyType forDependency(Dependency dependency) {
