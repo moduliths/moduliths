@@ -69,16 +69,16 @@
 
 		<dependency>
 			<groupId>org.jmolecules</groupId>
-			<artifactId>jmolecules-archunit</artifactId>
-			<version>${jmolecules.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jmolecules</groupId>
 			<artifactId>jmolecules-events</artifactId>
 			<version>${jmolecules.version}</version>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jmolecules.integrations</groupId>
+			<artifactId>jmolecules-archunit</artifactId>
+			<version>${jmolecules-integrations.version}</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
