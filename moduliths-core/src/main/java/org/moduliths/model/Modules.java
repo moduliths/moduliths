@@ -57,17 +57,6 @@ public class Modules implements Iterable<Module> {
 
 	private static final Map<CacheKey, Modules> CACHE = new HashMap<>();
 
-	private static final List<String> FRAMEWORK_PACKAGES = Arrays.asList( //
-			"javax.persistence", //
-			"org.jddd", //
-			"org.jmolecules", //
-			"org.springframework.context.event", //
-			"org.springframework.data.repository", //
-			"org.springframework.stereotype", //
-			"org.springframework.web.bind.annotation", //
-			"org.springframework.web.reactive" //
-	);
-
 	private static final ModuleDetectionStrategy DETECTION_STRATEGY;
 
 	static {
@@ -97,13 +86,9 @@ public class Modules implements Iterable<Module> {
 			boolean useFullyQualifiedModuleNames) {
 
 		this.metadata = metadata;
-
-		List<String> toImport = new ArrayList<>(packages);
-		toImport.addAll(FRAMEWORK_PACKAGES);
-
 		this.allClasses = new ClassFileImporter() //
 				.withImportOption(new ImportOption.DoNotIncludeTests()) //
-				.importPackages(toImport) //
+				.importPackages(packages) //
 				.that(not(ignored));
 
 		Classes classes = Classes.of(allClasses);
