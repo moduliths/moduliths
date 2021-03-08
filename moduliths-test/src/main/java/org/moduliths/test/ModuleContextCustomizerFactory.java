@@ -92,7 +92,7 @@ class ModuleContextCustomizerFactory implements ContextCustomizerFactory {
 			String bootstrapMode = execution.getBootstrapMode().name();
 
 			String message = String.format("Bootstrapping @ModuleTest for %s in mode %s (%s)…", moduleName, bootstrapMode,
-					modules.getModulithType());
+					modules.getModulithSource());
 
 			LOG.info(message);
 			LOG.info(getSeparator("=", message));
