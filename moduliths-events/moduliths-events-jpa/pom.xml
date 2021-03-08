@@ -9,8 +9,11 @@
 	</parent>
 
 	<name>Moduliths - Events - JPA-based registry</name>
-
 	<artifactId>moduliths-events-jpa</artifactId>
+
+	<properties>
+		<module.name>org.moduliths.events.jpa</module.name>
+	</properties>
 
 	<dependencies>
 

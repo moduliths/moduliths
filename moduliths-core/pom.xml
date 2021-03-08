@@ -10,6 +10,11 @@
 	<name>Moduliths - Core</name>
 	<artifactId>moduliths-core</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.core</module.name>
+	</properties>
+
+
 	<dependencies>
 
 		<dependency>

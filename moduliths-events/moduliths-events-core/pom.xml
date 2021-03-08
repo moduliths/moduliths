@@ -12,4 +12,9 @@
 
 	<artifactId>moduliths-events-core</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.events.core</module.name>
+	</properties>
+	
+
 </project>

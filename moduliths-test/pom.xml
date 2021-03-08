@@ -10,6 +10,10 @@
 	<name>Moduliths - Test</name>
 	<artifactId>moduliths-test</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.test</module.name>
+	</properties>
+
 	<dependencies>
 
 		<dependency>

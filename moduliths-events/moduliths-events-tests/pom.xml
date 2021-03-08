@@ -9,6 +9,10 @@
 	<name>Moduliths - Events - Integration tests</name>
 	<artifactId>moduliths-events-tests</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.events.integrationtests</module.name>
+	</properties>
+
 	<dependencies>
 
 		<dependency>

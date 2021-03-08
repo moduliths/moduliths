@@ -9,8 +9,12 @@
 	</parent>
 
 	<name>Moduliths - Events - Jackson serializer</name>
-
 	<artifactId>moduliths-events-jackson</artifactId>
+
+	<properties>
+		<module.name>org.moduliths.events.jackson</module.name>
+	</properties>
+	
 
 	<dependencies>
 

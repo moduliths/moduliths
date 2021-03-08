@@ -11,6 +11,10 @@
 	<name>Moduliths - Sample</name>
 	<artifactId>moduliths-sample</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.sample</module.name>
+	</properties>
+
 	<profiles>
 		<profile>
 			<id>jqa</id>

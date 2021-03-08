@@ -11,6 +11,10 @@
 	<name>Moduliths - Events - Spring Boot Starter</name>
 	<artifactId>moduliths-events-starter</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.events.starter</module.name>
+	</properties>
+
 	<dependencies>
 
 		<dependency>

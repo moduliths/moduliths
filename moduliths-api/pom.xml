@@ -10,6 +10,10 @@
 	<name>Moduliths - API</name>
 	<artifactId>moduliths-api</artifactId>
 
+	<properties>
+		<module.name>org.moduliths.api</module.name>
+	</properties>
+
 	<dependencies>
 
 		<dependency>
