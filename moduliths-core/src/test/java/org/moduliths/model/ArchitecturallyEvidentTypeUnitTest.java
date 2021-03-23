@@ -208,6 +208,14 @@ class ArchitecturallyEvidentTypeUnitTest {
 		assertThat(ArchitecturallyEvidentType.of(type, classes).isEventListener()).isTrue();
 	}
 
+	@Test // #163
+	void discoversJMoleculesRepository() {
+
+		JavaClass type = classes.getRequiredClass(JMoleculesImplementingRepository.class);
+
+		assertThat(ArchitecturallyEvidentType.of(type, classes).isRepository()).isTrue();
+	}
+
 	private Iterator<ArchitecturallyEvidentType> getTypesFor(Class<?>... types) {
 
 		return Stream.of(types) //
@@ -278,6 +286,9 @@ class ArchitecturallyEvidentTypeUnitTest {
 		@DomainEventHandler
 		void on(Object event);
 	}
+
+	interface JMoleculesImplementingRepository extends
+			org.jmolecules.ddd.types.Repository<JMoleculesImplementingAggregateRoot, JMoleculesImplementingIdentifier> {}
 
 	// Spring
 

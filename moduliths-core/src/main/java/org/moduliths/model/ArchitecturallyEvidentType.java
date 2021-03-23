@@ -407,8 +407,8 @@ public abstract class ArchitecturallyEvidentType {
 
 			JavaClass type = getType();
 
-			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.AggregateRoot.class).apply(type) || //
-					type.isAssignableTo(org.jmolecules.ddd.types.AggregateRoot.class);
+			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.AggregateRoot.class).apply(type) //
+					|| type.isAssignableTo(org.jmolecules.ddd.types.AggregateRoot.class);
 		}
 
 		/*
@@ -420,7 +420,8 @@ public abstract class ArchitecturallyEvidentType {
 
 			JavaClass type = getType();
 
-			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Repository.class).apply(type);
+			return Types.isAnnotatedWith(org.jmolecules.ddd.annotation.Repository.class).apply(type)
+					|| type.isAssignableTo(org.jmolecules.ddd.types.Repository.class);
 		}
 
 		/*
