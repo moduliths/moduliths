@@ -28,7 +28,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
@@ -66,13 +65,14 @@ class ModuleTestAutoConfiguration {
 			LOG.info("Re-configuring auto-configuration and entity scan packages to: {}.",
 					StringUtils.collectionToDelimitedString(basePackages, ", "));
 
-			setBasePackagesOn(registry, AUTOCONFIG_PACKAGES, AutoConfigurationPackages.class.getName(), basePackages);
-			setBasePackagesOn(registry, ENTITY_SCAN_PACKAGE, "packageNames", basePackages);
+			setBasePackagesOn(registry, AUTOCONFIG_PACKAGES, "BasePackagesBeanDefinition", "basePackages", basePackages);
+			setBasePackagesOn(registry, ENTITY_SCAN_PACKAGE, "EntityScanPackagesBeanDefinition", "packageNames",
+					basePackages);
 		}
 
 		@SuppressWarnings("unchecked")
-		private void setBasePackagesOn(BeanDefinitionRegistry registry, String beanName, String fieldName,
-				List<String> packages) {
+		private void setBasePackagesOn(BeanDefinitionRegistry registry, String beanName, String definitionType,
+				String fieldName, List<String> packages) {
 
 			if (!registry.containsBeanDefinition(beanName)) {
 				return;
@@ -82,8 +82,8 @@ class ModuleTestAutoConfiguration {
 
 			// For Boot 2.4, we deal with a BasePackagesBeanDefinition
 			Field field = Arrays.stream(definition.getClass().getDeclaredFields())
-					.filter(__ -> definition.getClass().getSimpleName().equals("BasePackagesBeanDefinition"))
-					.filter(it -> it.getName().equals("basePackages"))
+					.filter(__ -> definition.getClass().getSimpleName().equals(definitionType))
+					.filter(it -> it.getName().equals(fieldName))
 					.findFirst()
 					.orElse(null);
 
