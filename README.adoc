@@ -341,7 +341,7 @@ Named Interface:: Given a module, a sub-set of types that constitute the API of 
 * Commit against release ticket id
 * Tag commit
 * Push commit and tag
-* `mvn clean deploy`
+* `mvn clean deploy -Psonatype`
 * `mvn versions:set -DnewVersion=$snapshotVersion -DgenerateBackupPoms=false`
 * Commit against release ticket id with message "Prepare next development iteration."
 * Push commit.
