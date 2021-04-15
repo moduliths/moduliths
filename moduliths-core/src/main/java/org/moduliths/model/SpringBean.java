@@ -53,7 +53,7 @@ public class SpringBean {
 	 */
 	public List<JavaClass> getInterfacesWithinModule() {
 
-		return type.getAllInterfaces().stream() //
+		return type.getRawInterfaces().stream() //
 				.filter(module::contains) //
 				.collect(Collectors.toList());
 	}
