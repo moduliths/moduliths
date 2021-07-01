@@ -27,8 +27,7 @@
 	<properties>
 
 		<archunit.version>0.19.0</archunit.version>
-		<jmolecules.version>1.2.0</jmolecules.version>
-		<jmolecules-integrations.version>0.4.0</jmolecules-integrations.version>
+		<jmolecules-bom.version>2021.0.2</jmolecules-bom.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -160,6 +159,18 @@ limitations under the License.
 		</profile>
 
 	</profiles>
+	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jmolecules</groupId>
+				<artifactId>jmolecules-bom</artifactId>
+				<version>${jmolecules-bom.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 
