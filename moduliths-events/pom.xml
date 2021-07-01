@@ -20,10 +20,6 @@
 		<module>moduliths-events-starter</module>
 	</modules>
 
-	<properties>
-		<spring-framework.version>5.3.8</spring-framework.version>
-	</properties>
-
 	<dependencies>
 
 		<dependency>
