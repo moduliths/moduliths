@@ -39,30 +39,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- jDDD -->
-
-		<dependency>
-			<groupId>org.jddd</groupId>
-			<artifactId>jddd-core</artifactId>
-			<version>${jddd.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jddd</groupId>
-			<artifactId>jddd-archunit</artifactId>
-			<version>${jddd.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jddd</groupId>
-			<artifactId>jddd-events</artifactId>
-			<version>${jddd.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<!-- jMolecules (supersedes jDDD) -->
+		<!-- jMolecules -->
 
 		<dependency>
 			<groupId>org.jmolecules</groupId>

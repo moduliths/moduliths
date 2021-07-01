@@ -44,13 +44,6 @@ public class TestEvents {
 		}
 	}
 
-	// jDDD
-
-	@org.jddd.event.annotation.DomainEvent
-	public static class JDddAnnotated {}
-
-	public static class JDddImplementing implements org.jddd.event.types.DomainEvent {}
-
 	// jMolecules
 
 	@org.jmolecules.event.annotation.DomainEvent

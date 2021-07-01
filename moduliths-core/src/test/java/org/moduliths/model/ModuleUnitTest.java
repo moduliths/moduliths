@@ -26,8 +26,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import com.acme.withatbean.TestEvents.DomainEvent;
-import com.acme.withatbean.TestEvents.JDddAnnotated;
-import com.acme.withatbean.TestEvents.JDddImplementing;
 import com.acme.withatbean.TestEvents.JMoleculesAnnotated;
 import com.acme.withatbean.TestEvents.JMoleculesImplementing;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -60,16 +58,13 @@ class ModuleUnitTest {
 	void discoversPublishedEvents() {
 
 		JavaClass domainEvent = classes.get(DomainEvent.class);
-		JavaClass jdddAnnotated = classes.get(JDddAnnotated.class);
-		JavaClass jdddImplementing = classes.get(JDddImplementing.class);
 		JavaClass jMoleculesAnnotated = classes.get(JMoleculesAnnotated.class);
 		JavaClass jMoleculesImplementing = classes.get(JMoleculesImplementing.class);
 
 		List<EventType> events = module.getPublishedEvents();
 
 		assertThat(events.stream().map(EventType::getType)) //
-				.containsExactlyInAnyOrder(domainEvent, jdddAnnotated, jdddImplementing, jMoleculesAnnotated,
-						jMoleculesImplementing);
+				.containsExactlyInAnyOrder(domainEvent, jMoleculesAnnotated, jMoleculesImplementing);
 		assertThat(events.stream().filter(it -> it.getType().equals(domainEvent))) //
 				.element(0) //
 				.satisfies(it -> {

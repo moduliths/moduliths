@@ -22,13 +22,6 @@
 			<optional>true</optional>
 		</dependency>
 
-		<dependency>
-			<groupId>org.jddd</groupId>
-			<artifactId>jddd-events</artifactId>
-			<version>${jddd.version}</version>
-			<optional>true</optional>
-		</dependency>
-
 	</dependencies>
 
 </project>

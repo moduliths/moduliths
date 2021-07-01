@@ -17,7 +17,6 @@ package org.moduliths.model;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 
-import org.jddd.core.annotation.Entity;
 import org.jmolecules.ddd.annotation.AggregateRoot;
 import org.springframework.data.repository.Repository;
 import org.springframework.util.Assert;
@@ -37,7 +36,7 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
 class TestUtils {
 
 	private static Supplier<JavaClasses> imported = Suppliers.memoize(() -> new ClassFileImporter() //
-			.importPackagesOf(Modules.class, Repository.class, Entity.class, AggregateRoot.class));
+			.importPackagesOf(Modules.class, Repository.class, AggregateRoot.class));
 
 	private static DescribedPredicate<JavaClass> IS_MODULE_TYPE = JavaClass.Predicates
 			.resideInAPackage(Modules.class.getPackage().getName());

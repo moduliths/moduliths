@@ -25,8 +25,6 @@ import java.util.stream.Stream;
 
 import javax.persistence.Entity;
 
-import org.jddd.core.types.AggregateRoot;
-import org.jddd.core.types.Identifier;
 import org.jmolecules.event.annotation.DomainEventHandler;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -103,43 +101,6 @@ class ArchitecturallyEvidentTypeUnitTest {
 			assertThat(new SpringDataAwareArchitecturallyEvidentType(entity, classes).isAggregateRoot())
 					.isEqualTo(it.getValue());
 		});
-	}
-
-	@TestFactory // #104
-	Stream<DynamicTest> considersJDddEntity() {
-
-		return DynamicTest.stream(getTypesFor(JDddAnnotatedEntity.class, JDddImplementingEntity.class), //
-				it -> String.format("%s is considered an entity", it.getType().getSimpleName()), //
-				it -> {
-					assertThat(it.isEntity()).isTrue();
-					assertThat(it.isAggregateRoot()).isFalse();
-					assertThat(it.isRepository()).isFalse();
-				});
-	}
-
-	@TestFactory // #104
-	Stream<DynamicTest> considersJDddAggregateRoot() {
-
-		return DynamicTest.stream(getTypesFor(JDddAnnotatedAggregateRoot.class, JDddImplementingAggregateRoot.class), //
-				it -> String.format("%s is considered an entity, aggregate root but not a repository",
-						it.getType().getSimpleName()), //
-				it -> {
-					assertThat(it.isEntity()).isTrue();
-					assertThat(it.isAggregateRoot()).isTrue();
-					assertThat(it.isRepository()).isFalse();
-				});
-	}
-
-	@TestFactory // #104
-	Stream<DynamicTest> considersJDddRepository() {
-
-		return DynamicTest.stream(getTypesFor(JDddAnnotatedRepository.class), //
-				it -> String.format("%s is considered a repository", it.getType().getSimpleName()), //
-				it -> {
-					assertThat(it.isEntity()).isFalse();
-					assertThat(it.isAggregateRoot()).isFalse();
-					assertThat(it.isRepository()).isTrue();
-				});
 	}
 
 	@TestFactory // #127
@@ -240,25 +201,6 @@ class ArchitecturallyEvidentTypeUnitTest {
 	class OtherEntity {}
 
 	class NoEntity {}
-
-	// jDDD
-
-	@org.jddd.core.annotation.Entity
-	class JDddAnnotatedEntity {}
-
-	@org.jddd.core.annotation.AggregateRoot
-	class JDddAnnotatedAggregateRoot {}
-
-	class JDddImplementingIdentifier implements Identifier {}
-
-	abstract class JDddImplementingEntity
-			implements org.jddd.core.types.Entity<JDddImplementingAggregateRoot, JDddImplementingIdentifier> {}
-
-	abstract class JDddImplementingAggregateRoot
-			implements AggregateRoot<JDddImplementingAggregateRoot, JDddImplementingIdentifier> {}
-
-	@org.jddd.core.annotation.Repository
-	class JDddAnnotatedRepository {}
 
 	// jMolecules
 

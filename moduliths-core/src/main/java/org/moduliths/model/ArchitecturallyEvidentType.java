@@ -21,7 +21,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,11 +35,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jddd.core.annotation.AggregateRoot;
-import org.jddd.core.annotation.Entity;
-import org.jddd.core.annotation.Repository;
-import org.jddd.core.annotation.Service;
-import org.moduliths.model.Types.JDDDTypes;
 import org.moduliths.model.Types.JMoleculesTypes;
 import org.moduliths.model.Types.SpringDataTypes;
 import org.moduliths.model.Types.SpringTypes;
@@ -58,11 +52,9 @@ import com.tngtech.archunit.thirdparty.com.google.common.base.Suppliers;
  *
  * @author Oliver Drotbohm
  */
-@Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class ArchitecturallyEvidentType {
 
-	private static boolean deprecationWarningLogged = false;
 	private static Map<Key, ArchitecturallyEvidentType> CACHE = new HashMap<>();
 
 	private final @Getter JavaClass type;
@@ -80,16 +72,6 @@ public abstract class ArchitecturallyEvidentType {
 		return CACHE.computeIfAbsent(Key.of(type, beanTypes), it -> {
 
 			List<ArchitecturallyEvidentType> delegates = new ArrayList<>();
-
-			if (JDDDTypes.isPresent()) {
-
-				if (!deprecationWarningLogged) {
-					LOG.warn("jDDD support in Moduliths is deprecated. Please move to jMolecules (http://jmolecules.org).");
-					deprecationWarningLogged = true;
-				}
-
-				delegates.add(new JDdddArchitecturallyEvidentType(type));
-			}
 
 			if (JMoleculesTypes.isPresent()) {
 				delegates.add(new JMoleculesArchitecturallyEvidentType(type));
@@ -326,53 +308,6 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isRepository() {
 			return SpringDataTypes.isSpringDataRepository().apply(getType());
-		}
-	}
-
-	static class JDdddArchitecturallyEvidentType extends ArchitecturallyEvidentType {
-
-		private JDdddArchitecturallyEvidentType(JavaClass type) {
-			super(type);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.moduliths.model.ArchitecturallyEvidentType#isEntity()
-		 */
-		@Override
-		public boolean isEntity() {
-
-			return Types.isAnnotatedWith(Entity.class).apply(getType()) || //
-					getType().isAssignableTo(org.jddd.core.types.Entity.class);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.moduliths.model.ArchitecturallyEvidentType#isAggregateRoot()
-		 */
-		@Override
-		public boolean isAggregateRoot() {
-
-			return Types.isAnnotatedWith(AggregateRoot.class).apply(getType()) || //
-					getType().isAssignableTo(org.jddd.core.types.AggregateRoot.class);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.moduliths.model.ArchitecturallyEvidentType#isRepository()
-		 */
-		@Override
-		public boolean isRepository() {
-			return Types.isAnnotatedWith(Repository.class).apply(getType());
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.moduliths.model.ArchitecturallyEvidentType#isService()
-		 */
-		@Override
-		public boolean isService() {
-			return Types.isAnnotatedWith(Service.class).apply(getType());
 		}
 	}
 

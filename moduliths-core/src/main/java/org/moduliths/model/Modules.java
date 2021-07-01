@@ -30,11 +30,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jddd.archunit.JDddRules;
 import org.jmolecules.archunit.JMoleculesRules;
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
-import org.moduliths.model.Types.JDDDTypes;
 import org.moduliths.model.Types.JMoleculesTypes;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.Assert;
@@ -318,15 +316,6 @@ public class Modules implements Iterable<Module> {
 				.flatMap(it -> it.getDetails().stream()) //
 				.map(IllegalStateException::new) //
 				.collect(Violations.toViolations());
-
-		if (JDDDTypes.areRulesPresent()) {
-
-			EvaluationResult result = JDddRules.all().evaluate(allClasses);
-
-			for (String message : result.getFailureReport().getDetails()) {
-				violations = violations.and(message);
-			}
-		}
 
 		if (JMoleculesTypes.areRulesPresent()) {
 
