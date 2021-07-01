@@ -17,13 +17,13 @@ package com.acme.myproject.moduleA;
 
 import lombok.Value;
 
-import org.moduliths.Event;
+import org.jmolecules.event.annotation.DomainEvent;
 
 /**
  * @author Oliver Drotbohm
  */
 @Value
-@Event
+@DomainEvent
 public class SomeEventA {
 	String message;
 }

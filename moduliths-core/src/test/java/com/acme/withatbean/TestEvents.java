@@ -15,39 +15,33 @@
  */
 package com.acme.withatbean;
 
-import org.moduliths.Event;
-
 /**
  * @author Oliver Drotbohm
  */
-@SuppressWarnings("deprecation")
 public class TestEvents {
 
 	/**
 	 * Method calling a factory method.
 	 */
 	public void method() {
-		DomainEvent.of();
+		JMoleculesAnnotated.of();
 	}
 
 	/**
 	 * Method calling a constructor.
 	 */
 	public void constructorCall() {
-		new DomainEvent();
-	}
-
-	@Event
-	public static class DomainEvent {
-		public static DomainEvent of() {
-			return null;
-		}
+		new JMoleculesAnnotated();
 	}
 
 	// jMolecules
 
 	@org.jmolecules.event.annotation.DomainEvent
-	public static class JMoleculesAnnotated {}
+	public static class JMoleculesAnnotated {
+		public static JMoleculesAnnotated of() {
+			return null;
+		}
+	}
 
 	public static class JMoleculesImplementing implements org.jmolecules.event.types.DomainEvent {}
 }

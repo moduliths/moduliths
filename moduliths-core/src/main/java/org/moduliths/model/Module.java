@@ -40,7 +40,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.moduliths.Event;
 import org.moduliths.model.Types.JMoleculesTypes;
 import org.moduliths.model.Types.SpringTypes;
 import org.springframework.lang.Nullable;
@@ -336,7 +335,6 @@ public class Module {
 	private List<EventType> findPublishedEvents() {
 
 		DescribedPredicate<JavaClass> isEvent = implement(JMoleculesTypes.DOMAIN_EVENT) //
-				.or(isAnnotatedWith(Event.class)) //
 				.or(isAnnotatedWith(JMoleculesTypes.AT_DOMAIN_EVENT));
 
 		return basePackage.that(isEvent).stream() //
