@@ -51,6 +51,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.structurizr.Workspace;
+import com.structurizr.io.plantuml.BasicPlantUMLWriter;
 import com.structurizr.io.plantuml.C4PlantUMLWriter;
 import com.structurizr.io.plantuml.PlantUMLWriter;
 import com.structurizr.model.Component;
@@ -59,8 +60,11 @@ import com.structurizr.model.Element;
 import com.structurizr.model.Model;
 import com.structurizr.model.Relationship;
 import com.structurizr.model.SoftwareSystem;
+import com.structurizr.model.Tags;
 import com.structurizr.view.ComponentView;
 import com.structurizr.view.RelationshipView;
+import com.structurizr.view.Shape;
+import com.structurizr.view.Styles;
 import com.structurizr.view.View;
 import com.tngtech.archunit.core.domain.JavaClass;
 
@@ -107,6 +111,11 @@ public class Documenter {
 
 		this.modules = modules;
 		this.workspace = new Workspace("Modulith", "");
+
+		workspace.getViews().getConfiguration()
+				.getStyles()
+				.addElementStyle(Tags.COMPONENT)
+				.shape(Shape.Component);
 
 		Model model = workspace.getModel();
 		String systemName = modules.getSystemName().orElse("Modulith");
@@ -327,9 +336,17 @@ public class Documenter {
 	private void addComponentsToView(Supplier<Stream<Module>> modules, ComponentView view, Options options,
 			Consumer<ComponentView> afterCleanup) {
 
-		modules.get().filter(options.getExclusions().negate()) //
-				.map(it -> getComponents(options).get(it)) //
-				.filter(options.getComponentFilter()).forEach(view::add);
+		Styles styles = view.getViewSet().getConfiguration().getStyles();
+		Map<Module, Component> components = getComponents(options);
+
+		modules.get() //
+				.distinct()
+				.filter(options.getExclusions().negate()) //
+				.map(it -> applyBackgroundColor(it, components, options, styles)) //
+				.filter(options.getComponentFilter()) //
+				.forEach(view::add);
+
+		// view.getViewSet().getConfiguration().getStyles().findElementStyle(element).getBackground()
 
 		// Remove filtered dependency types
 		DependencyType.allBut(options.getDependencyTypes()) //
@@ -342,7 +359,7 @@ public class Documenter {
 		modules.get().filter(options.getTargetOnly()) //
 				.forEach(module -> {
 
-					Component component = getComponents(options).get(module);
+					Component component = components.get(module);
 
 					view.getRelationships().stream() //
 							.map(RelationshipView::getRelationship) //
@@ -373,6 +390,22 @@ public class Documenter {
 				.findFirst().ifPresent(view::remove);
 	}
 
+	private static Component applyBackgroundColor(Module module, Map<Module, Component> components, Options options,
+			Styles styles) {
+
+		Component component = components.get(module);
+		Function<Module, Optional<String>> selector = options.getColorSelector();
+
+		// Apply custom color if configured
+		selector.apply(module).ifPresent(color -> {
+			String tag = module.getName() + "-" + color;
+			component.addTags(tag);
+			styles.addElementStyle(tag).background(color);
+		});
+
+		return component;
+	}
+
 	@Value
 	private static class Connection {
 
@@ -390,27 +423,13 @@ public class Documenter {
 			Path file = recreateFile(filename);
 
 			try (Writer writer = new FileWriter(file.toFile())) {
-				getPlantUMLWriter(options).write(view, writer);
+				options.getWriter().write(view, writer);
 			}
 
 			return this;
 
 		} catch (IOException o_O) {
 			throw new RuntimeException(o_O);
-		}
-	}
-
-	private PlantUMLWriter getPlantUMLWriter(Options options) {
-
-		Function<Module, Optional<String>> selector = options.getColorSelector();
-		Map<Module, Component> components = getComponents(options);
-
-		switch (options.getStyle()) {
-			case C4:
-				return new ModulithC4PlantUmlWriter(selector, components);
-			case UML:
-			default:
-				return new CustomPlantUmlWriter(selector, components);
 		}
 	}
 
@@ -422,7 +441,7 @@ public class Documenter {
 
 		addComponentsToView(() -> modules.stream(), componentView, options, it -> {});
 
-		getPlantUMLWriter(options).write(componentView, writer);
+		options.getWriter().write(componentView, writer);
 
 		return writer;
 	}
@@ -535,6 +554,19 @@ public class Documenter {
 
 		private Stream<DependencyType> getDependencyTypes() {
 			return dependencyTypes.stream();
+		}
+
+		private PlantUMLWriter getWriter() {
+
+			switch (style) {
+				case C4:
+					return new C4PlantUMLWriter();
+				case UML:
+				default:
+					PlantUMLWriter writer = new BasicPlantUMLWriter();
+					writer.addSkinParam("componentStyle", "uml1");
+					return writer;
+			}
 		}
 
 		/**
@@ -698,68 +730,6 @@ public class Documenter {
 			boolean hasOnlyFallbackGroup() {
 				return groupings.size() == 1 && groupings.get(FALLBACK_GROUP) != null;
 			}
-		}
-	}
-
-	/**
-	 * Custom {@link PlantUMLWriter} to apply the {@link Options#getColorSelector()}s while writing the component
-	 * instances into the PlantUML component diagram.
-	 *
-	 * @author Oliver Drotbohm
-	 */
-	@RequiredArgsConstructor
-	private static class CustomPlantUmlWriter extends PlantUMLWriter {
-
-		private final Function<Module, Optional<String>> colorSelector;
-		private final Map<Module, Component> components;
-
-		/*
-		 * (non-Javadoc)
-		 * @see com.structurizr.io.plantuml.PlantUMLWriter#backgroundOf(com.structurizr.view.View, com.structurizr.model.Element)
-		 */
-		@Override
-		protected String backgroundOf(@Nullable View view, @Nullable Element element) {
-
-			if (!Component.class.isInstance(element)) {
-				return super.backgroundOf(view, element);
-			}
-
-			Component component = (Component) element;
-
-			return components.entrySet().stream() //
-					.filter(it -> it.getValue().equals(component)) //
-					.map(Entry::getKey) //
-					.findFirst() //
-					.flatMap(colorSelector) //
-					.orElseGet(() -> super.backgroundOf(view, element));
-		}
-	}
-
-	@RequiredArgsConstructor
-	private static class ModulithC4PlantUmlWriter extends C4PlantUMLWriter {
-
-		private final Function<Module, Optional<String>> colorSelector;
-		private final Map<Module, Component> components;
-
-		/*
-		 * (non-Javadoc)
-		 * @see com.structurizr.io.plantuml.PlantUMLWriter#backgroundOf(com.structurizr.view.View, com.structurizr.model.Element)
-		 */
-		@Override
-		protected String backgroundOf(@Nullable View view, @Nullable Element element) {
-
-			if (!Component.class.isInstance(element)) {
-				return super.backgroundOf(view, element);
-			}
-
-			Component component = (Component) element;
-
-			return components.entrySet().stream() //
-					.filter(it -> it.getValue().equals(component)) //
-					.map(Entry::getKey) //
-					.findFirst() //
-					.flatMap(colorSelector) //
-					.orElseGet(() -> super.backgroundOf(view, element));
 		}
 	}
 }
