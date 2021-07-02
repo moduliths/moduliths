@@ -51,6 +51,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.structurizr.Workspace;
+import com.structurizr.io.plantuml.C4PlantUMLWriter;
 import com.structurizr.io.plantuml.PlantUMLWriter;
 import com.structurizr.model.Component;
 import com.structurizr.model.Container;
@@ -400,7 +401,17 @@ public class Documenter {
 	}
 
 	private PlantUMLWriter getPlantUMLWriter(Options options) {
-		return new CustomPlantUmlWriter(options.getColorSelector(), getComponents(options));
+
+		Function<Module, Optional<String>> selector = options.getColorSelector();
+		Map<Module, Component> components = getComponents(options);
+
+		switch (options.getStyle()) {
+			case C4:
+				return new ModulithC4PlantUmlWriter(selector, components);
+			case UML:
+			default:
+				return new CustomPlantUmlWriter(selector, components);
+		}
 	}
 
 	private <T extends Writer> T createPlantUml(T writer, Options options) throws IOException {
@@ -486,6 +497,11 @@ public class Documenter {
 		private final @With Function<Module, String> defaultDisplayName;
 
 		/**
+		 * Which style to render the diagram in. Defaults to {@value DiagramStyle#UML}.
+		 */
+		private final @With DiagramStyle style;
+
+		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
 		 * filters and default file names.
@@ -494,7 +510,7 @@ public class Documenter {
 		 */
 		public static Options defaults() {
 			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null,
-					__ -> Optional.empty(), it -> it.getDisplayName());
+					__ -> Optional.empty(), it -> it.getDisplayName(), DiagramStyle.UML);
 		}
 
 		/**
@@ -510,7 +526,7 @@ public class Documenter {
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
 
 			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName,
-					colorSelector, defaultDisplayName);
+					colorSelector, defaultDisplayName, style);
 		}
 
 		private Optional<String> getTargetFileName() {
@@ -519,6 +535,26 @@ public class Documenter {
 
 		private Stream<DependencyType> getDependencyTypes() {
 			return dependencyTypes.stream();
+		}
+
+		/**
+		 * Different diagram styles.
+		 *
+		 * @author Oliver Drotbohm
+		 */
+		public enum DiagramStyle {
+
+			/**
+			 * A plain UML component diagram.
+			 */
+			UML,
+
+			/**
+			 * A C4 model component diagram.
+			 *
+			 * @see https://c4model.com/#ComponentDiagram
+			 */
+			C4;
 		}
 	}
 
@@ -673,6 +709,34 @@ public class Documenter {
 	 */
 	@RequiredArgsConstructor
 	private static class CustomPlantUmlWriter extends PlantUMLWriter {
+
+		private final Function<Module, Optional<String>> colorSelector;
+		private final Map<Module, Component> components;
+
+		/*
+		 * (non-Javadoc)
+		 * @see com.structurizr.io.plantuml.PlantUMLWriter#backgroundOf(com.structurizr.view.View, com.structurizr.model.Element)
+		 */
+		@Override
+		protected String backgroundOf(@Nullable View view, @Nullable Element element) {
+
+			if (!Component.class.isInstance(element)) {
+				return super.backgroundOf(view, element);
+			}
+
+			Component component = (Component) element;
+
+			return components.entrySet().stream() //
+					.filter(it -> it.getValue().equals(component)) //
+					.map(Entry::getKey) //
+					.findFirst() //
+					.flatMap(colorSelector) //
+					.orElseGet(() -> super.backgroundOf(view, element));
+		}
+	}
+
+	@RequiredArgsConstructor
+	private static class ModulithC4PlantUmlWriter extends C4PlantUMLWriter {
 
 		private final Function<Module, Optional<String>> colorSelector;
 		private final Map<Module, Component> components;
