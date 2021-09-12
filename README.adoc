@@ -286,6 +286,11 @@ icon:question-circle[] _**Correlate actual dependencies with the ones defined (i
 
 icon:question-circle[] _**No cycles on the module level**_ -- We should generally disallow cycles on the module level.
 
+== Sample applications
+
+* https://github.com/odrotbohm/spring-restbucks[Spring RESTBucks] - an implementation of the RESTBucks API from the ”REST in Practice” book. Primary a showcase for hypermedia APIs but still using Moduliths primarily for documentation purposes.
+* https://github.com/st-tu-dresden/salespoint[Salespoint] - a POS library developed by the TU Dresden to be used in the software engineering lab to teach third semester students how to build web applications with Spring Boot.
+
 == Ideas
 
 === In the works
