@@ -51,8 +51,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.structurizr.Workspace;
+import com.structurizr.io.Diagram;
 import com.structurizr.io.plantuml.BasicPlantUMLWriter;
-import com.structurizr.io.plantuml.C4PlantUMLWriter;
+import com.structurizr.io.plantuml.C4PlantUMLExporter;
 import com.structurizr.io.plantuml.PlantUMLWriter;
 import com.structurizr.model.Component;
 import com.structurizr.model.Container;
@@ -173,7 +174,7 @@ public class Documenter {
 		Path file = recreateFile(options.getTargetFileName().orElse("components.uml"));
 
 		try (Writer writer = new FileWriter(file.toFile())) {
-			createPlantUml(writer, options);
+			writer.write(createPlantUml(options));
 		}
 
 		return this;
@@ -297,7 +298,7 @@ public class Documenter {
 	}
 
 	public String toPlantUml() throws IOException {
-		return createPlantUml(new StringWriter(), Options.defaults()).toString();
+		return createPlantUml(Options.defaults());
 	}
 
 	private void addDependencies(Module module, Component component, Options options) {
@@ -416,15 +417,13 @@ public class Documenter {
 		}
 	}
 
-	private Documenter writeViewAsPlantUml(View view, String filename, Options options) {
+	private Documenter writeViewAsPlantUml(ComponentView view, String filename, Options options) {
 
-		try {
+		Path file = recreateFile(filename);
 
-			Path file = recreateFile(filename);
+		try (Writer writer = new FileWriter(file.toFile())) {
 
-			try (Writer writer = new FileWriter(file.toFile())) {
-				options.getWriter().write(view, writer);
-			}
+			writer.write(render(view, options));
 
 			return this;
 
@@ -433,7 +432,29 @@ public class Documenter {
 		}
 	}
 
-	private <T extends Writer> T createPlantUml(T writer, Options options) throws IOException {
+	private String render(ComponentView view, Options options) {
+
+		switch (options.style) {
+
+			case C4:
+
+				C4PlantUMLExporter exporter = new C4PlantUMLExporter();
+				Diagram diagram = exporter.export(view);
+				return diagram.getDefinition();
+
+			case UML:
+			default:
+
+				Writer writer = new StringWriter();
+				PlantUMLWriter umlWriter = new BasicPlantUMLWriter();
+				umlWriter.addSkinParam("componentStyle", "uml1");
+				umlWriter.write(view, writer);
+
+				return writer.toString();
+		}
+	}
+
+	private String createPlantUml(Options options) throws IOException {
 
 		ComponentView componentView = workspace.getViews() //
 				.createComponentView(container, "modules-" + options.toString(), "");
@@ -441,9 +462,7 @@ public class Documenter {
 
 		addComponentsToView(() -> modules.stream(), componentView, options, it -> {});
 
-		options.getWriter().write(componentView, writer);
-
-		return writer;
+		return render(componentView, options);
 	}
 
 	private static Path recreateFile(String name) {
@@ -554,19 +573,6 @@ public class Documenter {
 
 		private Stream<DependencyType> getDependencyTypes() {
 			return dependencyTypes.stream();
-		}
-
-		private PlantUMLWriter getWriter() {
-
-			switch (style) {
-				case C4:
-					return new C4PlantUMLWriter();
-				case UML:
-				default:
-					PlantUMLWriter writer = new BasicPlantUMLWriter();
-					writer.addSkinParam("componentStyle", "uml1");
-					return writer;
-			}
 		}
 
 		/**
