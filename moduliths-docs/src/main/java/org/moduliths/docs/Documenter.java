@@ -219,7 +219,7 @@ public class Documenter {
 		Assert.notNull(module, "Module must not be null!");
 		Assert.notNull(options, "Options must not be null!");
 
-		ComponentView view = workspace.getViews().createComponentView(container, module.getName(), "");
+		ComponentView view = createComponentView(options, module);
 		view.setTitle(options.getDefaultDisplayName().apply(module));
 
 		addComponentsToView(module, view, options);
@@ -399,9 +399,16 @@ public class Documenter {
 
 		// Apply custom color if configured
 		selector.apply(module).ifPresent(color -> {
+
 			String tag = module.getName() + "-" + color;
 			component.addTags(tag);
-			styles.addElementStyle(tag).background(color);
+
+			// Add or update background color
+			styles.getElements().stream()
+					.filter(it -> it.getTag().equals(tag))
+					.findFirst()
+					.orElseGet(() -> styles.addElementStyle(tag))
+					.background(color);
 		});
 
 		return component;
@@ -456,13 +463,24 @@ public class Documenter {
 
 	private String createPlantUml(Options options) throws IOException {
 
-		ComponentView componentView = workspace.getViews() //
-				.createComponentView(container, "modules-" + options.toString(), "");
+		ComponentView componentView = createComponentView(options);
 		componentView.setTitle(modules.getSystemName().orElse("Modules"));
 
 		addComponentsToView(() -> modules.stream(), componentView, options, it -> {});
 
 		return render(componentView, options);
+	}
+
+	private ComponentView createComponentView(Options options) {
+		return createComponentView(options, null);
+	}
+
+	private ComponentView createComponentView(Options options, @Nullable Module module) {
+
+		String prefix = module == null ? "modules-" : module.getName();
+
+		return workspace.getViews() //
+				.createComponentView(container, prefix + options.toString(), "");
 	}
 
 	private static Path recreateFile(String name) {
