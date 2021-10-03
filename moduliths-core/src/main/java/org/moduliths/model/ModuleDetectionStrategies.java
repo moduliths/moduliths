@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package org.moduliths.model;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.moduliths.Module;
+import org.moduliths.model.Types.JMoleculesTypes;
 
 /**
  * Default implementations of {@link ModuleDetectionStrategy}.
@@ -35,7 +37,8 @@ enum ModuleDetectionStrategies implements ModuleDetectionStrategy {
 		 * @see org.moduliths.model.ModuleDetection#getModuleBasePackages(org.moduliths.model.JavaPackage)
 		 */
 		@Override
-		public Stream<JavaPackage> getModuleBasePackages(JavaPackage basePackage) {
+		public Stream<JavaPackage> getModuleBasePackages(
+				JavaPackage basePackage) {
 			return basePackage.getDirectSubPackages().stream();
 		}
 	},
@@ -48,7 +51,10 @@ enum ModuleDetectionStrategies implements ModuleDetectionStrategy {
 		 */
 		@Override
 		public Stream<JavaPackage> getModuleBasePackages(JavaPackage basePackage) {
-			return basePackage.getSubPackagesAnnotatedWith(Module.class);
+
+			return Stream.of(Module.class, JMoleculesTypes.getModuleAnnotationTypeIfPresent())
+					.filter(Objects::nonNull)
+					.flatMap(basePackage::getSubPackagesAnnotatedWith);
 		}
 	}
 }

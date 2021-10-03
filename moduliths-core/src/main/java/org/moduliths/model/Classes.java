@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.moduliths.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ import com.tngtech.archunit.core.domain.properties.HasName;
  * @author Oliver Gierke
  */
 @ToString
+@EqualsAndHashCode
 public class Classes implements DescribedIterable<JavaClass> {
 
 	private final List<JavaClass> classes;

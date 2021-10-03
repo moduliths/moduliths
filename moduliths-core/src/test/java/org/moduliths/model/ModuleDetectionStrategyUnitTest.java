@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,16 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+
 /**
  * Unit tests for {@link ModuleDetectionStrategy}.
  *
  * @author Oliver Drotbohm
  */
-public class ModuleDetectionStrategyUnitTest {
+class ModuleDetectionStrategyUnitTest {
 
 	@Test // #138
 	void usesExplicitlyAnnotatedConstant() {
@@ -38,5 +42,18 @@ public class ModuleDetectionStrategyUnitTest {
 
 		assertThat(ModuleDetectionStrategy.directSubPackage())
 				.isEqualTo(ModuleDetectionStrategies.DIRECT_SUB_PACKAGES);
+	}
+
+	@Test // #188
+	void detectsJMoleculesAnnotatedModule() {
+
+		JavaClasses classes = new ClassFileImporter() //
+				.withImportOption(new ImportOption.OnlyIncludeTests()) //
+				.importPackages("jmolecules");
+
+		JavaPackage javaPackage = JavaPackage.of(Classes.of(classes), "jmolecules");
+
+		assertThat(ModuleDetectionStrategy.explictlyAnnotated().getModuleBasePackages(javaPackage))
+				.containsExactly(javaPackage);
 	}
 }
