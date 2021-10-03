@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.moduliths.model;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 
 import lombok.experimental.UtilityClass;
+
+import java.lang.annotation.Annotation;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
@@ -49,6 +51,7 @@ class Types {
 		private static final String ANNOTATION_PACKAGE = BASE_PACKAGE + ".ddd.annotation";
 		private static final String AT_ENTITY = ANNOTATION_PACKAGE + ".Entity";
 		private static final String ARCHUNIT_RULES = BASE_PACKAGE + ".archunit.JDddRules";
+		private static final String MODULE = ANNOTATION_PACKAGE + ".Module";
 
 		static final String AT_DOMAIN_EVENT_HANDLER = BASE_PACKAGE + ".event.annotation.DomainEventHandler";
 		static final String AT_DOMAIN_EVENT = BASE_PACKAGE + ".event.annotation.DomainEvent";
@@ -56,6 +59,19 @@ class Types {
 
 		public static boolean isPresent() {
 			return ClassUtils.isPresent(AT_ENTITY, JMoleculesTypes.class.getClassLoader());
+		}
+
+		@Nullable
+		@SuppressWarnings("unchecked")
+		public static Class<? extends Annotation> getModuleAnnotationTypeIfPresent() {
+
+			try {
+				return isPresent()
+						? (Class<? extends Annotation>) ClassUtils.forName(MODULE, JMoleculesTypes.class.getClassLoader())
+						: null;
+			} catch (Exception o_O) {
+				return null;
+			}
 		}
 
 		public static boolean areRulesPresent() {
