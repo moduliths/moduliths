@@ -19,9 +19,12 @@ import static org.springframework.util.ClassUtils.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.moduliths.docs.ConfigurationProperties.ModuleProperty;
 import org.moduliths.docs.Documenter.CanvasOptions;
 import org.moduliths.docs.Documenter.CanvasOptions.Groupings;
 import org.moduliths.model.ArchitecturallyEvidentType;
@@ -34,6 +37,7 @@ import org.moduliths.model.SpringBean;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -41,9 +45,10 @@ import com.tngtech.archunit.core.domain.JavaModifier;
 /**
  * @author Oliver Drotbohm
  */
-class Asciidoctor implements InlineCodeSource {
+class Asciidoctor {
 
 	private static String PLACEHOLDER = "¯\\_(ツ)_/¯";
+	private static final Pattern JAVADOC_CODE = Pattern.compile("\\{\\@(?>link|code|literal)\\s(.*)\\}");
 
 	private final Modules modules;
 	private final String javaDocBase;
@@ -188,6 +193,42 @@ class Asciidoctor implements InlineCodeSource {
 		return builder.toString();
 	}
 
+	public String renderConfigurationProperties(Module module, List<ModuleProperty> properties) {
+
+		if (properties.isEmpty()) {
+			return "none";
+		}
+
+		Stream<String> stream = properties.stream()
+				.map(it -> {
+
+					StringBuilder builder = new StringBuilder()
+							.append(toCode(it.getName()))
+							.append(" -- ")
+							.append(toInlineCode(it.getType()));
+
+					String defaultValue = it.getDefaultValue();
+
+					if (defaultValue != null && StringUtils.hasText(defaultValue)) {
+
+						builder = builder.append(", default ")
+								.append(toInlineCode(defaultValue))
+								.append("");
+					}
+
+					String description = it.getDescription();
+
+					if (description != null && StringUtils.hasText(description)) {
+						builder = builder.append(". ")
+								.append(toAsciidoctor(description));
+					}
+
+					return builder.toString();
+				});
+
+		return toBulletPoints(stream);
+	}
+
 	private String toBulletPoints(List<SpringBean> beans) {
 		return toBulletPoints(beans.stream().map(this::toInlineCode));
 	}
@@ -244,9 +285,11 @@ class Asciidoctor implements InlineCodeSource {
 
 			if (!docSource.isPresent()) {
 
+				Stream<JavaClass> referenceTypes = type.getReferenceTypes();
+
 				return String.format("%s listening to %s", //
 						toInlineCode(type.getType()), //
-						toInlineCode(type.getReferenceTypes()));
+						toInlineCode(referenceTypes));
 			}
 
 			String header = String.format("%s listening to:\n", toInlineCode(type.getType()));
@@ -292,5 +335,19 @@ class Asciidoctor implements InlineCodeSource {
 
 		return Stream.of(columns) //
 				.collect(Collectors.joining("\n|", "|", "\n"));
+	}
+
+	public String toAsciidoctor(String source) {
+
+		Matcher matcher = JAVADOC_CODE.matcher(source);
+
+		while (matcher.find()) {
+
+			String type = matcher.group(1);
+
+			source = source.replace(matcher.group(), toInlineCode(type));
+		}
+
+		return source;
 	}
 }

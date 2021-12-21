@@ -50,8 +50,8 @@ class DocumenterUnitTests {
 
 		assertThat(result.keySet())
 				.extracting(Grouping::getName)
-				.containsExactlyInAnyOrder("Controllers", "Services", "Repositories", "Event listeners", "Representations",
-						"Interface implementations", "Others");
+				.containsExactlyInAnyOrder("Controllers", "Services", "Repositories", "Event listeners",
+						"Configuration properties", "Representations", "Interface implementations", "Others");
 
 		List<SpringBean> impls = result.byGroupName("Interface implementations");
 
@@ -76,6 +76,6 @@ class DocumenterUnitTests {
 		CanvasOptions options = CanvasOptions.defaults() //
 				.groupingBy(of("Representations", nameMatching(".*Representations")));
 
-		modules.forEach(it -> documenter.toModuleCanvas(it, options));
+		modules.forEach(it -> System.out.println(documenter.toModuleCanvas(it, options)));
 	}
 }

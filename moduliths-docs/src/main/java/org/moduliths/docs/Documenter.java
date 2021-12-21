@@ -89,6 +89,7 @@ public class Documenter {
 	private final @Getter Modules modules;
 	private final Workspace workspace;
 	private final Container container;
+	private final ConfigurationProperties properties;
 
 	private Map<Module, Component> components;
 
@@ -124,6 +125,7 @@ public class Documenter {
 		SoftwareSystem system = model.addSoftwareSystem(systemName, "");
 
 		this.container = system.addContainer("Application", "", "");
+		this.properties = new ConfigurationProperties();
 	}
 
 	private Map<Module, Component> getComponents(Options options) {
@@ -288,6 +290,8 @@ public class Documenter {
 		builder.append(addTableRow(module.getAggregateRoots(modules), "Aggregate roots", mapper));
 		builder.append(writeTableRow("Published events", asciidoctor.renderEvents(module)));
 		builder.append(addTableRow(module.getEventsListenedTo(modules), "Events listened to", mapper));
+		builder.append(writeTableRow("Properties",
+				asciidoctor.renderConfigurationProperties(module, properties.getModuleProperties(module))));
 		builder.append(startOrEndTable());
 
 		return builder.toString();
@@ -659,7 +663,9 @@ public class Documenter {
 					.groupingBy("Controllers", bean -> bean.toArchitecturallyEvidentType().isController()) //
 					.groupingBy("Services", bean -> bean.toArchitecturallyEvidentType().isService()) //
 					.groupingBy("Repositories", bean -> bean.toArchitecturallyEvidentType().isRepository()) //
-					.groupingBy("Event listeners", bean -> bean.toArchitecturallyEvidentType().isEventListener());
+					.groupingBy("Event listeners", bean -> bean.toArchitecturallyEvidentType().isEventListener()) //
+					.groupingBy("Configuration properties",
+							bean -> bean.toArchitecturallyEvidentType().isConfigurationProperties());
 		}
 
 		public static CanvasOptions withoutDefaultGroupings() {

@@ -58,4 +58,14 @@ class AsciidoctorUnitTests {
 
 		assertThatCode(() -> asciidoctor.toInlineCode(type)).doesNotThrowAnyException();
 	}
+
+	@Test
+	void cleansUpJavadocForConfigurationProperties() {
+
+		ConfigurationProperties metadata = new ConfigurationProperties();
+
+		assertThat(metadata).containsExactly(new ConfigurationProperties.ConfigurationProperty("org.moduliths.sample.test",
+				"Some test property of type {@link java.lang.Boolean}.", "java.lang.Boolean",
+				"com.acme.myproject.stereotypes.Stereotypes$SomeConfigurationProperties", "false"));
+	}
 }

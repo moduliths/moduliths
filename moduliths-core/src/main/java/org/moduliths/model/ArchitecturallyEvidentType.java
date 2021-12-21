@@ -131,6 +131,10 @@ public abstract class ArchitecturallyEvidentType {
 		return false;
 	}
 
+	public boolean isConfigurationProperties() {
+		return false;
+	}
+
 	/**
 	 * Returns other types that are interesting in the context of the current {@link ArchitecturallyEvidentType}. For
 	 * example, for an event listener this might be the event types the particular listener is interested in.
@@ -143,6 +147,15 @@ public abstract class ArchitecturallyEvidentType {
 
 	public Stream<ReferenceMethod> getReferenceMethods() {
 		return Stream.empty();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return type.getFullName();
 	}
 
 	private static Stream<JavaClass> distinctByName(Stream<JavaClass> types) {
@@ -229,6 +242,15 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isEventListener() {
 			return getType().getMethods().stream().anyMatch(IS_EVENT_LISTENER);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isConfigurationProperties()
+		 */
+		@Override
+		public boolean isConfigurationProperties() {
+			return Types.isAnnotatedWith(SpringTypes.AT_CONFIGURATION_PROPERTIES).apply(getType());
 		}
 
 		/*
@@ -383,13 +405,14 @@ public abstract class ArchitecturallyEvidentType {
 
 	static class DelegatingType extends ArchitecturallyEvidentType {
 
-		private final Supplier<Boolean> isAggregateRoot, isRepository, isEntity, isService, isController, isEventListener;
+		private final Supplier<Boolean> isAggregateRoot, isRepository, isEntity, isService, isController, isEventListener,
+				isConfigurationProperties;
 		private final Supplier<Collection<JavaClass>> referenceTypes;
 		private final Supplier<Collection<ReferenceMethod>> referenceMethods;
 
 		DelegatingType(JavaClass type, Supplier<Boolean> isAggregateRoot,
 				Supplier<Boolean> isRepository, Supplier<Boolean> isEntity, Supplier<Boolean> isService,
-				Supplier<Boolean> isController, Supplier<Boolean> isEventListener,
+				Supplier<Boolean> isController, Supplier<Boolean> isEventListener, Supplier<Boolean> isConfigurationProperties,
 				Supplier<Collection<JavaClass>> referenceTypes, Supplier<Collection<ReferenceMethod>> referenceMethods) {
 
 			super(type);
@@ -400,6 +423,7 @@ public abstract class ArchitecturallyEvidentType {
 			this.isService = isService;
 			this.isController = isController;
 			this.isEventListener = isEventListener;
+			this.isConfigurationProperties = isConfigurationProperties;
 			this.referenceTypes = referenceTypes;
 			this.referenceMethods = referenceMethods;
 		}
@@ -424,6 +448,9 @@ public abstract class ArchitecturallyEvidentType {
 			Supplier<Boolean> isEventListener = Suppliers
 					.memoize(() -> types.stream().anyMatch(ArchitecturallyEvidentType::isEventListener));
 
+			Supplier<Boolean> isConfigurationProperties = Suppliers
+					.memoize(() -> types.stream().anyMatch(ArchitecturallyEvidentType::isConfigurationProperties));
+
 			Supplier<Collection<JavaClass>> referenceTypes = Suppliers.memoize(() -> types.stream() //
 					.flatMap(ArchitecturallyEvidentType::getReferenceTypes) //
 					.collect(Collectors.toList()));
@@ -433,7 +460,7 @@ public abstract class ArchitecturallyEvidentType {
 					.collect(Collectors.toList()));
 
 			return new DelegatingType(type, isAggregateRoot, isRepository, isEntity, isService, isController,
-					isEventListener, referenceTypes, referenceMethods);
+					isEventListener, isConfigurationProperties, referenceTypes, referenceMethods);
 		}
 
 		/*
@@ -490,6 +517,15 @@ public abstract class ArchitecturallyEvidentType {
 		@Override
 		public boolean isEventListener() {
 			return isEventListener.get();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isConfigurationProperties()
+		 */
+		@Override
+		public boolean isConfigurationProperties() {
+			return isConfigurationProperties.get();
 		}
 
 		/*

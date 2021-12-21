@@ -18,8 +18,6 @@ package org.moduliths.docs;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.tngtech.archunit.core.domain.JavaMethod;
 
@@ -33,10 +31,8 @@ import com.tngtech.archunit.core.domain.JavaMethod;
 @RequiredArgsConstructor
 class CodeReplacingDocumentationSource implements DocumentationSource {
 
-	private static final Pattern JAVADOC_CODE = Pattern.compile("\\{\\@(?>link|code)\\s(.*)\\}");
-
 	private final DocumentationSource delegate;
-	private final InlineCodeSource codeSource;
+	private final Asciidoctor codeSource;
 
 	/*
 	 * (non-Javadoc)
@@ -46,28 +42,6 @@ class CodeReplacingDocumentationSource implements DocumentationSource {
 	public Optional<String> getDocumentation(JavaMethod method) {
 
 		return delegate.getDocumentation(method)
-				.map(this::replaceJavadocCodeReferences);
-	}
-
-	/**
-	 * Replaces references to {@literal {@code …}} and {@literal {@link …}} with the inline code representation of the
-	 * contained expression.
-	 *
-	 * @param source must not be {@literal null}.
-	 * @return will never be {@literal null}.
-	 * @see CodeReplacingDocumentationSource#getDocumentation(JavaMethod)
-	 */
-	private String replaceJavadocCodeReferences(String source) {
-
-		Matcher matcher = JAVADOC_CODE.matcher(source);
-
-		while (matcher.find()) {
-
-			String type = matcher.group(1);
-
-			source = source.replace(matcher.group(), codeSource.toInlineCode(type));
-		}
-
-		return source;
+				.map(codeSource::toAsciidoctor);
 	}
 }

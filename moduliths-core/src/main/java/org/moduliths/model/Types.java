@@ -110,6 +110,7 @@ class Types {
 		static final String AT_SERVICE = BASE_PACKAGE + ".stereotype.Service";
 		static final String AT_SPRING_BOOT_APPLICATION = BASE_PACKAGE + ".boot.autoconfigure.SpringBootApplication";
 		static final String AT_TX_EVENT_LISTENER = BASE_PACKAGE + ".transaction.event.TransactionalEventListener";
+		static final String AT_CONFIGURATION_PROPERTIES = BASE_PACKAGE + ".boot.context.properties.ConfigurationProperties";
 
 		static DescribedPredicate<? super JavaClass> isConfiguration() {
 			return isAnnotatedWith(AT_CONFIGURATION);
@@ -117,6 +118,10 @@ class Types {
 
 		static DescribedPredicate<? super JavaClass> isComponent() {
 			return isAnnotatedWith(AT_COMPONENT);
+		}
+
+		static DescribedPredicate<? super JavaClass> isConfigurationProperties() {
+			return isAnnotatedWith(AT_CONFIGURATION_PROPERTIES);
 		}
 
 		static boolean isAtBeanMethod(JavaMethod method) {

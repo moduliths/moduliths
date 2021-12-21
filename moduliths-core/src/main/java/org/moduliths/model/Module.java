@@ -424,9 +424,11 @@ public class Module {
 
 		Classes repositories = source.that(isSpringDataRepository());
 		Classes coreComponents = source.that(not(INTERFACES).and(isComponent()));
+		Classes configurationProperties = source.that(isConfigurationProperties());
 
 		return coreComponents //
 				.and(repositories) //
+				.and(configurationProperties) //
 				.and(collect.getOrDefault(true, Collections.emptyList())) //
 				.and(collect.getOrDefault(false, Collections.emptyList()));
 	}
