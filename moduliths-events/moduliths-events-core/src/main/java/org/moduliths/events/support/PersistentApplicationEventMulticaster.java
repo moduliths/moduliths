@@ -129,7 +129,6 @@ public class PersistentApplicationEventMulticaster extends AbstractApplicationEv
 		try {
 
 			listener.onApplicationEvent(publication.getApplicationEvent());
-			registry.get().markCompleted(publication);
 
 		} catch (Exception e) {
 
