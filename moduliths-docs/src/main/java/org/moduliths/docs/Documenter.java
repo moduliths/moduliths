@@ -369,7 +369,9 @@ public class Documenter {
 				});
 
 		// … as well as all elements left without a relationship
-		view.removeElementsWithNoRelationships();
+		if (options.hideElementsWithoutRelationships()) {
+			view.removeElementsWithNoRelationships();
+		}
 
 		afterCleanup.accept(view);
 
@@ -558,6 +560,16 @@ public class Documenter {
 		private final @With DiagramStyle style;
 
 		/**
+		 * Configuration setting to define whether modules that do not have a relationship to any other module shall be
+		 * retained in the diagrams created. The default is {@value ElementsWithoutRelationships#HIDDEN}. See
+		 * {@link Options#withExclusions(Predicate)} for a more fine-grained way of defining which modules to exclude in
+		 * case you flip this to {@link ElementsWithoutRelationships#VISIBLE}.
+		 *
+		 * @see #withExclusions(Predicate)
+		 */
+		private final @With ElementsWithoutRelationships elementsWithoutRelationships;
+
+		/**
 		 * Creates a new default {@link Options} instance configured to use all dependency types, list immediate
 		 * dependencies for individual module instances, not applying any kind of {@link Module} or {@link Component}
 		 * filters and default file names.
@@ -566,7 +578,7 @@ public class Documenter {
 		 */
 		public static Options defaults() {
 			return new Options(ALL_TYPES, DependencyDepth.IMMEDIATE, it -> false, it -> true, it -> false, null,
-					__ -> Optional.empty(), it -> it.getDisplayName(), DiagramStyle.UML);
+					__ -> Optional.empty(), it -> it.getDisplayName(), DiagramStyle.UML, ElementsWithoutRelationships.HIDDEN);
 		}
 
 		/**
@@ -582,7 +594,7 @@ public class Documenter {
 			Set<DependencyType> dependencyTypes = Arrays.stream(types).collect(Collectors.toSet());
 
 			return new Options(dependencyTypes, dependencyDepth, exclusions, componentFilter, targetOnly, targetFileName,
-					colorSelector, defaultDisplayName, style);
+					colorSelector, defaultDisplayName, style, elementsWithoutRelationships);
 		}
 
 		private Optional<String> getTargetFileName() {
@@ -591,6 +603,10 @@ public class Documenter {
 
 		private Stream<DependencyType> getDependencyTypes() {
 			return dependencyTypes.stream();
+		}
+
+		private boolean hideElementsWithoutRelationships() {
+			return elementsWithoutRelationships.equals(ElementsWithoutRelationships.HIDDEN);
 		}
 
 		/**
@@ -611,6 +627,19 @@ public class Documenter {
 			 * @see https://c4model.com/#ComponentDiagram
 			 */
 			C4;
+		}
+
+		/**
+		 * Configuration setting to define whether modules that do not have a relationship to any other module shall be
+		 * retained in the diagrams created. The default is {@value ElementsWithoutRelationships#HIDDEN}. See
+		 * {@link Options#withExclusions(Predicate)} for a more fine-grained way of defining which modules to exclude in
+		 * case you flip this to {@link ElementsWithoutRelationships#VISIBLE}.
+		 *
+		 * @author Oliver Drotbohm
+		 * @see Options#withExclusions(Predicate)
+		 */
+		public enum ElementsWithoutRelationships {
+			HIDDEN, VISIBLE;
 		}
 	}
 
