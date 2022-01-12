@@ -331,6 +331,15 @@ public abstract class ArchitecturallyEvidentType {
 		public boolean isRepository() {
 			return SpringDataTypes.isSpringDataRepository().apply(getType());
 		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.moduliths.model.ArchitecturallyEvidentType#isController()
+		 */
+		@Override
+		public boolean isController() {
+			return Types.isAnnotatedWith("org.springframework.data.rest.webmvc.BasePathAwareController").apply(getType());
+		}
 	}
 
 	static class JMoleculesArchitecturallyEvidentType extends ArchitecturallyEvidentType {

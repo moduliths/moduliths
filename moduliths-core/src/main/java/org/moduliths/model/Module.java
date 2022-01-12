@@ -200,6 +200,10 @@ public class Module {
 		return basePackage.contains(type);
 	}
 
+	public boolean contains(@Nullable Class<?> type) {
+		return type != null && getType(type.getName()).isPresent();
+	}
+
 	/**
 	 * Returns the {@link JavaClass} for the given candidate simple of fully-qualified type name.
 	 *

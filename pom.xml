@@ -22,6 +22,7 @@
 		<module>moduliths-events</module>
 		<module>moduliths-test</module>
 		<module>moduliths-docs</module>
+		<module>moduliths-observability</module>
 	</modules>
 
 	<properties>
