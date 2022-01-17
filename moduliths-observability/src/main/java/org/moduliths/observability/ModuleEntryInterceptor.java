@@ -68,7 +68,7 @@ class ModuleEntryInterceptor implements MethodInterceptor {
 
 		String invokedMethod = module.getInvokedMethod(invocation);
 
-		LOG.info("Entering " + module.getDisplayName() + " via " + invokedMethod);
+		LOG.trace("Entering {} via {}.", module.getDisplayName(), invokedMethod);
 
 		Span span = tracer.spanBuilder()
 				.name(moduleName)
@@ -85,7 +85,7 @@ class ModuleEntryInterceptor implements MethodInterceptor {
 
 		} finally {
 
-			LOG.info("Leaving " + module.getDisplayName());
+			LOG.trace("Leaving {}", module.getDisplayName());
 
 			span.end();
 		}
