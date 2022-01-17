@@ -17,8 +17,9 @@ package org.moduliths.docs;
 
 import lombok.Value;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +28,11 @@ import java.util.stream.Stream;
 
 import org.moduliths.docs.ConfigurationProperties.ConfigurationProperty;
 import org.moduliths.model.Module;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -43,7 +46,7 @@ import com.tngtech.archunit.core.domain.JavaType;
  */
 class ConfigurationProperties implements Iterable<ConfigurationProperty> {
 
-	private static final String METADATA_PATH = "META-INF/spring-configuration-metadata.json";
+	private static final String METADATA_PATH = "classpath:META-INF/spring-configuration-metadata.json";
 	private static final JsonPath PATH = JsonPath.compile("$.properties");
 
 	private final List<ConfigurationProperty> properties;
@@ -53,9 +56,18 @@ class ConfigurationProperties implements Iterable<ConfigurationProperty> {
 	 */
 	ConfigurationProperties() {
 
-		ClassPathResource resource = new ClassPathResource(METADATA_PATH);
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-		this.properties = parseProperties(resource);
+		try {
+			Resource[] resources = resolver.getResources(METADATA_PATH);
+
+			this.properties = Arrays.stream(resources)
+					.flatMap(ConfigurationProperties::parseProperties)
+					.collect(Collectors.toList());
+
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -93,10 +105,10 @@ class ConfigurationProperties implements Iterable<ConfigurationProperty> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static List<ConfigurationProperty> parseProperties(ClassPathResource source) {
+	private static Stream<ConfigurationProperty> parseProperties(Resource source) {
 
 		if (!source.exists()) {
-			return Collections.emptyList();
+			return Stream.empty();
 		}
 
 		try (InputStream stream = source.getInputStream()) {
@@ -106,11 +118,10 @@ class ConfigurationProperties implements Iterable<ConfigurationProperty> {
 
 			return read.stream()
 					.map(it -> (Map<String, Object>) it)
-					.map(ConfigurationProperty::of)
-					.collect(Collectors.toList());
+					.flatMap(ConfigurationProperty::of);
 
 		} catch (Exception o_O) {
-			return Collections.emptyList();
+			return Stream.empty();
 		}
 	}
 
@@ -123,13 +134,25 @@ class ConfigurationProperties implements Iterable<ConfigurationProperty> {
 		@Nullable String defaultValue;
 
 		@SuppressWarnings("null")
-		public static ConfigurationProperty of(Map<String, Object> source) {
+		static Stream<ConfigurationProperty> of(Map<String, Object> source) {
 
-			return new ConfigurationProperty(getAsString(source, "name"),
+			String sourceType = getAsString(source, "sourceType");
+
+			if (!StringUtils.hasText(sourceType)) {
+				return Stream.empty();
+			}
+
+			ConfigurationProperty property = new ConfigurationProperty(getAsString(source, "name"),
 					getAsString(source, "description"),
 					getAsString(source, "type"),
-					getAsString(source, "sourceType"),
+					sourceType,
 					getAsString(source, "defaultValue"));
+
+			return Stream.of(property);
+		}
+
+		boolean hasSourceType() {
+			return StringUtils.hasText(sourceType);
 		}
 
 		private static @Nullable String getAsString(Map<String, Object> source, String key) {
