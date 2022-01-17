@@ -40,6 +40,7 @@ public class ModuleTracingBeanPostProcessor extends ModuleTracingSupport impleme
 
 	public static final String MODULE_BAGGAGE_KEY = "org.moduliths.module";
 
+	private final ApplicationRuntime runtime;
 	private final Tracer tracer;
 	private final Map<String, Advisor> advisors = new HashMap<>();
 
@@ -47,6 +48,7 @@ public class ModuleTracingBeanPostProcessor extends ModuleTracingSupport impleme
 
 		super(runtime);
 
+		this.runtime = runtime;
 		this.tracer = tracer;
 	}
 
@@ -59,7 +61,7 @@ public class ModuleTracingBeanPostProcessor extends ModuleTracingSupport impleme
 
 		Class<?> type = getBeanUserClass(bean, beanName);
 
-		if (!isInAutoConfigurationPackage(type) || !type.isInstance(bean)) {
+		if (!runtime.isApplicationClass(type) || !type.isInstance(bean)) {
 			return bean;
 		}
 

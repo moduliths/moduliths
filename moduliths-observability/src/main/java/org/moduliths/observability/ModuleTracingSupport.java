@@ -51,12 +51,6 @@ class ModuleTracingSupport implements BeanClassLoaderAware {
 		this.classLoader = classLoader;
 	}
 
-	protected boolean isInAutoConfigurationPackage(Class<?> type) {
-
-		return context.getApplicationPackages().stream()
-				.anyMatch(it -> type.getName().startsWith(it));
-	}
-
 	protected final Modules getModules() {
 
 		try {

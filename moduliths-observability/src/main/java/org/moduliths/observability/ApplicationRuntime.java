@@ -15,8 +15,6 @@
  */
 package org.moduliths.observability;
 
-import java.util.List;
-
 /**
  * Abstraction of the application runtime environment. Primarily to keep references to Spring Boot out of the core
  * observability implementation.
@@ -38,13 +36,6 @@ public interface ApplicationRuntime {
 	 * @return
 	 */
 	Class<?> getMainApplicationClass();
-
-	/**
-	 * Returns all packages that are considered application packages, i.e. contain user code.
-	 *
-	 * @return
-	 */
-	List<String> getApplicationPackages();
 
 	/**
 	 * Obtain the end user class for the given bean and bean name. Necessary to reveal the actual user type from

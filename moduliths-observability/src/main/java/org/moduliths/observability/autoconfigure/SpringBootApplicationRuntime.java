@@ -17,7 +17,6 @@ package org.moduliths.observability.autoconfigure;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -60,15 +59,6 @@ class SpringBootApplicationRuntime implements ApplicationRuntime {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.moduliths.observability.ApplicationRuntime#getApplicationPackages()
-	 */
-	@Override
-	public List<String> getApplicationPackages() {
-		return AutoConfigurationPackages.get(context);
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.moduliths.observability.ApplicationRuntime#getBeanUserClass(java.lang.Object, java.lang.String)
 	 */
 	@Override
@@ -90,8 +80,13 @@ class SpringBootApplicationRuntime implements ApplicationRuntime {
 
 		return APPLICATION_CLASSES.computeIfAbsent(type.getName(),
 				it -> {
+
+					if (it.startsWith("org.springframework")) {
+						return false;
+					}
+
 					return it.startsWith(getMainApplicationClass().getPackage().getName())
-							|| getApplicationPackages().stream().anyMatch(pkg -> it.startsWith(pkg));
+							|| AutoConfigurationPackages.get(context).stream().anyMatch(pkg -> it.startsWith(pkg));
 				});
 	}
 }
