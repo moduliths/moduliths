@@ -74,9 +74,11 @@ class SpringBootApplicationRuntime implements ApplicationRuntime {
 	@Override
 	public Class<?> getUserClass(Object bean, String beanName) {
 
-		Class<?> targetClass = ClassUtils.getUserClass(bean);
+		Class<?> beanType = context.containsBean(beanName)
+				? context.getType(beanName)
+				: bean.getClass();
 
-		return context.containsBean(beanName) ? context.getType(beanName) : targetClass;
+		return ClassUtils.getUserClass(beanType);
 	}
 
 	/*
