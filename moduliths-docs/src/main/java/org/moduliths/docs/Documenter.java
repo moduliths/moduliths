@@ -18,11 +18,13 @@ package org.moduliths.docs;
 import static org.moduliths.docs.Asciidoctor.*;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.With;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -74,9 +76,9 @@ import com.tngtech.archunit.core.domain.JavaClass;
  *
  * @author Oliver Gierke
  */
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Documenter {
 
-	private static final String DEFAULT_LOCATION = "target/moduliths-docs";
 	private static final Map<DependencyType, String> DEPENDENCY_DESCRIPTIONS = new LinkedHashMap<>();
 
 	private static final String INVALID_FILE_NAME_PATTERN = "Configured file name pattern does not include a '%s' placeholder for the module name!";
@@ -90,6 +92,7 @@ public class Documenter {
 	private final Workspace workspace;
 	private final Container container;
 	private final ConfigurationProperties properties;
+	private final String outputFolder;
 
 	private Map<Module, Component> components;
 
@@ -108,10 +111,16 @@ public class Documenter {
 	 * @param modules must not be {@literal null}.
 	 */
 	public Documenter(Modules modules) {
+		this(modules, getDefaultOutputDirectory());
+	}
+
+	private Documenter(Modules modules, String outputFolder) {
 
 		Assert.notNull(modules, "Modules must not be null!");
+		Assert.hasText(outputFolder, "Output folder must not be null or empty!");
 
 		this.modules = modules;
+		this.outputFolder = outputFolder;
 		this.workspace = new Workspace("Modulith", "");
 
 		workspace.getViews().getConfiguration()
@@ -140,6 +149,17 @@ public class Documenter {
 		}
 
 		return components;
+	}
+
+	/**
+	 * Customize the output folder to write the generated files to. Defaults to {@value #DEFAULT_LOCATION}.
+	 *
+	 * @param outputFolder must not be {@literal null} or empty.
+	 * @return
+	 * @see #DEFAULT_LOCATION
+	 */
+	public Documenter withOutputFolder(String outputFolder) {
+		return new Documenter(modules, workspace, container, properties, outputFolder, components);
 	}
 
 	/**
@@ -420,16 +440,6 @@ public class Documenter {
 		return component;
 	}
 
-	@Value
-	private static class Connection {
-
-		Element source, target;
-
-		public static Connection of(Relationship relationship) {
-			return new Connection(relationship.getSource(), relationship.getDestination());
-		}
-	}
-
 	private Documenter writeViewAsPlantUml(ComponentView view, String filename, Options options) {
 
 		Path file = recreateFile(filename);
@@ -489,20 +499,37 @@ public class Documenter {
 				.createComponentView(container, prefix + options.toString(), "");
 	}
 
-	private static Path recreateFile(String name) {
+	private Path recreateFile(String name) {
 
 		try {
 
-			Files.createDirectories(Paths.get(DEFAULT_LOCATION));
-
-			Path filePath = Paths.get(DEFAULT_LOCATION, name);
-
+			Files.createDirectories(Paths.get(outputFolder));
+			Path filePath = Paths.get(outputFolder, name);
 			Files.deleteIfExists(filePath);
 
 			return Files.createFile(filePath);
 
 		} catch (IOException o_O) {
 			throw new RuntimeException(o_O);
+		}
+	}
+
+	/**
+	 * Returns the default output directory based on the detected build system.
+	 *
+	 * @return will never be {@literal null}.
+	 */
+	private static String getDefaultOutputDirectory() {
+		return (new File("pom.xml").exists() ? "target" : "build").concat("/moduliths-docs");
+	}
+
+	@Value
+	private static class Connection {
+
+		Element source, target;
+
+		public static Connection of(Relationship relationship) {
+			return new Connection(relationship.getSource(), relationship.getDestination());
 		}
 	}
 

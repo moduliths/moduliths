@@ -40,6 +40,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaModifier;
 
 /**
@@ -295,6 +296,10 @@ class Asciidoctor {
 			String header = String.format("%s listening to:\n", toInlineCode(type.getType()));
 
 			return header + type.getReferenceMethods().map(it -> {
+
+				JavaMethod method = it.getMethod();
+				Assert.isTrue(method.getRawParameterTypes().size() > 0,
+						() -> String.format("Method %s must have at least one parameter!", method));
 
 				JavaClass parameterType = it.getMethod().getRawParameterTypes().get(0);
 				String isAsync = it.isAsync() ? "(async) " : "";

@@ -15,7 +15,14 @@
  */
 package org.moduliths.docs;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -61,5 +68,27 @@ class DocumenterTest {
 
 		documenter.getModules().stream() //
 				.map(it -> documenter.toModuleCanvas(it));
+	}
+
+	@Test // #212
+	void customizesOutputLocation() throws IOException {
+
+		String customOutputFolder = "build/moduliths";
+		Path path = Paths.get(customOutputFolder);
+
+		try {
+
+			documenter.withOutputFolder(customOutputFolder).writeModuleCanvases();
+
+			assertThat(Files.list(path)).isNotEmpty();
+			assertThat(path).exists();
+
+		} finally {
+
+			Files.walk(path)
+					.sorted(Comparator.reverseOrder())
+					.map(Path::toFile)
+					.forEach(File::delete);
+		}
 	}
 }

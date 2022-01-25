@@ -50,14 +50,14 @@ public class Stereotypes {
 	static class SomeEventListener {
 
 		@EventListener
-		void someEventListener() {}
+		void someEventListener(Object event) {}
 	}
 
 	@Component
 	static class SomeTxEventListener {
 
 		@TransactionalEventListener
-		void someTxEventListener() {}
+		void someTxEventListener(Object event) {}
 	}
 
 	@Component // Used for documentation purposes
