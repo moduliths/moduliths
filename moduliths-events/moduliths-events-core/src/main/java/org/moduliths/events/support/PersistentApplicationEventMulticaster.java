@@ -124,17 +124,9 @@ public class PersistentApplicationEventMulticaster extends AbstractApplicationEv
 	}
 
 	private ApplicationListener<ApplicationEvent> executeListenerWithCompletion(EventPublication publication,
-			ApplicationListener<ApplicationEvent> listener) {
+			TransactionalApplicationListener<ApplicationEvent> listener) {
 
-		try {
-
-			listener.onApplicationEvent(publication.getApplicationEvent());
-			registry.get().markCompleted(publication);
-
-		} catch (Exception e) {
-
-			LOG.debug("Publication {} not completed due to exception {}.", publication.getTargetIdentifier(), e.getMessage());
-		}
+		listener.processEvent(publication.getApplicationEvent());
 
 		return listener;
 	}

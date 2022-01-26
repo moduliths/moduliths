@@ -17,6 +17,7 @@ package example.events;
 
 import static org.assertj.core.api.Assertions.*;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import org.moduliths.events.EventPublication;
 import org.moduliths.events.EventPublicationRegistry;
 import org.moduliths.events.PublicationTargetIdentifier;
 import org.moduliths.events.config.EnablePersistentDomainEvents;
+import org.moduliths.events.support.PersistentApplicationEventMulticaster;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -46,11 +48,19 @@ class PersistentDomainEventIntegrationTest {
 		context.register(ApplicationConfiguration.class, InfrastructureConfiguration.class);
 		context.refresh();
 
+		EventPublicationRegistry registry = context.getBean(EventPublicationRegistry.class);
+
 		try {
 
 			context.getBean(Client.class).method();
 
 			Thread.sleep(200);
+
+			assertThat(context.getBean(NonTxEventListener.class).getInvoked()).isEqualTo(1);
+			assertThat(context.getBean(FirstTxEventListener.class).getInvoked()).isEqualTo(1);
+			assertThat(context.getBean(SecondTxEventListener.class).getInvoked()).isEqualTo(1);
+			assertThat(context.getBean(ThirdTxEventListener.class).getInvoked()).isEqualTo(1);
+			assertThat(context.getBean(FourthTxEventListener.class).getInvoked()).isEqualTo(1);
 
 		} catch (Throwable e) {
 
@@ -58,7 +68,7 @@ class PersistentDomainEventIntegrationTest {
 
 		} finally {
 
-			assertThat(context.getBean(EventPublicationRegistry.class).findIncompletePublications()) //
+			assertThat(registry.findIncompletePublications()) //
 					.extracting(EventPublication::getTargetIdentifier) //
 					.extracting(PublicationTargetIdentifier::getValue) //
 					.hasSize(2) //
@@ -69,14 +79,35 @@ class PersistentDomainEventIntegrationTest {
 								|| it.contains(FourthTxEventListener.class.getName()));
 					});
 
-			context.close();
 		}
+
+		// Simulate application restart with pending publications
+		PersistentApplicationEventMulticaster multicaster = context.getBean(PersistentApplicationEventMulticaster.class);
+		multicaster.afterSingletonsInstantiated();
+
+		Thread.sleep(200);
+
+		assertThat(context.getBean(NonTxEventListener.class).getInvoked()).isEqualTo(1);
+		assertThat(context.getBean(FirstTxEventListener.class).getInvoked()).isEqualTo(1);
+		assertThat(context.getBean(SecondTxEventListener.class).getInvoked()).isEqualTo(2);
+		assertThat(context.getBean(ThirdTxEventListener.class).getInvoked()).isEqualTo(1);
+		assertThat(context.getBean(FourthTxEventListener.class).getInvoked()).isEqualTo(2);
+
+		// Still 2 uncompleted publications
+		assertThat(registry.findIncompletePublications()).hasSize(2);
+
+		context.close();
 	}
 
 	@Configuration
 	@EnableAsync
 	@EnablePersistentDomainEvents
 	static class ApplicationConfiguration {
+
+		@Bean
+		NonTxEventListener nonTx() {
+			return new NonTxEventListener();
+		}
 
 		@Bean
 		FirstTxEventListener first() {
@@ -119,51 +150,54 @@ class PersistentDomainEventIntegrationTest {
 
 	static class NonTxEventListener {
 
-		boolean invoked = false;
+		@Getter int invoked = 0;
 
 		@EventListener
 		void on(DomainEvent event) {
-			invoked = true;
+			invoked++;
 		}
 	}
 
 	static class FirstTxEventListener {
 
-		boolean invoked = false;
+		@Getter int invoked = 0;
 
 		@TransactionalEventListener
 		public void on(DomainEvent event) {
-			invoked = true;
+			invoked++;
 		}
 	}
 
 	static class SecondTxEventListener {
 
+		@Getter int invoked = 0;
+
 		@TransactionalEventListener
 		public void on(DomainEvent event) {
+			invoked++;
 			throw new IllegalStateException();
 		}
 	}
 
 	static class ThirdTxEventListener {
 
-		boolean invoked = false;
+		@Getter int invoked = 0;
 
 		@TransactionalEventListener
 		public void on(DomainEvent event) {
-			invoked = true;
+			invoked++;
 		}
 	}
 
 	static class FourthTxEventListener {
 
-		boolean invoked = false;
+		@Getter int invoked = 0;
 
 		@Async
 		@TransactionalEventListener
 		public void on(DomainEvent event) throws InterruptedException {
 
-			invoked = true;
+			invoked++;
 
 			Thread.sleep(100);
 
