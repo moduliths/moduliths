@@ -76,6 +76,8 @@ class DocumenterUnitTests {
 		CanvasOptions options = CanvasOptions.defaults() //
 				.groupingBy(of("Representations", nameMatching(".*Representations")));
 
-		modules.forEach(it -> System.out.println(documenter.toModuleCanvas(it, options)));
+		assertThatNoException().isThrownBy(() -> {
+			modules.forEach(it -> documenter.toModuleCanvas(it, options));
+		});
 	}
 }
