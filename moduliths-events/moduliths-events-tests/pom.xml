@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.moduliths</groupId>
 		<artifactId>moduliths-events</artifactId>
-		<version>1.2.2-SNAPSHOT</version>
+		<version>1.2.2</version>
 	</parent>
 
 	<name>Moduliths - Events - Integration tests</name>
