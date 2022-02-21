@@ -47,7 +47,7 @@ Moments will pick it up automatically.
 
 Moments exposes configuration properties to tweak its behavior under the `moduliths.moments` namespace.
 
-[%header, cols="1,1,3"]
+[%header, cols="1,1,2"]
 |===
 |Property|Default value|Description
 |`enabled`|`true`|Whether to enable Moments in the first place.
