@@ -30,7 +30,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jmolecules.archunit.JMoleculesRules;
+import org.jmolecules.archunit.JMoleculesDddRules;
 import org.moduliths.Modulith;
 import org.moduliths.Modulithic;
 import org.moduliths.model.Types.JMoleculesTypes;
@@ -319,7 +319,7 @@ public class Modules implements Iterable<Module> {
 
 		if (JMoleculesTypes.areRulesPresent()) {
 
-			EvaluationResult result = JMoleculesRules.all().evaluate(allClasses);
+			EvaluationResult result = JMoleculesDddRules.all().evaluate(allClasses);
 
 			for (String message : result.getFailureReport().getDetails()) {
 				violations = violations.and(message);

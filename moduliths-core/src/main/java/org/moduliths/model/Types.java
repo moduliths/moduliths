@@ -50,7 +50,7 @@ class Types {
 		private static final String BASE_PACKAGE = "org.jmolecules";
 		private static final String ANNOTATION_PACKAGE = BASE_PACKAGE + ".ddd.annotation";
 		private static final String AT_ENTITY = ANNOTATION_PACKAGE + ".Entity";
-		private static final String ARCHUNIT_RULES = BASE_PACKAGE + ".archunit.JDddRules";
+		private static final String ARCHUNIT_RULES = BASE_PACKAGE + ".archunit.JMoleculesDddRules";
 		private static final String MODULE = ANNOTATION_PACKAGE + ".Module";
 
 		static final String AT_DOMAIN_EVENT_HANDLER = BASE_PACKAGE + ".event.annotation.DomainEventHandler";
