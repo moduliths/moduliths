@@ -358,7 +358,7 @@ public class Module {
 		Assert.notNull(type, "Type must not be null!");
 
 		return Stream.concat(//
-				type.getAllSuperClasses().stream().filter(this::contains), //
+				type.getAllRawSuperclasses().stream().filter(this::contains), //
 				Stream.of(type));
 	}
 

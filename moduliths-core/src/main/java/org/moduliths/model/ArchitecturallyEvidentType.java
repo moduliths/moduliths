@@ -574,11 +574,9 @@ public abstract class ArchitecturallyEvidentType {
 
 		public Optional<String> getTransactionPhase() {
 
-			return Optional.ofNullable(
-					com.tngtech.archunit.base.Optional.fromNullable(method.getAnnotationOfType(SpringTypes.AT_TX_EVENT_LISTENER))
-							.transform(it -> it.get("phase"))
-							.transform(Object::toString)
-							.orNull());
+			return Optional.ofNullable(method.getAnnotationOfType(SpringTypes.AT_TX_EVENT_LISTENER))
+					.map(it -> it.get("phase"))
+					.map(Object::toString);
 		}
 	}
 }
