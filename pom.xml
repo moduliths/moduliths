@@ -24,6 +24,9 @@
 		<module>moduliths-docs</module>
 		<module>moduliths-observability</module>
 		<module>moduliths-moments</module>
+		<module>moduliths-starter-jpa</module>
+		<module>moduliths-starter-jpa-jakarta</module>
+		<module>moduliths-starter-test</module>
 	</modules>
 
 	<properties>
