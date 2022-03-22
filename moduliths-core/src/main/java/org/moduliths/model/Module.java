@@ -131,12 +131,9 @@ public class Module {
 	/**
 	 * Returns all types that are considered aggregate roots.
 	 *
-	 * @param modules must not be {@literal null}.
-	 * @return
+	 * @return will never be {@literal null}.
 	 */
-	public List<JavaClass> getAggregateRoots(Modules modules) {
-
-		Assert.notNull(modules, "Modules must not be null!");
+	public List<JavaClass> getAggregateRoots() {
 
 		return entities.get().stream() //
 				.map(it -> ArchitecturallyEvidentType.of(it, getSpringBeansInternal())) //
@@ -145,6 +142,21 @@ public class Module {
 				.flatMap(this::resolveModuleSuperTypes) //
 				.distinct() //
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns all types that are considered aggregate roots.
+	 *
+	 * @param modules must not be {@literal null}.
+	 * @return
+	 * @deprecated since 1.3, use {@link #getAggregateRoots()} instead.
+	 */
+	@Deprecated
+	public List<JavaClass> getAggregateRoots(Modules modules) {
+
+		Assert.notNull(modules, "Modules must not be null!");
+
+		return getAggregateRoots();
 	}
 
 	/**
