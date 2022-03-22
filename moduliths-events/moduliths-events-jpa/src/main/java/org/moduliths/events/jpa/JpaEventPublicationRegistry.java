@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		listeners.map(it -> CompletableEventPublication.of(event, it)) //
 				.map(this::map) //
-				.forEach(it -> events.save(it));
+				.forEach(it -> events.create(it));
 	}
 
 	/*
@@ -85,8 +85,8 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 		Assert.notNull(listener, "Listener identifier must not be null!");
 
 		events.findBySerializedEventAndListenerId(serializer.serialize(event), listener.toString()) //
-				.map(JpaEventPublicationRegistry::LOGCompleted) //
-				.ifPresent(it -> events.saveAndFlush(it.markCompleted()));
+				.map(JpaEventPublicationRegistry::logCompleted) //
+				.ifPresent(it -> events.update(it.markCompleted()));
 	}
 
 	/*
@@ -96,9 +96,9 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 	@Override
 	public void destroy() throws Exception {
 
-		List<JpaEventPublication> outstandingPublications = events.findByCompletionDateIsNull();
+		List<JpaEventPublication> publications = events.findByCompletionDateIsNull();
 
-		if (outstandingPublications.isEmpty()) {
+		if (publications.isEmpty()) {
 
 			LOG.info("No publications outstanding!");
 			return;
@@ -106,8 +106,13 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		LOG.info("Shutting down with the following publications left unfinished:");
 
-		outstandingPublications
-				.forEach(it -> LOG.info("\t{} - {} - {}", it.getId(), it.getEventType().getName(), it.getListenerId()));
+		for (int i = 0; i < publications.size(); i++) {
+
+			String prefix = (i + 1) == publications.size() ? "└─" : "├─";
+			JpaEventPublication it = publications.get(i);
+
+			LOG.info("{} {} - {} - {}", prefix, it.getId(), it.getEventType().getName(), it.getListenerId());
+		}
 	}
 
 	private JpaEventPublication map(EventPublication publication) {
@@ -125,7 +130,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 		return result;
 	}
 
-	private static JpaEventPublication LOGCompleted(JpaEventPublication publication) {
+	private static JpaEventPublication logCompleted(JpaEventPublication publication) {
 
 		LOG.debug("Marking publication of event {} with id {} to listener {} completed.", //
 				publication.getEventType(), publication.getId(), publication.getListenerId());
@@ -140,13 +145,20 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 		private final JpaEventPublication publication;
 		private final EventSerializer serializer;
 
+		private Object deserializedEvent;
+
 		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.events.EventPublication#getEvent()
 		 */
 		@Override
 		public Object getEvent() {
-			return serializer.deserialize(publication.getSerializedEvent(), publication.getEventType());
+
+			if (deserializedEvent == null) {
+				this.deserializedEvent = serializer.deserialize(publication.getSerializedEvent(), publication.getEventType());
+			}
+
+			return deserializedEvent;
 		}
 
 		/*

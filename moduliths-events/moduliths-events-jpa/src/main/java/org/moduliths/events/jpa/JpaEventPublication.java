@@ -26,11 +26,6 @@ import java.util.UUID;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
-import javax.persistence.Transient;
-
-import org.springframework.data.domain.Persistable;
 
 /**
  * @author Oliver Gierke
@@ -39,7 +34,7 @@ import org.springframework.data.domain.Persistable;
 @Entity
 @NoArgsConstructor(force = true)
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-class JpaEventPublication implements Persistable<UUID> {
+class JpaEventPublication {
 
 	private final @Id UUID id;
 	private final Instant publicationDate;
@@ -48,7 +43,6 @@ class JpaEventPublication implements Persistable<UUID> {
 	private final Class<?> eventType;
 
 	private Instant completionDate;
-	private @Transient boolean isNew = true;
 
 	@Builder
 	static JpaEventPublication of(Instant publicationDate, String listenerId, Object serializedEvent,
@@ -61,20 +55,5 @@ class JpaEventPublication implements Persistable<UUID> {
 
 		this.completionDate = Instant.now();
 		return this;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.domain.Persistable#isNew()
-	 */
-	@Override
-	public boolean isNew() {
-		return isNew;
-	}
-
-	@PostLoad
-	@PrePersist
-	public void markNotNew() {
-		this.isNew = false;
 	}
 }
