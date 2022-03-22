@@ -16,6 +16,7 @@
 	<modules>
 		<module>moduliths-events-core</module>
 		<module>moduliths-events-jpa</module>
+		<module>moduliths-events-jpa-jakarta</module>
 		<module>moduliths-events-jackson</module>
 		<module>moduliths-events-tests</module>
 		<module>moduliths-events-starter</module>
