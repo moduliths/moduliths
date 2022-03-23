@@ -2,7 +2,7 @@
 
 A playground to build technology supporting the development of modular monolithic (modulithic) Java applications.
 
-image:https://travis-ci.org/odrotbohm/moduliths.svg?branch=master["Build Status", link="https://travis-ci.org/odrotbohm/moduliths"]
+image:https://github.com/moduliths/moduliths/actions/workflows/build.yaml/badge.svg["Maven Build", link="https://github.com/moduliths/moduliths/actions/workflows/build.yaml"]
 
 == tl;dr
 
