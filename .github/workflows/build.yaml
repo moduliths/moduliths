@@ -31,19 +31,18 @@ jobs:
     strategy:
       matrix:
         boot-version: ["2.4.13", "2.5.10", "2.7.0-M2"]
-        java-version: ["8", "11", "17"]
-    name: Integration test (Boot ${{ matrix.boot-version }}, Java ${{ matrix.java-version }})
+    name: Integration test (Boot ${{ matrix.boot-version }}
     needs: build
     steps:
 
     - name: Check out sources
       uses: actions/checkout@v2
 
-    - name: Set up JDK ${{ matrix.java-version }}
+    - name: Set up JDK 17
       uses: actions/setup-java@v2
       with:
         distribution: 'temurin'
-        java-version: ${{ matrix.java-version }}
+        java-version: 17
         cache: 'maven'
 
     - name: Build with Maven (Boot ${{ matrix.boot-version }})
