@@ -50,9 +50,9 @@
 
 
 		<dependency>
-			<groupId>org.hibernate</groupId>
+			<groupId>org.hibernate.orm</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>6.0.0.CR1</version>
+			<version>6.0.0.CR2</version>
 			<scope>test</scope>
 		</dependency>
 
