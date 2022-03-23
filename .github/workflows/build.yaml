@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         boot-version: ["2.4.13", "2.5.10", "2.7.0-M2"]
-    name: Integration test (Boot ${{ matrix.boot-version }}
+    name: Integration test (Boot ${{ matrix.boot-version }})
     needs: build
     steps:
 
