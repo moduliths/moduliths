@@ -74,11 +74,12 @@ class MomentsUnitTests {
 	void emitsMonthHasPassedForShiftAcrossMonths() {
 
 		LocalDate now = LocalDate.now();
-		Duration shift = Duration.ofDays(now.lengthOfMonth());
+		int numberOfDaysIntoNextMonth = (now.lengthOfMonth() - now.getDayOfMonth()) + 1;
+		Duration shift = Duration.ofDays(numberOfDaysIntoNextMonth);
 
 		daily.shiftBy(shift);
 
-		verify(events, times(now.lengthOfMonth())).publishEvent(any(DayHasPassed.class));
+		verify(events, times(numberOfDaysIntoNextMonth)).publishEvent(any(DayHasPassed.class));
 		verify(events, times(1)).publishEvent(any(MonthHasPassed.class));
 	}
 
