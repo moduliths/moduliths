@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        boot-version: ["2.4.13", "2.6.3", "2.7.0-M1"]
+        boot-version: ["2.4.13", "2.6.6", "2.7.0-M3"]
         java-version: ["8", "11", "17"]
     name: Integration test against Boot ${{ matrix.boot-version }} on Java ${{ matrix.java-version }}
     needs: build
