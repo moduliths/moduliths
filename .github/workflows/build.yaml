@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        boot-version: ["2.4.13", "2.5.10", "2.7.0-M2"]
+        boot-version: ["2.4.13", "2.5.12", "2.7.0-M3"]
     name: Integration test (Boot ${{ matrix.boot-version }})
     needs: build
     steps:
