@@ -15,6 +15,7 @@
  */
 package org.moduliths.events.jpa;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
@@ -35,7 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 class JpaEventPublication {
 
-	private final @Id UUID id;
+	private final @Id @Column(length = 16) UUID id;
 	private final Instant publicationDate;
 	private final String listenerId;
 	private final String serializedEvent;
