@@ -46,4 +46,4 @@ jobs:
         cache: 'maven'
 
     - name: Build with Maven (Boot ${{ matrix.boot-version }})
-      run: ./mvnw -B versions:update-parent -DparentVersion=${{ matrix.boot-version }} -DgenerateBackupPoms=false && ./mvnw dependency:list -B && ./mvnw -B
+      run: sed -i -e 's/2.7.1/${{ matrix.boot-version }}/g' ./pom.xml && ./mvnw dependency:list -B && ./mvnw -B
