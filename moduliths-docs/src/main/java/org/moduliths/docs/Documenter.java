@@ -302,12 +302,15 @@ public class Documenter {
 
 		Asciidoctor asciidoctor = Asciidoctor.withJavadocBase(modules, options.getApiBase());
 		Function<List<JavaClass>, String> mapper = asciidoctor::typesToBulletPoints;
+		List<JavaClass> aggregates = options.hideInternals
+				? module.getAggregateRoots().stream().filter(module::isExposed).collect(Collectors.toList())
+				: module.getAggregateRoots();
 
 		StringBuilder builder = new StringBuilder();
 		builder.append(startTable("%autowidth.stretch, cols=\"h,a\""));
 		builder.append(writeTableRow("Base package", asciidoctor.toInlineCode(module.getBasePackage().getName())));
 		builder.append(writeTableRow("Spring components", asciidoctor.renderSpringBeans(options, module)));
-		builder.append(addTableRow(module.getAggregateRoots(), "Aggregate roots", mapper));
+		builder.append(addTableRow(aggregates, "Aggregate roots", mapper));
 		builder.append(writeTableRow("Published events", asciidoctor.renderEvents(module)));
 		builder.append(addTableRow(module.getEventsListenedTo(modules), "Events listened to", mapper));
 		builder.append(writeTableRow("Properties",
@@ -683,6 +686,7 @@ public class Documenter {
 		private final List<Grouping> groupers;
 		private final @With @Getter @Nullable String apiBase;
 		private final @With @Nullable String targetFileName;
+		private final boolean hideInternals;
 
 		public static CanvasOptions defaults() {
 
@@ -696,7 +700,7 @@ public class Documenter {
 		}
 
 		public static CanvasOptions withoutDefaultGroupings() {
-			return new CanvasOptions(new ArrayList<>(), null, null);
+			return new CanvasOptions(new ArrayList<>(), null, null, false);
 		}
 
 		public CanvasOptions groupingBy(Grouping... groupings) {
@@ -704,11 +708,20 @@ public class Documenter {
 			List<Grouping> result = new ArrayList<>(groupers);
 			result.addAll(Arrays.asList(groupings));
 
-			return new CanvasOptions(result, apiBase, targetFileName);
+			return new CanvasOptions(result, apiBase, targetFileName, hideInternals);
 		}
 
 		public CanvasOptions groupingBy(String name, Predicate<SpringBean> filter) {
 			return groupingBy(Grouping.of(name, null, filter));
+		}
+
+		/**
+		 * Disables the inclusion of internal components in the module canvas.
+		 *
+		 * @return will never be {@literal null}.
+		 */
+		public CanvasOptions hideInternals() {
+			return new CanvasOptions(groupers, apiBase, targetFileName, true);
 		}
 
 		Groupings groupBeans(Module module) {
@@ -741,9 +754,10 @@ public class Documenter {
 			return Optional.ofNullable(targetFileName);
 		}
 
-		private static List<SpringBean> getMatchingBeans(Module module, Grouping filter, List<SpringBean> alreadyMapped) {
+		private List<SpringBean> getMatchingBeans(Module module, Grouping filter, List<SpringBean> alreadyMapped) {
 
 			return module.getSpringBeans().stream()
+					.filter(it -> !hideInternals || it.isApiBean())
 					.filter(it -> !alreadyMapped.contains(it))
 					.filter(filter::matches)
 					.collect(Collectors.toList());
@@ -814,7 +828,7 @@ public class Documenter {
 			}
 
 			boolean hasOnlyFallbackGroup() {
-				return groupings.size() == 1 && groupings.get(FALLBACK_GROUP) != null;
+				return (groupings.size() == 1) && (groupings.get(FALLBACK_GROUP) != null);
 			}
 		}
 	}

@@ -126,7 +126,7 @@ class Asciidoctor {
 				.map(this::toInlineCode) //
 				.collect(Collectors.joining(", "));
 
-		return String.format("%s implementing %s", base, interfacesAsString);
+		return String.format("%s (via %s)", interfacesAsString, base);
 	}
 
 	public String renderSpringBeans(CanvasOptions options, Module module) {
