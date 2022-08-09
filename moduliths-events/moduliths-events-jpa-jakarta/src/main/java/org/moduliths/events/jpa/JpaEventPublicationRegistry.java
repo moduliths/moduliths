@@ -68,6 +68,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		List<EventPublication> result = events.findByCompletionDateIsNull().stream() //
 				.map(it -> JpaEventPublicationAdapter.of(it, serializer)) //
+				.sorted() //
 				.collect(Collectors.toList());
 
 		return result;
