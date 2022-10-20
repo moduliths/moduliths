@@ -412,7 +412,9 @@ public class Module {
 
 	private Stream<Module> getDirectModuleBootstrapDependencies(Modules modules) {
 
-		return getSpringBeansInternal().stream() //
+		Classes beanTypes = getSpringBeansInternal();
+		return beanTypes.stream() //
+				.map(it -> ArchitecturallyEvidentType.of(it, beanTypes))
 				.flatMap(it -> ModuleDependency.fromType(it)) //
 				.filter(it -> isDependencyToOtherModule(it.target, modules)) //
 				.filter(it -> it.hasType(DependencyType.USES_COMPONENT)) //
@@ -423,7 +425,9 @@ public class Module {
 
 	private Stream<ModuleDependency> getModuleDependenciesOf(JavaClass type, Modules modules) {
 
-		Stream<ModuleDependency> injections = ModuleDependency.fromType(type) //
+		ArchitecturallyEvidentType evidentType = ArchitecturallyEvidentType.of(type, getSpringBeansInternal());
+
+		Stream<ModuleDependency> injections = ModuleDependency.fromType(evidentType) //
 				.filter(it -> isDependencyToOtherModule(it.getTarget(), modules)); //
 
 		Stream<ModuleDependency> directDependencies = type.getDirectDependenciesFromSelf().stream() //
@@ -557,18 +561,27 @@ public class Module {
 					DependencyType.DEFAULT);
 		}
 
-		static Stream<ModuleDependency> fromType(JavaClass source) {
-			return Stream.concat(Stream.concat(fromConstructorOf(source), fromMethodsOf(source)), fromFieldsOf(source));
+		static Stream<ModuleDependency> fromType(ArchitecturallyEvidentType type) {
+
+			JavaClass source = type.getType();
+
+			return Stream.concat(Stream.concat(fromConstructorOf(type), fromMethodsOf(source)), fromFieldsOf(source));
 		}
 
-		private static Stream<ModuleDependency> fromConstructorOf(JavaClass source) {
+		private static Stream<ModuleDependency> fromConstructorOf(ArchitecturallyEvidentType source) {
 
-			Set<JavaConstructor> constructors = source.getConstructors();
+			JavaClass type = source.getType();
+			Set<JavaConstructor> constructors = type.getConstructors();
 
 			return constructors.stream() //
 					.filter(it -> constructors.size() == 1 || isInjectionPoint(it)) //
 					.flatMap(it -> it.getRawParameterTypes().stream() //
-							.map(parameter -> new InjectionModuleDependency(source, parameter, it)));
+							.map(parameter -> {
+								return source.isConfigurationProperties()
+										? new ModuleDependency(type, parameter, createDescription(it, parameter, "parameter"),
+												DependencyType.DEFAULT)
+										: new InjectionModuleDependency(type, parameter, it);
+							}));
 		}
 
 		private static Stream<ModuleDependency> fromFieldsOf(JavaClass source) {
