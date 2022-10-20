@@ -18,6 +18,7 @@ package com.acme.myproject;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+import org.moduliths.model.Module;
 import org.moduliths.model.Modules;
 import org.moduliths.model.Modules.Filters;
 import org.moduliths.model.Violations;
@@ -69,5 +70,15 @@ class ModulithTest {
 				// mentions offending types
 				.withMessageContaining("CycleA") //
 				.withMessageContaining("CycleB");
+	}
+
+	@Test // #249
+	void doesNotIncludeEventListenerDependencyInBootstrapOnes() {
+
+		Modules modules = Modules.of(Application.class, DEFAULT_EXCLUSIONS);
+
+		assertThat(modules.getModuleByName("moduleD")).hasValueSatisfying(it -> {
+			assertThat(it.getBootstrapDependencies(modules)).map(Module::getName).doesNotContain("moduleA");
+		});
 	}
 }
