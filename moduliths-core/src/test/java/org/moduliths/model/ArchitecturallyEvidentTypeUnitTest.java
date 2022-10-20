@@ -177,6 +177,14 @@ class ArchitecturallyEvidentTypeUnitTest {
 		assertThat(ArchitecturallyEvidentType.of(type, classes).isRepository()).isTrue();
 	}
 
+	@Test // #251
+	void discoversJakartaPersistenceEntity() {
+
+		JavaClass type = classes.getRequiredClass(JakartaEntity.class);
+
+		assertThat(ArchitecturallyEvidentType.of(type, classes).isEntity()).isTrue();
+	}
+
 	private Iterator<ArchitecturallyEvidentType> getTypesFor(Class<?>... types) {
 
 		return Stream.of(types) //
@@ -254,5 +262,12 @@ class ArchitecturallyEvidentTypeUnitTest {
 		 */
 		@Override
 		public void onApplicationEvent(ApplicationReadyEvent event) {}
+	}
+
+	// JakartaEE
+
+	@jakarta.persistence.Entity
+	class JakartaEntity {
+
 	}
 }

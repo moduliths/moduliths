@@ -15,6 +15,7 @@
  */
 package org.moduliths.model;
 
+import static org.moduliths.model.Types.JakartaTypes.*;
 import static org.moduliths.model.Types.JavaXTypes.*;
 
 import lombok.AccessLevel;
@@ -102,7 +103,10 @@ public abstract class ArchitecturallyEvidentType {
 	 * @return
 	 */
 	boolean isEntity() {
-		return isJpaEntity().apply(getType());
+
+		JavaClass type = getType();
+
+		return isJpaEntity().apply(type) || isJakartaEntity().apply(type);
 	}
 
 	/**

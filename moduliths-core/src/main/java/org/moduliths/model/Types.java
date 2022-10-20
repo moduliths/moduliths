@@ -94,6 +94,20 @@ class Types {
 	}
 
 	@UtilityClass
+	static class JakartaTypes {
+
+		private static final String BASE_PACKAGE = "jakarta";
+
+		static final String AT_ENTITY = BASE_PACKAGE + ".persistence.Entity";
+		static final String AT_INJECT = BASE_PACKAGE + ".inject.Inject";
+		static final String AT_RESOURCE = BASE_PACKAGE + ".annotation.Resource";
+
+		static DescribedPredicate<? super JavaClass> isJakartaEntity() {
+			return isAnnotatedWith(AT_ENTITY);
+		}
+	}
+
+	@UtilityClass
 	static class SpringTypes {
 
 		private static final String BASE_PACKAGE = "org.springframework";
