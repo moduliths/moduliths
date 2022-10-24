@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        boot-version: ["2.4.13", "2.5.12", "2.7.0-M3"]
+        boot-version: ["2.5.14", "2.7.5", "3.0.0-SNAPSHOT"]
     name: Integration test (Boot ${{ matrix.boot-version }})
     needs: build
     steps:
@@ -46,4 +46,5 @@ jobs:
         cache: 'maven'
 
     - name: Build with Maven (Boot ${{ matrix.boot-version }})
-      run: ./mvnw -B versions:update-parent -DparentVersion=${{ matrix.boot-version }} -DgenerateBackupPoms=false && mvn -B
+      run: sed -i -e 's/2.6.13/${{ matrix.boot-version }}/g' ./pom.xml && ./mvnw dependency:list -B && ./mvnw -B
+
