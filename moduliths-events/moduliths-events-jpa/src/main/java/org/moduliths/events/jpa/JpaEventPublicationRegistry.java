@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * JPA based {@link EventPublicationRegistry}.
  *
  * @author Oliver Gierke
+ * @author OGAWA, Takeshi
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -68,6 +69,7 @@ class JpaEventPublicationRegistry implements EventPublicationRegistry, Disposabl
 
 		List<EventPublication> result = events.findByCompletionDateIsNull().stream() //
 				.map(it -> JpaEventPublicationAdapter.of(it, serializer)) //
+				.sorted() //
 				.collect(Collectors.toList());
 
 		return result;
